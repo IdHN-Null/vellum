@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vellum — 상상을 지도로</title>
+  <meta name="description" content="당신만의 판타지 세계를 창조하고 다듬는 Obsidian 지도 생성·편집기. 절차적 지형, 잉크&워시 고지도 렌더, 노트 연동." />
+  <meta property="og:title" content="Vellum — 상상을 지도로" />
+  <meta property="og:description" content="당신만의 판타지 세계를 창조하고 다듬는 Obsidian 지도 생성·편집기." />
+  <meta property="og:image" content="map/hero.jpg" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body>
+
+  <div class="progress" id="progress" aria-hidden="true"></div>
+
+  <!-- 내비 -->
+  <nav class="nav" id="nav">
+    <div class="wrap-wide">
+      <a class="brand" href="#top">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 3l1.6 8.4L12 12l-1.6-.6z" fill="currentColor" stroke="none"/></svg>
+        VELLUM
+      </a>
+      <div class="nav-links">
+        <a href="#features">기능</a>
+        <a href="#stickers">스티커</a>
+        <a href="#start">시작하기</a>
+        <a href="#download">다운로드</a>
+        <a class="nav-cta" href="#download">설치하기</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 히어로 -->
+  <header class="hero" id="top">
+    <div class="wrap">
+      <span class="eyebrow reveal">Obsidian 지도 스튜디오</span>
+      <h1 class="reveal">상상을, 지도로.
+        <span class="hero-en">A cartographer's studio, inside your vault.</span>
+      </h1>
+      <p class="lede reveal">당신만의 판타지 세계를 빚고, 잉크와 워시로 그려내고, 노트와 하나로 엮습니다.</p>
+      <div class="cta-row reveal">
+        <a class="btn btn-primary" href="#download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+          무료로 시작하기
+        </a>
+        <a class="btn-text" href="#features">기능 둘러보기</a>
+      </div>
+      <div class="scroll-cue reveal" aria-hidden="true">
+        <span>스크롤</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- 두루마리 펼침 쇼케이스 -->
+  <section class="unfurl" id="showcase">
+    <div class="unfurl-pin">
+      <div class="unfurl-stage">
+        <div class="roll-group">
+          <div class="paper-wrap">
+            <div class="paper">
+              <div class="paper-inner"><img src="map/hero.jpg" alt="Vellum으로 생성한 판타지 지도 — 에스텔라 대륙" width="1600" height="900" /></div>
+            </div>
+            <span class="roller left"></span>
+            <span class="roller right"></span>
+          </div>
+        </div>
+        <div class="paper-cap">
+          <span class="eyebrow">The World</span>
+          <h2>펼치면, 하나의 세계.</h2>
+          <p>침식과 강, 산맥과 해안이 손으로 그린 고지도로 깨어납니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 기능 1: 절차적 지형 -->
+  <section class="feature-block" id="features">
+    <div class="wrap">
+      <div class="fb-figure reveal-clip"><img src="assets/feat-terrain.jpg" alt="생성된 산맥과 강, 등고선" data-parallax="0.05" loading="lazy" /></div>
+      <div class="fb-body reveal">
+        <span class="eyebrow">Generate</span>
+        <h3>시드 하나로,<br>대륙 하나.</h3>
+        <p>노이즈에 물방울 침식과 유량 수문을 더해, 계곡과 강줄기가 자연스럽게 새겨집니다. 대륙마다 산맥 등뼈가 놓이고, 주사위 한 번이면 완전히 새로운 세계가 나타납니다.</p>
+        <p>같은 시드는 언제든 같은 지형으로 돌아옵니다.</p>
+        <div class="fb-note"><span>물방울 침식</span><span>유량 수문</span><span>무한 재현</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 기능 2: 잉크 & 워시 -->
+  <section class="feature-block flip" id="craft">
+    <div class="wrap">
+      <div class="fb-figure reveal-clip"><img src="assets/feat-craft.jpg" alt="해안선과 동판화 헤칭 디테일" data-parallax="0.05" loading="lazy" /></div>
+      <div class="fb-body reveal">
+        <span class="eyebrow">Render</span>
+        <h3>손으로 그린<br>고지도의 결.</h3>
+        <p>수채 워시 위에 만년필 해안선과 등고선을 얹고, 해안을 따라 동판화 잔선을 겹겹이 새깁니다. 크게 확대해도 벡터 디테일이 무너지지 않습니다.</p>
+        <div class="fb-note"><span>만년필 해안선</span><span>동판화 헤칭</span><span>판화풍 산맥</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 기능 3: 세계관 연동 -->
+  <section class="feature-block" id="world">
+    <div class="wrap">
+      <div class="fb-figure reveal-clip"><img src="assets/feat-world.jpg" alt="지도 위 마커와 지명 라벨" data-parallax="0.05" loading="lazy" /></div>
+      <div class="fb-body reveal">
+        <span class="eyebrow">Worldbuild</span>
+        <h3>지도와 노트를,<br>하나로.</h3>
+        <p>수도와 유적에 마커를 찍고 옵시디언 문서를 연결하면, 클릭 한 번으로 설정 노트가 열립니다. 노트에서 지도의 그 장소로 되돌아올 수도 있습니다.</p>
+        <p>지역·리본 문구·자유 그림까지, 세계관을 지도 위에 그대로 담습니다.</p>
+        <div class="fb-note"><span>마커 18종</span><span>지역·리본 문구</span><span>노트 양방향 링크</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 스티커 -->
+  <section class="sticker-band" id="stickers">
+    <div class="wrap">
+      <div class="lead reveal">
+        <span class="eyebrow">Stickers</span>
+        <h2>여백을 채우는, 스물다섯 가지 장식.</h2>
+        <p>클릭 한 번으로 지도 위에. 잉크와 종이 톤이 스타일에 맞춰 조용히 어우러집니다.</p>
+      </div>
+      <div class="sticker-sheet reveal-scale">
+        <img src="assets/stickers.png" alt="Vellum 내장 스티커 — 나침반·용·성·고래·등대·크라켄·태양·풍차·탑·두루마리 등" width="900" height="300" loading="lazy" />
+      </div>
+      <div class="sticker-cats reveal">
+        <span><b>하늘</b>구름·태양·바람</span>
+        <span><b>바다</b>범선·고래·크라켄·등대</span>
+        <span><b>땅</b>드래곤·성·유적·풍차</span>
+        <span><b>지도</b>나침반·두루마리·＋내 PNG</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 스타일 -->
+  <section id="styles">
+    <div class="theme-bg parchment"></div>
+    <div class="theme-bg color"></div>
+    <div class="theme-bg ink"></div>
+    <div class="wrap" style="position:relative; z-index:2;">
+      <div class="lead reveal">
+        <span class="eyebrow">Styles</span>
+        <h2>같은 세계, 다른 붓.</h2>
+        <p>세 가지 손맛으로, 바이옴 색까지 자유롭게.</p>
+      </div>
+      <div class="styles-row">
+        <div class="style-card reveal">
+          <div class="style-swatch sw-parchment">
+            <span class="chip" style="background:#efe2c2"></span>
+            <span class="chip" style="background:#c79a63"></span>
+            <span class="chip" style="background:#7a5a2a"></span>
+          </div>
+          <h4>Parchment</h4>
+          <p>따뜻한 양피지에 세피아 잉크. 가장 고전적인 고지도.</p>
+        </div>
+        <div class="style-card reveal">
+          <div class="style-swatch sw-color">
+            <span class="chip" style="background:#9fc4ba"></span>
+            <span class="chip" style="background:#3f6f78"></span>
+            <span class="chip" style="background:#c7b46a"></span>
+          </div>
+          <h4>Color</h4>
+          <p>선명한 바다와 초록 대지. 삽화 같은 컬러 톤.</p>
+        </div>
+        <div class="style-card reveal">
+          <div class="style-swatch sw-ink">
+            <span class="chip" style="background:#f5f3ec"></span>
+            <span class="chip" style="background:#b8b2a3"></span>
+            <span class="chip" style="background:#3a352b"></span>
+          </div>
+          <h4>Ink</h4>
+          <p>흑백 펜화. 종이와 잉크만으로 그린 판화.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 시작하기 (튜토리얼) -->
+  <section class="tutorial" id="start">
+    <div class="wrap">
+      <div class="lead reveal">
+        <span class="eyebrow">Start</span>
+        <h2>세 걸음이면 충분합니다.</h2>
+        <p>Vellum의 흐름은 단순합니다 — 만들고, 다듬고, 잇는 것.</p>
+      </div>
+      <div class="tutorial-steps">
+        <div class="tut-step reveal">
+          <div class="tut-num">1</div>
+          <h4>만들기</h4>
+          <p>지형 탭에서 주사위를 굴려, 마음에 드는 대륙이 나올 때까지 생성합니다.</p>
+        </div>
+        <div class="tut-step reveal">
+          <div class="tut-num">2</div>
+          <h4>다듬기</h4>
+          <p>브러시로 지형을 손보고, 스타일과 색·헤칭을 취향껏 조절합니다.</p>
+        </div>
+        <div class="tut-step reveal">
+          <div class="tut-num">3</div>
+          <h4>잇기</h4>
+          <p>마커를 찍고 노트를 연결해, 세계관을 하나의 지도로 엮습니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 다운로드 -->
+  <section class="download" id="download">
+    <div class="wrap">
+      <div class="lead reveal">
+        <span class="eyebrow">Download</span>
+        <h2>지금, <span class="lite">첫 대륙을.</span></h2>
+        <p>Obsidian 1.4.0 이상 · 데스크톱. 외부 라이브러리 없이 순수 캔버스로 동작합니다.</p>
+      </div>
+      <div class="reveal" style="text-align:center">
+        <a class="dl-btn" href="download/vellum-0.21.0.zip" download>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
+          Vellum v0.21.0 <small>(.zip · ~370KB)</small>
+        </a>
+        <div class="dl-meta">MIT 라이선스 · © 2026 Altair</div>
+      </div>
+      <div class="install reveal">
+        <h4>설치</h4>
+        <div class="steps">
+          <div class="step"><div class="n"></div><div class="txt">압축을 풀고 <b>main.js · manifest.json · styles.css</b>를 확인합니다.</div></div>
+          <div class="step"><div class="n"></div><div class="txt">볼트의 <code>.obsidian/plugins/vellum/</code>에 복사합니다. <span style="color:var(--ink-faint)">(Windows는 동봉된 <code>install.ps1</code>로 한 번에)</span></div></div>
+          <div class="step"><div class="n"></div><div class="txt">설정 → <b>커뮤니티 플러그인</b>에서 <b>Vellum</b>을 켭니다.</div></div>
+          <div class="step"><div class="n"></div><div class="txt">명령 팔레트 → <b>샘플팩 설치</b>로 예제 지도를 받아 시작합니다.</div></div>
+        </div>
+      </div>
+      <p class="migrate reveal"><b>이전에 Fantasy Map Studio를 쓰셨나요?</b> 지도 파일(<code>.fmap</code>)은 그대로 열립니다. 새로 설치한 뒤 기존 플러그인은 비활성화하세요 — 둘 다 켜져 있으면 충돌할 수 있습니다.</p>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <div class="brand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 3l1.6 8.4L12 12l-1.6-.6z" fill="currentColor" stroke="none"/></svg>
+        VELLUM
+      </div>
+      <p>상상을 지도로. — 세계관 창작자를 위한 Obsidian 지도 도구.</p>
+      <p>Crafted by <a href="#top">Altair</a> · MIT License</p>
+    </div>
+  </footer>
+
+  <script>
+    const nav = document.getElementById("nav");
+    const progress = document.getElementById("progress");
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // 그룹별 스태거 — 형제 요소가 순차적으로 등장
+    const stagger = (sel, step) => document.querySelectorAll(sel).forEach((el, i) => {
+      el.style.transitionDelay = (i * step) + "ms";
+    });
+    stagger(".hero .wrap > .reveal", 110);
+    stagger(".tutorial-steps > .tut-step", 130);
+    stagger(".styles-row > .style-card", 120);
+
+    // 스크롤 리빌 — IO + 안전망(백그라운드 탭 throttle에도 내용 반드시 표시)
+    const revealEls = document.querySelectorAll(".reveal, .reveal-scale, .reveal-clip");
+    const showAll = () => revealEls.forEach((el) => el.classList.add("in", "force-show"));
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+      }, { threshold: 0.12, rootMargin: "0px 0px -7% 0px" });
+      revealEls.forEach((el) => io.observe(el));
+      setTimeout(showAll, 1600);
+    } else { showAll(); }
+    addEventListener("load", () => setTimeout(showAll, 200));
+
+    // 스크롤 스파이 — 현재 섹션에 해당하는 내비 링크 활성화
+    const navMap = new Map();
+    document.querySelectorAll('.nav-links a[href^="#"]:not(.nav-cta)').forEach((a) => navMap.set(a.getAttribute("href").slice(1), a));
+    if ("IntersectionObserver" in window) {
+      const spy = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const a = navMap.get(e.target.id);
+          if (!a) continue; // 내비에 없는 섹션(craft/world 등)은 직전 활성 유지
+          navMap.forEach((l) => l.classList.remove("active"));
+          a.classList.add("active");
+        }
+      }, { rootMargin: "-45% 0px -50% 0px", threshold: 0 });
+      document.querySelectorAll("section[id], header[id]").forEach((s) => spy.observe(s));
+    }
+
+    // 진행 바(즉시) + 기능 이미지 패럴랙스(관성 lerp — 버터처럼 부드럽게)
+    const targets = new Map();          // el → 목표 py
+    const current = new Map();          // el → 현재 py
+    const parallaxEls = reduce ? [] : [...document.querySelectorAll("[data-parallax]")];
+    parallaxEls.forEach((el) => { targets.set(el, 0); current.set(el, 0); });
+    const updateProgress = () => {
+      const max = document.documentElement.scrollHeight - innerHeight;
+      progress.style.setProperty("--p", max > 0 ? (scrollY / max).toFixed(4) : 0);
+    };
+    const computeTargets = () => {
+      const vh = innerHeight;
+      for (const el of parallaxEls) {
+        const r = el.getBoundingClientRect();
+        const off = (r.top + r.height / 2 - vh / 2) / vh;
+        targets.set(el, off * r.height * -(parseFloat(el.dataset.parallax) || 0));
+      }
+    };
+    const tick = () => {
+      if (!document.hidden) {
+        for (const el of parallaxEls) {
+          const cur = current.get(el) + (targets.get(el) - current.get(el)) * 0.085; // lerp
+          current.set(el, cur);
+          el.style.setProperty("--py", cur.toFixed(2) + "px");
+        }
+      }
+      requestAnimationFrame(tick);
+    };
+
+    // 두루마리 펼침 — 핀 구간의 특정 진행률에서 확정 트리거.
+    // 올릴 때도 어색하지 않게 역방향 트랜지션을 고려하여 2단계로 쪼갬.
+    const unfurl = document.getElementById("showcase");
+    const stage = unfurl && unfurl.querySelector(".unfurl-stage");
+    const updateUnfurl = () => {
+      if (!stage) return;
+      if (reduce) { stage.classList.add("play-drop", "play-unfurl"); return; }
+      const range = unfurl.offsetHeight - innerHeight;
+      const p = range > 0 ? (scrollY - unfurl.offsetTop) / range : (scrollY >= unfurl.offsetTop ? 1 : 0);
+      
+      // Step 1: 두루마리 낙하
+      if (p >= 0.15) stage.classList.add("play-drop");
+      else if (p < 0.10) stage.classList.remove("play-drop");
+
+      // Step 2: 두루마리 펼침
+      if (p >= 0.35) stage.classList.add("play-unfurl");
+      else if (p < 0.25) stage.classList.remove("play-unfurl");
+    };
+
+    addEventListener("scroll", () => {
+      nav.classList.toggle("scrolled", scrollY > 8);
+      updateProgress(); computeTargets(); updateUnfurl();
+    }, { passive: true });
+    addEventListener("resize", () => { updateProgress(); computeTargets(); updateUnfurl(); }, { passive: true });
+    updateProgress(); computeTargets(); updateUnfurl();
+    if (parallaxEls.length) requestAnimationFrame(tick);
+
+    // Styles 호버 — 가리킨 카드의 실제 스타일 지도가 배경에 원형으로 퍼지고, 카드에 포커스.
+    // 카드 사이를 오갈 때 깜빡이지 않도록 "이전 테마 비우고 현재만" + 행을 벗어날 때만 초기화.
+    const stylesSec = document.getElementById("styles");
+    const stylesRow = document.querySelector(".styles-row");
+    const styleCards = [...document.querySelectorAll(".styles-row .style-card")];
+    const themes = ["hover-parchment", "hover-color", "hover-ink"];
+    if (stylesSec && stylesRow && styleCards.length === 3) {
+      const clear = () => {
+        stylesSec.classList.remove(...themes);
+        styleCards.forEach((c) => c.classList.remove("is-active"));
+      };
+      styleCards.forEach((card, i) => {
+        card.addEventListener("mouseenter", () => {
+          clear();
+          stylesSec.classList.add(themes[i]);
+          card.classList.add("is-active");
+        });
+      });
+      stylesRow.addEventListener("mouseleave", clear);
+    }
+  </script>
+</body>
+</html>
