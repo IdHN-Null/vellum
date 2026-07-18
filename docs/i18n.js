@@ -437,8 +437,16 @@
       if (v != null) el.setAttribute("alt", v);
     });
 
-    var sel = document.getElementById("langSelect");
-    if (sel) sel.value = lang;
+    var cur = document.getElementById("langCur");
+    if (cur) cur.textContent = LANGS[lang] || lang;
+    var menu = document.getElementById("langMenu");
+    if (menu) {
+      Array.prototype.forEach.call(menu.children, function (li) {
+        var active = li.getAttribute("data-lang") === lang;
+        li.classList.toggle("is-active", active);
+        li.setAttribute("aria-selected", active ? "true" : "false");
+      });
+    }
   }
 
   function setLang(lang, updateUrl) {
@@ -451,16 +459,53 @@
     }
   }
 
-  /* ── Switcher UI ─────────────────────────────────────── */
-  var sel = document.getElementById("langSelect");
-  if (sel) {
+  /* ── Switcher UI (custom dropdown, matching the map theme) ── */
+  var dd = document.getElementById("langDd");
+  var btn = document.getElementById("langBtn");
+  var menu = document.getElementById("langMenu");
+  if (dd && btn && menu) {
     Object.keys(LANGS).forEach(function (code) {
-      var opt = document.createElement("option");
-      opt.value = code;
-      opt.textContent = LANGS[code];
-      sel.appendChild(opt);
+      var li = document.createElement("li");
+      li.setAttribute("role", "option");
+      li.setAttribute("data-lang", code);
+      li.setAttribute("tabindex", "-1");
+      li.textContent = LANGS[code];
+      li.addEventListener("click", function () {
+        setLang(code, true);
+        close();
+        btn.focus();
+      });
+      menu.appendChild(li);
     });
-    sel.addEventListener("change", function () { setLang(sel.value, true); });
+
+    var isOpen = function () { return dd.classList.contains("is-open"); };
+    var close = function () {
+      dd.classList.remove("is-open");
+      btn.setAttribute("aria-expanded", "false");
+    };
+    var open = function () {
+      dd.classList.add("is-open");
+      btn.setAttribute("aria-expanded", "true");
+      var active = menu.querySelector(".is-active") || menu.firstElementChild;
+      if (active) active.focus();
+    };
+
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      isOpen() ? close() : open();
+    });
+    document.addEventListener("click", function (e) {
+      if (isOpen() && !dd.contains(e.target)) close();
+    });
+    dd.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") { close(); btn.focus(); return; }
+      if (!isOpen()) return;
+      var items = Array.prototype.slice.call(menu.children);
+      var idx = items.indexOf(document.activeElement);
+      if (e.key === "ArrowDown") { e.preventDefault(); (items[idx + 1] || items[0]).focus(); }
+      else if (e.key === "ArrowUp") { e.preventDefault(); (items[idx - 1] || items[items.length - 1]).focus(); }
+      else if ((e.key === "Enter" || e.key === " ") && idx >= 0) { e.preventDefault(); items[idx].click(); }
+    });
   }
 
   // Initial application (do not touch the URL on auto-detection)
