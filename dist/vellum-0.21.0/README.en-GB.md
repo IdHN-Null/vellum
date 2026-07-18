@@ -1,6 +1,6 @@
 # Vellum (Obsidian plugin)
 
-🌐 **English (US)** · [English (UK)](README.en-GB.md) · [Español](README.es.md) · [中文](README.zh.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
+🌐 [English (US)](README.md) · **English (UK)** · [Español](README.es.md) · [中文](README.zh.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 
 **From imagination to map.** A fantasy map generator & editor for creating and refining your own worlds.
 It runs on pure canvas with no external libraries, aiming for renders that stand on their own as finished antique maps.
@@ -15,22 +15,22 @@ It runs on pure canvas with no external libraries, aiming for renders that stand
 - **Async generation** — terrain is computed in a Web Worker, so even large maps never freeze the UI
 
 **Ink & wash rendering (antique-map style)**
-- Watercolor wash base + crisp pen-ink vector detail (coastlines, contours, rivers), with LOD re-rendering when zoomed
+- Watercolour wash base + crisp pen-ink vector detail (coastlines, contours, rivers), with LOD re-rendering when zoomed
 - **Coastal concentric rings** — the equidistant ripple rings of antique charts, plus water-surface streaks
 - **Coastal / land hatching** — copperplate-style dashed lines engraved in layers on both sides of the coast (individually toggleable)
 - **Glyph stamps** — forests as shaded tree clusters, hills as mound arcs, mountains as woodcut peaks with shaded faces and hatching
-- **Texture sliders** for grain, shading, mottle and icon size; three styles (parchment/color/ink); customizable biome colors
+- **Texture sliders** for grain, shading, mottle and icon size; three styles (parchment/colour/ink); customisable biome colours
 - Coordinate grid (A·B·C / 1·2·3), compass rhumb lines, frame/waves/vignette toggles
 
 **Editing tools**
 - **Terrain brushes** — raise/lower (`[` `]` for brush size)
 - **Biome paint** — Water/Grassland/Forest/Desert/Snow brushes (1–5, E to erase). Painting water/land also corrects the elevation
-- **Freehand annotations** — paths, lines and arrows (dashed supported) with color/width options — great for treasure maps
-- **18 marker icons** — map-style vector badges (castle, town, harbor, mountain, forest, tower, temple, battlefield, chest, skull, flag, X and more) with size control
-- **Region polygons** — click out borders, with name labels and colors
+- **Freehand annotations** — paths, lines and arrows (dashed supported) with colour/width options — great for treasure maps
+- **18 marker icons** — map-style vector badges (castle, town, harbour, mountain, forest, tower, temple, battlefield, chest, skull, flag, X and more) with size control
+- **Region polygons** — click out borders, with name labels and colours
 - **Text elements** — title cartouche, place-name labels, **ribbon banners (text on a ribbon)**, note cards. Drag to move, resize, double-click to edit
 - **25 decorative stickers** — one click from a thumbnail grid. Sky (cloud, sun, crescent, birds, wind, storm) / Sea (ship, sea serpent, whale, fish, whirlpool, waves, lighthouse, kraken) / Land (dragon, camp, ruins, tower, castle, bridge, windmill) / Map (compass, ink blot, scroll, corner flourish). **You can also add your own vault PNGs as stickers**
-- **Ink-style marker badges** — hand-drawn rings + ink glyphs + muted accent colors that suit an antique map
+- **Ink-style marker badges** — hand-drawn rings + ink glyphs + muted accent colours that suit an antique map
 - Layer ordering (front/back) via the context menu
 
 **Vault integration**
@@ -71,7 +71,7 @@ cd vellum
 | Select | Drag: pan the map / drag markers, elements, drawings: move / click a marker: open its note / right-click: menu |
 | Marker | Add a marker where you click (name, icon, note link) |
 | Region | Click to add vertices; double-click/Enter to finish, Esc to cancel |
-| Draw/Arrow | Drag for free curves and arrows (color, width and dashes in the bottom bar) |
+| Draw/Arrow | Drag for free curves and arrows (colour, width and dashes in the bottom bar) |
 | Raise/Lower | Drag to edit terrain (generated maps only) |
 | Paint | Paint biomes — pick type and size in the bottom bar (1–5, E) |
 
@@ -87,5 +87,5 @@ npm test       # pure-logic unit tests (RLE, migrations, contours, terrain distr
 Rendering-pipeline visual tests: `node test/server.mjs`, then open http://localhost:8137
 (refresh the bundle with `npx esbuild test/preview.ts --bundle --outfile=test/preview.js`)
 
-## License
+## Licence
 MIT

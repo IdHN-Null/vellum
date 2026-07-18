@@ -1,6 +1,7 @@
 /**
- * 지형 생성 워커 — generateBase(침식) + composeTerrain(수문)을 백그라운드에서 실행.
- * DOM 의존 없음(typed array + Math). 결과 버퍼는 transfer로 돌려보낸다.
+ * Terrain generation worker — runs generateBase (erosion) + composeTerrain (hydrology)
+ * in the background. No DOM dependencies (typed arrays + Math only). Result buffers
+ * are sent back via transfer.
  */
 import { MapData } from "./types";
 import { composeTerrain, generateBase } from "./terrain";
@@ -10,7 +11,7 @@ interface Req {
   map: Pick<MapData, "width" | "height" | "gen">;
   edits: ArrayBuffer | null;
   paint: ArrayBuffer | null;
-  base: ArrayBuffer | null; // 캐시된 베이스(있으면 generateBase 생략)
+  base: ArrayBuffer | null; // cached base heightmap (skips generateBase when present)
 }
 
 const ctx = self as unknown as {

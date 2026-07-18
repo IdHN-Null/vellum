@@ -20,21 +20,21 @@ function check(name: string, data: Int8Array): void {
 
 const N = 512 * 384;
 
-// 1) 전부 0 (편집 없음 — 실제론 필드 삭제되지만 인코딩도 검증)
+// 1) All zeros (no edits — the field is dropped in practice, but verify the encoding too)
 check("all-zero", new Int8Array(N));
 
-// 2) 희소 편집 (붓질 몇 번)
+// 2) Sparse edits (a few brush strokes)
 const sparse = new Int8Array(N);
 for (let i = 5000; i < 5600; i++) sparse[i] = 42;
 for (let i = 90000; i < 90900; i++) sparse[i] = -77;
 check("sparse", sparse);
 
-// 3) 음수 포함 랜덤 노이즈 (RLE 비효율 → dense 폴백 검증)
+// 3) Random noise including negatives (RLE-inefficient → verifies the dense fallback)
 const noise = new Int8Array(N);
 for (let i = 0; i < N; i++) noise[i] = ((i * 2654435761) % 255) - 127;
 check("noise (dense fallback)", noise);
 
-// 4) 구버전 dense 형식 읽기 호환
+// 4) Read compatibility with the legacy dense format
 const legacyData = new Int8Array([1, -1, 127, -127, 0, 55]);
 const u8 = new Uint8Array(legacyData.buffer);
 let bin = "";

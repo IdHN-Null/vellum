@@ -1,7 +1,7 @@
 /**
- * 순수 로직 단위 테스트 (DOM 불필요 — node로 실행).
+ * Pure-logic unit tests (no DOM needed — run with node).
  *   npm test
- * 실패 시 exit 1. 캔버스 렌더링 검증은 test/server.mjs 시각 하네스 참조.
+ * Exits 1 on failure. For canvas rendering checks, see the test/server.mjs visual harness.
  */
 import { defaultMapData, parseMapData, bytesToB64, b64ToBytes } from "../src/types";
 import { B, composeTerrain, generateBase } from "../src/terrain";
@@ -17,9 +17,9 @@ function check(name: string, cond: boolean, detail = ""): void {
   }
 }
 
-// ── RLE 직렬화 왕복 ─────────────────────────────────────
+// ── RLE serialisation round trip ────────────────────────
 {
-  // 희소 델타 (전형적 편집 패턴)
+  // Sparse deltas (the typical editing pattern)
   const sparse = new Int8Array(4096);
   sparse[100] = 12; sparse[101] = 12; sparse[102] = -8; sparse[4000] = 127;
   const enc = bytesToB64(sparse);
@@ -28,26 +28,26 @@ function check(name: string, cond: boolean, detail = ""): void {
   check("RLE 압축 접두사", enc.startsWith("R:"));
   check("RLE 크기 축소", enc.length < 4096 / 2, `len=${enc.length}`);
 
-  // 노이즈성 데이터 (RLE가 커지는 케이스 → dense 폴백)
+  // Noisy data (the case where RLE grows → dense fallback)
   const noisy = new Int8Array(512);
   for (let i = 0; i < noisy.length; i++) noisy[i] = ((i * 37 + 11) % 251) - 125;
   const encN = bytesToB64(noisy);
   const decN = b64ToBytes(encN, noisy.length);
   check("dense 폴백 왕복", decN.every((v, i) => v === noisy[i]));
 
-  // 구버전(dense, 접두사 없음) 호환
+  // Legacy compatibility (dense, no prefix)
   const legacy = btoa(String.fromCharCode(5, 250, 0, 0)); // 5, -6, 0, 0
   const decL = b64ToBytes(legacy, 4);
   check("레거시 dense 디코드", decL[0] === 5 && decL[1] === -6 && decL[2] === 0);
 
-  // 깨진 입력 → 0 배열 (예외 없이)
+  // Corrupted input → zero array (without throwing)
   const bad = b64ToBytes("!!!not-base64!!!", 16);
   check("손상 입력 안전 폴백", bad.length === 16 && bad.every((v) => v === 0));
 }
 
-// ── parseMapData 마이그레이션·기본값 ─────────────────────
+// ── parseMapData migration & defaults ───────────────────
 {
-  // v0.2 이하: ornaments 없음 → decor.compass/title이 배치 요소로 승격
+  // v0.2 and earlier: no ornaments → decor.compass/title promoted to placed elements
   const old = JSON.stringify({
     version: 1, name: "옛지도", width: 256, height: 192, mode: "generated",
     gen: { seed: 7 }, style: "parchment",
@@ -65,14 +65,14 @@ function check(name: string, cond: boolean, detail = ""): void {
   check("coastHatching 기본 on (구버전 파일 포함)", m.coastHatching === true);
   check("landHatching 기본 on (구버전 파일 포함)", m.landHatching === true);
 
-  // 잘못된 필드 타입 방어
+  // Defence against wrong field types
   const weird = parseMapData(JSON.stringify({ name: "x", markers: "oops", regions: null }));
   check("markers 타입 방어", Array.isArray(weird.markers) && weird.markers.length === 0);
 }
 
-// ── 등고선 추출 ─────────────────────────────────────────
+// ── Contour extraction ──────────────────────────────────
 {
-  // 중앙 봉우리 하나 있는 합성 지형
+  // Synthetic terrain with a single central peak
   const w = 64, h = 64;
   const hm = new Float32Array(w * h);
   for (let y = 0; y < h; y++) {
@@ -89,17 +89,17 @@ function check(name: string, cond: boolean, detail = ""): void {
     const ring = coast.rings[0];
     check("링 좌표 유효", ring.every(([x, y]) => x >= -1 && x <= w && y >= -1 && y <= h));
   }
-  // 라인 유틸
+  // Line utilities
   const line: [number, number][] = [[0, 0], [1, 0.01], [2, 0], [3, 0.01], [10, 0]];
   check("simplifyLine 축소", simplifyLine(line, 0.5).length <= line.length);
   check("chaikin 증가", chaikin(line, 1, false).length > line.length);
 }
 
-// ── 지형 생성: 대륙 등뼈 산맥 보장·평야 균형 ─────────────
+// ── Terrain generation: guaranteed spine ranges & plains balance ──
 {
   for (const seed of [151186, 4242, 777, 90210]) {
     const m = defaultMapData("t", seed);
-    m.width = 256; m.height = 192; // 테스트 속도용 축소
+    m.width = 256; m.height = 192; // shrunk for test speed
     const t = composeTerrain(m, generateBase(m), null, null);
     let land = 0, mtn = 0, plains = 0, water = 0;
     for (let i = 0; i < t.biome.length; i++) {
@@ -115,14 +115,14 @@ function check(name: string, cond: boolean, detail = ""): void {
     check(`seed ${seed}: 평야 우세 (도시·왕국 적합)`, plainsPct > 55, `plains=${plainsPct.toFixed(1)}%`);
     check(`seed ${seed}: 물·육지 공존`, water > 0 && land > 0);
     check(`seed ${seed}: 강 생성`, t.rivers.length > 0, `rivers=${t.rivers.length}`);
-    // 호수 셀은 항상 물 바이옴 (v0.10.1 호수 사라짐 버그 회귀 가드)
+    // Lake cells are always a water biome (regression guard for the v0.10.1 vanishing-lake bug)
     let lakeOK = true;
     for (let i = 0; i < t.lake.length; i++) {
       if (t.lake[i] && t.biome[i] !== B.OCEAN && t.biome[i] !== B.DEEP) { lakeOK = false; break; }
     }
     check(`seed ${seed}: 호수=물 바이옴`, lakeOK);
 
-    // 강 연결 (v0.15 합류 스냅 / v0.16 하구 깔때기 회귀 가드)
+    // River connectivity (regression guards: v0.15 confluence snap / v0.16 estuary funnel)
     let mouthOK = false, joinValid = true, joinCount = 0, flareOK = true;
     for (const rv of t.rivers) {
       const [ex, ey] = rv.pts[rv.pts.length - 1];
@@ -130,13 +130,13 @@ function check(name: string, cond: boolean, detail = ""): void {
       const endWater = t.biome[endIdx] === B.DEEP || t.biome[endIdx] === B.OCEAN || t.lake[endIdx] === 1;
       if (endWater) {
         mouthOK = true;
-        // 하구 깔때기: 끝 폭이 본류 폭보다 넓게 벌어져야 한다
+        // Estuary funnel: the final width must flare wider than the main channel
         if (rv.widths[rv.widths.length - 1] <= rv.widths[Math.max(0, rv.widths.length - 4)]) flareOK = false;
       }
       if (rv.joins !== undefined) {
         joinCount++;
         const parent = t.rivers[rv.joins];
-        // 합류 인덱스가 유효하고, 합류점이 본류 경로 위의 셀이어야 한다
+        // The join index must be valid, and the junction must be a cell on the parent's path
         if (!parent || !parent.pts.some(([px, py]) => px === ex && py === ey)) joinValid = false;
       }
     }

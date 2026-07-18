@@ -1,7 +1,7 @@
 /**
- * 지도용 벡터 마커 아이콘. 24×24 뷰박스의 SVG 패스 하나를
- * 캔버스(Path2D)와 모달(<svg>) 양쪽에서 공유한다.
- * 스타일: 양피지 배지 + 잉크 스트로크 글리프.
+ * Vector marker icons for the map. A single 24×24-viewBox SVG path is shared
+ * between the canvas (Path2D) and the modal (<svg>).
+ * Style: parchment badge + ink-stroke glyph.
  */
 
 import { StyleId } from "./types";
@@ -11,7 +11,7 @@ import { hexToRGB } from "./render2d";
 export interface MarkerIcon {
   id: string;
   label: string;
-  d: string; // 24x24 SVG path (stroke 기반)
+  d: string; // 24x24 SVG path (stroke-based)
 }
 
 export const MARKER_ICONS: MarkerIcon[] = [
@@ -34,7 +34,7 @@ export const MARKER_ICONS: MarkerIcon[] = [
   { id: "cross", label: "성소", d: "M10 21V9H4V7h6V3h4v4h6v2h-6v12z" },
 ];
 
-/** 구버전(이모지) 아이콘 → 새 id 매핑 */
+/** Legacy (emoji) icon → new id mapping */
 const LEGACY: Record<string, string> = {
   "📍": "pin", "🏰": "castle", "🏘️": "town", "⚓": "anchor",
   "⛰️": "mountain", "🌲": "tree", "🗼": "tower", "🕍": "temple",
@@ -59,10 +59,10 @@ function getPath(id: string): Path2D {
 }
 
 /**
- * 마커를 캔버스에 그린다. (cx, cy)가 지면 앵커(핀 끝)이고
- * 배지는 그 위에 뜬다. size는 배지 지름.
+ * Draws a marker on the canvas. (cx, cy) is the ground anchor (pin tip),
+ * with the badge floating above it. size is the badge diameter.
  */
-/** 손그림 배지 링 캐시 (아이콘 id별 고정 시드 — 드래그 중 흔들림 방지) */
+/** Hand-drawn badge ring cache (fixed seed per icon id — prevents wobble whilst dragging) */
 const badgeRingCache = new Map<string, Path2D>();
 
 function badgeRing(id: string): Path2D {
@@ -74,7 +74,7 @@ function badgeRing(id: string): Path2D {
     const N = 22;
     for (let k = 0; k < N; k++) {
       const a = (k / N) * Math.PI * 2;
-      pts.push([Math.cos(a), Math.sin(a)]); // 단위원 — 그릴 때 스케일
+      pts.push([Math.cos(a), Math.sin(a)]); // unit circle — scaled at draw time
     }
     p = new Path2D();
     sketchToPath(p, roughRing(pts, 0.045, seed), true);
@@ -91,20 +91,20 @@ export function drawMarkerIcon(
 ): void {
   const id = normalizeIcon(iconId);
   const r = size / 2;
-  const bcy = cy - size * 0.78; // 배지 중심
+  const bcy = cy - size * 0.78; // badge centre
 
   ctx.save();
 
   const isInk = style === "ink";
   const inkC: [number, number, number] = isInk ? [60, 55, 45] : [58, 44, 28];
-  // 강조색은 잉크와 섞어 채도를 낮춘다 — 쨍한 현대색이 고지도에 뜨지 않게
+  // Mix the accent colour with ink to desaturate it — keeps garish modern colours from floating on an antique map
   const acc = hexToRGB(accent || "") ?? inkC;
   const mr = Math.round(acc[0] * 0.6 + inkC[0] * 0.4);
   const mg = Math.round(acc[1] * 0.6 + inkC[1] * 0.4);
   const mb = Math.round(acc[2] * 0.6 + inkC[2] * 0.4);
   const inkStr = `rgb(${inkC[0]},${inkC[1]},${inkC[2]})`;
 
-  // 포인터: 붓끝처럼 가늘어지는 획 (면 삼각형 대신)
+  // Pointer: a stroke tapering like a brush tip (instead of a filled triangle)
   ctx.beginPath();
   ctx.moveTo(cx, cy);
   ctx.quadraticCurveTo(cx - r * 0.12, bcy + r * 0.9, cx - r * 0.2, bcy + r * 0.72);
@@ -117,7 +117,7 @@ export function drawMarkerIcon(
   ctx.strokeStyle = inkStr;
   ctx.stroke();
 
-  // 배지: 종이 바탕 + 손그림 잉크 링 (이중: 잉크 외곽 + 뮤트 강조 내선)
+  // Badge: paper ground + hand-drawn ink ring (double: ink outline + muted accent inner line)
   const ring = badgeRing(id);
   ctx.translate(cx, bcy);
   ctx.scale(r, r);
@@ -132,12 +132,12 @@ export function drawMarkerIcon(
   ctx.stroke(ring);
   ctx.restore();
 
-  // 글리프 (잉크 스트로크)
+  // Glyph (ink stroke)
   ctx.save();
   const gs = (size * 0.68) / 24;
   ctx.translate(cx - 12 * gs, bcy - 12 * gs);
   ctx.scale(gs, gs);
-  ctx.lineWidth = 2; // 뷰박스(24px) 좌표계 기준
+  ctx.lineWidth = 2; // in viewBox (24px) coordinate space
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
   ctx.strokeStyle = inkStr;
@@ -145,7 +145,7 @@ export function drawMarkerIcon(
   ctx.restore();
 }
 
-/** 모달 버튼용 SVG 마크업 */
+/** SVG markup for modal buttons */
 export function iconSvg(id: string): string {
   const icon = MARKER_ICONS.find((i) => i.id === id) ?? MARKER_ICONS[0];
   return `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="${icon.d}"/></svg>`;

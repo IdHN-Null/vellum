@@ -1,4 +1,4 @@
-# 사용법:  .\install.ps1 "C:\path\to\YourVault"
+# Usage:  .\install.ps1 "C:\path\to\YourVault"
 param(
     [Parameter(Mandatory = $true)]
     [string]$VaultPath

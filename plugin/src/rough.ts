@@ -1,21 +1,21 @@
 /**
- * 손그림 스타일 선. rough.js의 핵심 아이디어를 경량 구현:
- * 정점에 시드 기반 미세 흔들림을 주고, 필요 시 여러 겹으로 겹쳐 그린다.
- * 결과는 결정론적(시드 고정)이라 한 번 구워 Path2D로 캐시할 수 있다.
+ * Hand-drawn style lines. A lightweight take on the core idea of rough.js:
+ * apply seeded micro-jitter to vertices and, where needed, overdraw in layers.
+ * The result is deterministic (fixed seed), so it can be baked once and cached as a Path2D.
  */
 
 import { mulberry32 } from "./noise";
 
 export type Pt = [number, number];
 
-/** 열린 폴리라인을 손그림 곡선 점열로 변환 (셀 좌표계, amp=흔들림 셀) */
+/** Convert an open polyline into hand-drawn curve points (cell space, amp = jitter in cells) */
 export function roughLine(pts: Pt[], amp: number, seed: number): Pt[] {
   if (pts.length < 2) return pts;
   const rng = mulberry32(seed);
   const out: Pt[] = [];
   for (let i = 0; i < pts.length; i++) {
     const [x, y] = pts[i];
-    // 진행 방향의 법선으로 흔들어 선이 종이 위에서 떨리는 느낌
+    // Jitter along the normal of the direction of travel, so the line trembles on the paper
     const prev = pts[Math.max(0, i - 1)];
     const next = pts[Math.min(pts.length - 1, i + 1)];
     let tx = next[0] - prev[0], ty = next[1] - prev[1];
@@ -23,13 +23,13 @@ export function roughLine(pts: Pt[], amp: number, seed: number): Pt[] {
     tx /= tl; ty /= tl;
     const nx = -ty, ny = tx;
     const j = (rng() - 0.5) * 2 * amp;
-    const jt = (rng() - 0.5) * amp * 0.5; // 접선 방향 미세 흔들림
+    const jt = (rng() - 0.5) * amp * 0.5; // slight tangential jitter
     out.push([x + nx * j + tx * jt, y + ny * j + ty * jt]);
   }
   return out;
 }
 
-/** 닫힌 링을 손그림 점열로 변환 (끝점은 시작점 흔들림과 무관하게 자연스레 벌어짐 허용) */
+/** Convert a closed ring into hand-drawn points (the ends may drift apart naturally, independent of the start jitter) */
 export function roughRing(ring: Pt[], amp: number, seed: number): Pt[] {
   if (ring.length < 3) return ring;
   const rng = mulberry32(seed);
@@ -50,20 +50,20 @@ export function roughRing(ring: Pt[], amp: number, seed: number): Pt[] {
 }
 
 /**
- * 점열을 Path2D에 손그림 스트로크로 추가.
- * passes>1이면 살짝 다른 흔들림으로 겹쳐 그어 잉크가 번진 듯한 이중선.
+ * Append a point sequence to a Path2D as a hand-drawn stroke.
+ * With passes > 1, overdraw with slightly different jitter for a bled double-ink line.
  */
 export function sketchToPath(
   path: Path2D, pts: Pt[], closed: boolean,
 ): void {
   if (pts.length < 2) return;
-  // Catmull-Rom → 부드러운 곡선으로 흔들린 점들을 잇는다
+  // Catmull-Rom → join the jittered points with a smooth curve
   const p = (i: number): Pt => pts[Math.max(0, Math.min(pts.length - 1, i))];
   path.moveTo(pts[0][0], pts[0][1]);
   const end = closed ? pts.length : pts.length - 1;
   for (let i = 0; i < end; i++) {
     const p0 = p(i - 1), p1 = p(i), p2 = closed ? pts[(i + 1) % pts.length] : p(i + 1), p3 = closed ? pts[(i + 2) % pts.length] : p(i + 2);
-    // Catmull-Rom → 베지어 제어점
+    // Catmull-Rom → Bézier control points
     const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
     const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
     path.bezierCurveTo(c1x, c1y, c2x, c2y, p2[0], p2[1]);
@@ -71,7 +71,7 @@ export function sketchToPath(
   if (closed) path.closePath();
 }
 
-/** 손그림 열린 선 Path2D 생성 */
+/** Build a hand-drawn open-line Path2D */
 export function roughLinePath(pts: Pt[], amp: number, seed: number, passes = 1): Path2D {
   const path = new Path2D();
   for (let k = 0; k < passes; k++) {
@@ -80,7 +80,7 @@ export function roughLinePath(pts: Pt[], amp: number, seed: number, passes = 1):
   return path;
 }
 
-/** 손그림 닫힌 링 Path2D 생성 */
+/** Build a hand-drawn closed-ring Path2D */
 export function roughRingPath(ring: Pt[], amp: number, seed: number, passes = 1): Path2D {
   const path = new Path2D();
   for (let k = 0; k < passes; k++) {

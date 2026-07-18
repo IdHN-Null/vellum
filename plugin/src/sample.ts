@@ -37,7 +37,7 @@ const NOTES: SampleNote[] = [
   },
 ];
 
-/** 온보딩용 샘플 지도 + 연결된 노트 생성 */
+/** Create the onboarding sample map plus its linked notes */
 export async function installSamplePack(app: App): Promise<TFile | null> {
   const vault = app.vault;
 

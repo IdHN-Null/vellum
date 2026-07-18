@@ -54,7 +54,7 @@ export default class VellumPlugin extends Plugin {
   }
 
   onunload(): void {
-    // Obsidian이 등록된 뷰/확장자를 자동 정리한다.
+    // Obsidian cleans up registered views/extensions automatically.
   }
 
   private async createNewMap(): Promise<void> {
@@ -66,7 +66,7 @@ export default class VellumPlugin extends Plugin {
       path = normalizePath(`${base}새 지도 ${++n}.fmap`);
     }
     const data = defaultMapData(path.replace(/\.fmap$/, "").split("/").pop() ?? "지도");
-    // 새 지도는 완전 랜덤 세계 — 고급 설정은 패널에서 조정 (시드로 재현 가능)
+    // A new map is a fully random world — advanced settings live in the panel (reproducible via seed)
     data.gen = randomizeGenParams(data.gen.seed);
     const file = await this.app.vault.create(path, JSON.stringify(data, null, 2));
     await this.app.workspace.getLeaf(true).openFile(file);
@@ -79,7 +79,7 @@ export default class VellumPlugin extends Plugin {
     return root instanceof TFolder ? root.path : "/";
   }
 
-  /** 볼트의 모든 .fmap에서 이 노트를 참조하는 마커를 찾아 지도를 연다 */
+  /** Search every .fmap in the vault for a marker referencing this note, and open that map */
   private async locateNoteOnMap(note: TFile): Promise<void> {
     const maps = this.app.vault.getFiles().filter((f) => f.extension === "fmap");
     for (const mapFile of maps) {
@@ -88,7 +88,7 @@ export default class VellumPlugin extends Plugin {
         const hit = data.markers.find((m) => m.notePath === note.path);
         if (!hit) continue;
 
-        // 이미 열린 뷰가 있으면 재사용
+        // Reuse an already-open view if there is one
         let targetView: VellumView | null = null;
         for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_FMAP)) {
           const v = leaf.view;
@@ -104,7 +104,7 @@ export default class VellumPlugin extends Plugin {
           const v = leaf.view;
           if (v instanceof VellumView) targetView = v;
         }
-        // 뷰가 데이터를 로드할 때까지 재시도하며 포커스
+        // Retry focusing until the view has loaded its data
         let tries = 0;
         const attempt = () => {
           if (targetView?.focusMarkerByNote(note.path)) return;
@@ -113,7 +113,7 @@ export default class VellumPlugin extends Plugin {
         window.setTimeout(attempt, 100);
         return;
       } catch {
-        // 손상된 지도 파일은 건너뜀
+        // Skip corrupted map files
       }
     }
     new Notice("이 노트와 연결된 마커가 있는 지도를 찾지 못했습니다.");

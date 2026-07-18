@@ -8,7 +8,7 @@ const types = { ".html": "text/html", ".js": "text/javascript" };
 
 createServer(async (req, res) => {
   const p = req.url === "/" ? "/index.html" : req.url.split("?")[0];
-  // styles.css는 플러그인 루트(상위)에서 서빙 (@font-face 검증용)
+  // styles.css is served from the plugin root (one level up) for @font-face checks
   const fsPath = p === "/styles.css" ? join(root, "..", "styles.css") : join(root, p);
   try {
     const data = await readFile(fsPath);

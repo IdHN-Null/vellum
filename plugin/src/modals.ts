@@ -2,7 +2,7 @@ import { App, FuzzySuggestModal, Modal, Setting, TFile } from "obsidian";
 import { MARKER_ICONS, iconSvg, normalizeIcon } from "./icons";
 import { Marker, Region } from "./types";
 
-/** 마크다운 노트 선택 모달 */
+/** Markdown note picker modal */
 export class NoteSuggestModal extends FuzzySuggestModal<TFile> {
   private onChoose: (file: TFile) => void;
 
@@ -25,7 +25,7 @@ export class NoteSuggestModal extends FuzzySuggestModal<TFile> {
   }
 }
 
-/** 볼트 이미지 선택 모달 */
+/** Vault image picker modal */
 export class ImageSuggestModal extends FuzzySuggestModal<TFile> {
   private onChoose: (file: TFile) => void;
 
@@ -49,7 +49,7 @@ export class ImageSuggestModal extends FuzzySuggestModal<TFile> {
   }
 }
 
-/** 마커 편집 모달 */
+/** Marker editing modal */
 export class MarkerModal extends Modal {
   private marker: Marker;
   private onSave: (m: Marker) => void;
@@ -135,7 +135,7 @@ export class MarkerModal extends Modal {
     );
   }
 
-  /** 노트 연결 변경 후 UI 리프레시 */
+  /** Refresh the UI after the note link changes */
   private onOpen2(): void {
     this.contentEl.empty();
     this.onOpen();
@@ -146,7 +146,7 @@ export class MarkerModal extends Modal {
   }
 }
 
-/** 배치 요소 텍스트 편집 모달 (라벨·메모·제목) */
+/** Text editing modal for placed elements (labels, notes, titles) */
 export class TextEditModal extends Modal {
   private value: string;
   private heading: string;
@@ -197,7 +197,7 @@ export class TextEditModal extends Modal {
 
 const REGION_COLORS = ["#c0392b", "#8e44ad", "#2471a3", "#1e8449", "#b7950b", "#6e2c00", "#5d6d7e"];
 
-/** 지역 편집 모달 */
+/** Region editing modal */
 export class RegionModal extends Modal {
   private region: Region;
   private onSave: (r: Region) => void;

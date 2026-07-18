@@ -11,8 +11,9 @@ export interface Palette {
 
 const PALETTES: Record<StyleId, Palette> = {
   parchment: {
-    // 고전 판타지 지도 문법: 땅은 거의 평평한 크림 톤, 지형은 글리프·잉크선이 표현
-    // (언덕/산 색 단차를 좁게 — 넓은 갈색 테라스 밴딩 방지)
+    // Classic fantasy-map grammar: land is a nearly flat cream tone; terrain is expressed
+    // by glyphs and ink lines
+    // (narrow hill/mountain colour steps — avoids wide brown terrace banding)
     deep: [118, 150, 142], ocean: [154, 182, 166], beach: [228, 204, 150],
     grass: [214, 184, 130], forest: [193, 176, 116], desert: [234, 202, 138],
     hill: [206, 175, 120], mountain: [188, 155, 108], snow: [240, 230, 206],
@@ -43,7 +44,7 @@ export function rgbToHex(c: RGB): string {
   return "#" + c.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
 }
 
-/** 사용자 색 오버라이드 키 → 팔레트 슬롯 */
+/** User colour-override key → palette slot */
 export const TERRAIN_COLOR_KEYS: { key: string; label: string; slot: keyof Palette }[] = [
   { key: "water", label: "Water", slot: "ocean" },
   { key: "grass", label: "Grassland", slot: "grass" },
@@ -75,7 +76,7 @@ export function hash2(x: number, y: number): number {
   return ((n ^ (n >> 16)) >>> 0) / 4294967296;
 }
 
-/** 부드러운 값 노이즈 (bilinear) — 종이 얼룩용 */
+/** Smooth value noise (bilinear) — for paper mottling */
 export function smoothVal(x: number, y: number, scale: number): number {
   const xf = x / scale, yf = y / scale;
   const xi = Math.floor(xf), yi = Math.floor(yf);
@@ -88,8 +89,8 @@ export function smoothVal(x: number, y: number, scale: number): number {
 let _grainTile: HTMLCanvasElement | null = null;
 
 /**
- * 화면 해상도 종이/잉크 결 타일 (한 번 생성 후 캐시).
- * 지도 위에 repeat 패턴으로 얹어 배율과 무관하게 고운 붓펜 질감을 준다.
+ * Screen-resolution paper/ink grain tile (generated once and cached).
+ * Laid over the map as a repeat pattern for a fine brush-pen texture independent of zoom.
  */
 export function paperGrainTile(): HTMLCanvasElement {
   if (_grainTile) return _grainTile;
@@ -101,8 +102,8 @@ export function paperGrainTile(): HTMLCanvasElement {
   const p = img.data;
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
-      const speck = hash2(x * 13 + 1, y * 7 + 3);         // 고운 반점
-      const fiber = smoothVal(x, y * 0.35, 3.2);          // 결(fiber)
+      const speck = hash2(x * 13 + 1, y * 7 + 3);         // fine specks
+      const fiber = smoothVal(x, y * 0.35, 3.2);          // fibre grain
       const v = 128 + (speck - 0.5) * 26 + (fiber - 0.5) * 12;
       const o = (y * N + x) * 4;
       p[o] = p[o + 1] = p[o + 2] = Math.max(0, Math.min(255, v));
@@ -116,18 +117,18 @@ export function paperGrainTile(): HTMLCanvasElement {
 
 export const GRAIN_TILE = 160;
 
-/** 해안 동심 잔선(coast rings) 최대 거리 (셀) — waterDistance BFS 범위와 연동 */
+/** Maximum coastal concentric-ring distance (cells) — tied to the waterDistance BFS range */
 export const COAST_RING_MAX = 17;
 
-/** 잔선 위치(셀 거리)와 어둡기 — 해안에서 멀어질수록 간격이 벌어지고 옅어진다 */
+/** Ring positions (cell distance) and darkness — spacing widens and rings fade with distance from shore */
 const COAST_RINGS: [number, number][] = [[2.4, 13], [4.8, 9], [7.8, 6.5], [11.4, 4.5], [15.6, 3]];
 
 /**
- * 고지도풍 바다 디테일: 수면 결 스트릭 + 해안 동심 잔선.
- * RGB에 더할 스칼라 델타를 돌려준다 (base 렌더와 LOD 상세 렌더 공용).
+ * Antique-map sea detail: surface streaks + coastal concentric rings.
+ * Returns a scalar delta to add to RGB (shared by the base render and the LOD detail render).
  */
 export function oceanExtraShade(x: number, y: number, d: number): number {
-  // 수면 결: 가로로 긴 은은한 스트릭
+  // Water-surface grain: subtle horizontally stretched streaks
   let v = (smoothVal(x + 533, y * 3.1 + 97, 9) - 0.5) * 6.5;
   if (d >= 1 && d <= COAST_RING_MAX) {
     for (let k = 0; k < COAST_RINGS.length; k++) {
@@ -138,7 +139,7 @@ export function oceanExtraShade(x: number, y: number, d: number): number {
   return v;
 }
 
-/** 육지 수채 워시 변주: 평지의 밋밋한 단색을 깨는 저주파 식생 얼룩 (RGB 델타) */
+/** Land watercolour-wash variation: low-frequency vegetation mottling that breaks up flat plains (RGB delta) */
 export function landWash(x: number, y: number): [number, number, number] {
   const v = smoothVal(x * 0.9 + 911, y * 0.9 + 533, 21) - 0.5;
   return [v * 5, v * 9, -v * 4];
@@ -160,19 +161,19 @@ export function biomeColor(pal: Palette, b: number): RGB {
 
 export interface RenderOpts {
   colors?: Record<string, string>;
-  coastWidth?: number;  // 해안 띠 폭 (셀)
-  coastColor?: string;  // 해안 띠 색 (없으면 자동)
-  waves?: boolean;      // 해안 파도 무늬
-  relief?: number;      // 명암(워시) 대비 배율 (기본 1)
-  mottle?: number;      // 종이 얼룩 배율 (기본 1)
+  coastWidth?: number;  // coastal band width (cells)
+  coastColor?: string;  // coastal band colour (automatic when unset)
+  waves?: boolean;      // coastal wave marks
+  relief?: number;      // shading (wash) contrast multiplier (default 1)
+  mottle?: number;      // paper mottling multiplier (default 1)
 }
 
-/** 지형 레이어: 베이스 픽셀 + 글리프 스탬프 (뷰가 겹쳐 그린다) */
+/** Terrain layers: base pixels + glyph stamps (the view composites them) */
 export interface MapLayers {
   base: HTMLCanvasElement;
   stamps: HTMLCanvasElement;
-  ss: number;            // 스탬프 초과표본 배율 (확대 시 뭉개짐 완화)
-  waterDist: Uint8Array; // 육지로부터 물 셀 거리 (파도·해안띠 공용)
+  ss: number;            // stamp supersampling factor (softens zoom blur)
+  waterDist: Uint8Array; // water-cell distance from land (shared by waves & coastal band)
 }
 
 function isWaterBiome(b: number): boolean {
@@ -181,17 +182,17 @@ function isWaterBiome(b: number): boolean {
 
 const WAVE_DIST = 12;
 
-/** 육지로부터의 물 셀 거리 BFS (maxD 초과는 255) */
+/** BFS distance of water cells from land (values above maxD become 255) */
 function waterDistance(biome: Uint8Array, w: number, h: number, maxD: number): Uint8Array {
   return distanceField(biome, w, h, maxD, true);
 }
 
-/** 육지 셀의 물가로부터 거리 (육지 헤칭용) */
+/** Distance of land cells from the waterline (for land hatching) */
 export function landDistance(biome: Uint8Array, w: number, h: number, maxD: number): Uint8Array {
   return distanceField(biome, w, h, maxD, false);
 }
 
-/** 경계로부터의 셀 거리 BFS — targetWater=true면 물 셀의 육지 거리, false면 육지 셀의 물 거리 */
+/** BFS cell distance from the boundary — targetWater=true: water cells' distance from land; false: land cells' distance from water */
 function distanceField(biome: Uint8Array, w: number, h: number, maxD: number, targetWater: boolean): Uint8Array {
   const isTarget = (b: number) => isWaterBiome(b) === targetWater;
   const dist = new Uint8Array(w * h).fill(255);
@@ -230,12 +231,12 @@ function distanceField(biome: Uint8Array, w: number, h: number, maxD: number, ta
   return dist;
 }
 
-/** 빈 레이어 할당 (픽셀 미렌더) — 프로그레시브 타일 렌더의 시작점 */
+/** Allocate empty layers (pixels unrendered) — the starting point of the progressive tile render */
 export function allocLayers(t: TerrainResult, opts: RenderOpts = {}): MapLayers {
   const base = document.createElement("canvas");
   base.width = t.w;
   base.height = t.h;
-  // 나무·산 기호는 고해상도로 그려 확대 시 뭉개짐을 완화 (지도 클수록 배율 낮춤)
+  // Tree/mountain glyphs are drawn at high resolution to soften zoom blur (lower factor for bigger maps)
   const ss = t.w <= 640 ? 3 : t.w <= 900 ? 2.5 : t.w <= 1600 ? 2 : 1.5;
   const stamps = document.createElement("canvas");
   stamps.width = Math.round(t.w * ss);
@@ -246,7 +247,7 @@ export function allocLayers(t: TerrainResult, opts: RenderOpts = {}): MapLayers 
   };
 }
 
-/** 한 타일(셀 사각형)의 베이스+스탬프 렌더 — 프로그레시브 스케줄러가 호출 */
+/** Render one tile (cell rectangle) of base + stamps — called by the progressive scheduler */
 export function renderTile(
   layers: MapLayers, t: TerrainResult, style: StyleId, opts: RenderOpts,
   x0: number, y0: number, x1: number, y1: number,
@@ -255,7 +256,7 @@ export function renderTile(
   stampRect(layers, t, style, opts, x0, y0, x1, y1);
 }
 
-/** 전체 레이어 렌더 (동기, 소형·내보내기·하네스용) */
+/** Full layer render (synchronous; for small maps, exports and the test harness) */
 export function renderLayers(t: TerrainResult, style: StyleId, opts: RenderOpts = {}): MapLayers {
   const layers = allocLayers(t, opts);
   renderTile(layers, t, style, opts, 0, 0, t.w - 1, t.h - 1);
@@ -263,15 +264,16 @@ export function renderLayers(t: TerrainResult, style: StyleId, opts: RenderOpts 
 }
 
 /**
- * 브러시 영역만 다시 그리기 (즉석 반영).
- * 물↔육지 경계가 바뀌므로 해안띠 거리도 갱신하되, BFS는 선형이라 수 ms.
+ * Redraw only the brushed area (instant feedback).
+ * The water↔land boundary may change, so the coastal distance field is refreshed too —
+ * the BFS is linear and takes a few ms.
  */
 export function updateLayersRect(
   layers: MapLayers, t: TerrainResult, style: StyleId, opts: RenderOpts,
   x0: number, y0: number, x1: number, y1: number,
 ): void {
   layers.waterDist = waterDistance(t.biome, t.w, t.h, Math.max(WAVE_DIST, COAST_RING_MAX, Math.round(opts.coastWidth ?? 0) * 3));
-  // 해안띠·파도·동심 잔선이 브러시 밖까지 번지므로 여유를 두고 다시 그림
+  // Coastal band, waves and concentric rings spill beyond the brush, so repaint with a margin
   const pad = Math.max(WAVE_DIST, COAST_RING_MAX, Math.round(opts.coastWidth ?? 0) * 3) + 8;
   const rx0 = Math.max(0, x0 - pad), ry0 = Math.max(0, y0 - pad);
   const rx1 = Math.min(t.w - 1, x1 + pad), ry1 = Math.min(t.h - 1, y1 + pad);
@@ -279,7 +281,7 @@ export function updateLayersRect(
   stampRect(layers, t, style, opts, rx0, ry0, rx1, ry1);
 }
 
-/** 픽셀 레이어: 물 깊이·힐셰이딩·해안띠·종이 질감 (해안선·강은 벡터로 그리므로 제외) */
+/** Pixel layer: water depth, hillshading, coastal band, paper texture (coastlines & rivers are vector-drawn, so excluded) */
 function paintBaseRect(
   layers: MapLayers, t: TerrainResult, style: StyleId, opts: RenderOpts,
   x0: number, y0: number, x1: number, y1: number,
@@ -303,16 +305,18 @@ function paintBaseRect(
       const el = height[i];
 
       if (isWaterBiome(b)) {
-        // 얕은 물도 22%는 이미 깊은 색 → 해안 선반이 민트색으로 떠 보이지 않게 램프 압축.
-        // 호수는 수면고도가 해수면 이상이라 depth가 0으로 떠 보임 → 중간 깊이 고정.
+        // Even shallow water starts 22% into the deep colour → ramp compression stops the
+        // coastal shelf floating mint-green. Lakes sit at or above sea level so their depth
+        // reads as 0 — pin them at a middle depth instead.
         const rawDepth = Math.min(1, Math.max(0, (seaLevel - el) / 0.25));
         const depth = t.lake[i] ? 0.4 : 0.22 + 0.78 * Math.pow(rawDepth, 0.7);
         const dp = pal.deep, oc = pal.ocean;
         r = oc[0] + (dp[0] - oc[0]) * depth;
         g = oc[1] + (dp[1] - oc[1]) * depth;
         bl = oc[2] + (dp[2] - oc[2]) * depth;
-        // 물가 하이라이트: 좁은 지수 감쇠 밴드 (경계 띠가 아니라 물가의 빛으로 읽히게).
-        // 호수는 전체가 밴드에 잠겨 색이 떠 버리므로 제외.
+        // Shoreline highlight: a narrow exponential-decay band (reads as light at the water's
+        // edge, not a border stripe). Lakes are excluded — the band would swamp them and wash
+        // out their colour.
         if (coastW > 0 && !t.lake[i]) {
           const d = layers.waterDist[i];
           if (d <= coastW * 3) {
@@ -322,25 +326,25 @@ function paintBaseRect(
             bl += (coastRGB[2] - bl) * f;
           }
         }
-        // 물가선: 육지와 맞닿은 물 픽셀을 살짝 어둡게 (호수 윤곽)
+        // Waterline: darken water pixels touching land slightly (lake outline)
         if (t.lake[i] && layers.waterDist[i] === 1) {
           const ck = pal.coastline;
           r = r * 0.45 + ck[0] * 0.55;
           g = g * 0.45 + ck[1] * 0.55;
           bl = bl * 0.45 + ck[2] * 0.55;
         }
-        // 수면 결 + 해안 동심 잔선 (고지도 잔물결)
+        // Surface grain + coastal concentric rings (antique-map ripples)
         const ex = oceanExtraShade(x, y, layers.waterDist[i]);
         r += ex; g += ex * 0.98; bl += ex * 0.9;
       } else {
-        // 바이옴 경계 스무딩: 이웃 셀 바이옴 색상을 bilinear 보간하여 경계선을 부드럽게
-        // (renderDetail의 Gaussian 3×3보다는 연하지만 드래그 중에도 균일한 렌더링 제공)
+        // Biome-boundary smoothing: bilinearly blend neighbouring cells' biome colours to soften edges
+        // (milder than renderDetail's 3×3 Gaussian, but gives consistent rendering even mid-drag)
         const x1b = Math.min(w - 1, x + 1), y1b = Math.min(h - 1, y + 1);
         const c00 = biomeColor(pal, biome[i]);
         const c10 = biomeColor(pal, biome[y * w + x1b]);
         const c01 = biomeColor(pal, biome[y1b * w + x]);
         const c11 = biomeColor(pal, biome[y1b * w + x1b]);
-        // 0.5 offset - half-cell bilinear 중성 보간
+        // 0.5 offset — neutral half-cell bilinear blend
         const tx = 0.5, ty = 0.5;
         r = (c00[0] * (1-tx) + c10[0] * tx) * (1-ty) + (c01[0] * (1-tx) + c11[0] * tx) * ty;
         g = (c00[1] * (1-tx) + c10[1] * tx) * (1-ty) + (c01[1] * (1-tx) + c11[1] * tx) * ty;
@@ -364,8 +368,9 @@ function paintBaseRect(
         const grain = (hash2(x + 999, y + 999) - 0.5) * pal.paperGrain * (isWaterBiome(b) ? 0.5 : 1);
         r += grain; g += grain; bl += grain;
       }
-      // 종이 얼룩 (모든 스타일) — 평평한 디지털 색을 깨뜨려 오래된 종이 느낌.
-      // 물은 절반 이하로 — 바다가 얼룩덜룩하면 경계가 지저분해 보인다 (LOD 렌더와 동일 계수)
+      // Paper mottling (all styles) — breaks the flat digital colour for an aged-paper feel.
+      // Under half strength on water — a blotchy sea makes the boundary look messy
+      // (same coefficient as the LOD render)
       const mScale = isWaterBiome(b) ? 0.45 : 1;
       const mottle = (smoothVal(x + 300, y + 300, 13) - 0.5) * 22 * (opts.mottle ?? 1) * mScale;
       r += mottle; g += mottle * 0.95; bl += mottle * 0.82;
@@ -380,7 +385,7 @@ function paintBaseRect(
   ctx.putImageData(img, x0, y0);
 }
 
-/** 스탬프 레이어: 숲 나무·산 능선 글리프 + 해안 파도 */
+/** Stamp layer: forest trees, mountain-ridge glyphs, plus coastal waves */
 function stampRect(
   layers: MapLayers, t: TerrainResult, style: StyleId, opts: RenderOpts,
   x0: number, y0: number, x1: number, y1: number,
@@ -392,7 +397,7 @@ function stampRect(
   const ctx = layers.stamps.getContext("2d")!;
 
   ctx.save();
-  ctx.scale(ss, ss); // 셀 좌표로 그리되 ss배 해상도로 래스터화 → 확대에 강함
+  ctx.scale(ss, ss); // draw in cell space but rasterise at ss× resolution → holds up when zoomed
   ctx.clearRect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
   ctx.beginPath();
   ctx.rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
@@ -413,7 +418,8 @@ function stampRect(
       const b = biome[i];
       const rnd = hash2(gx * 7, gy * 13);
 
-      // 글리프가 해안선·지도 밖을 침범하면 반쪽으로 잘려 보인다 — 발밑이 전부 육지일 때만 찍는다
+      // A glyph straddling the coastline or map edge looks cut in half — stamp only where
+      // its whole footprint is on land
       const fitsLand = (r: number): boolean => {
         for (const [ox2, oy2] of [[-r, 0], [r, 0], [0, -r], [0, r]] as const) {
           const tx = Math.round(jx + ox2), ty = Math.round(jy + oy2);
@@ -424,13 +430,13 @@ function stampRect(
       };
 
       if (b === B.FOREST && rnd < 0.85) {
-        // 나무: 바닥 그림자 + 몸통 + 손그림식 다면 수관 + 좌하단 음영 (덩어리감)
+        // Tree: ground shadow + trunk + hand-drawn multi-facet canopy + lower-left shading (bulk)
         const s = 2.2 + rnd * 1.7;
         const radius = s * 0.62;
         const cy = jy - s * 0.15;
         if (!fitsLand(s * 1.15)) continue;
 
-        // 바닥 그림자 (수관이 겹칠 때 숲 덩어리로 읽히게)
+        // Ground shadow (overlapping canopies read as a forest mass)
         ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.10)`;
         ctx.beginPath();
         ctx.ellipse(jx + radius * 0.2, jy + s * 0.95, radius * 1.05, radius * 0.3, 0, 0, Math.PI * 2);
@@ -447,7 +453,7 @@ function stampRect(
         const segments = 10;
         for (let k = 0; k < segments; k++) {
           const theta = (k * Math.PI * 2) / segments;
-          // 결정론적 노이즈를 섞어 손선 떨림 구현
+          // Mix in deterministic noise for hand-drawn line tremor
           const r_jitter = radius * (0.86 + 0.28 * hash2(jx + k * 17, cy + 31));
           const tx = jx + Math.cos(theta) * r_jitter;
           const ty = cy + Math.sin(theta) * r_jitter;
@@ -459,7 +465,7 @@ function stampRect(
         const fc = pal.forest;
         ctx.fillStyle = `rgba(${fc[0] * 0.92},${fc[1] * 0.94},${fc[2] * 0.86},0.95)`;
         ctx.fill(canopy);
-        // 수관 좌하단 음영 (볼륨)
+        // Lower-left canopy shading (volume)
         ctx.save();
         ctx.clip(canopy);
         ctx.fillStyle = `rgba(${fc[0] * 0.55},${fc[1] * 0.6},${fc[2] * 0.5},0.5)`;
@@ -469,7 +475,7 @@ function stampRect(
         ctx.restore();
         ctx.stroke(canopy);
       } else if (b === B.HILL && rnd < 0.5) {
-        // 언덕: 낮은 둔덕 아크 + 우측 짧은 해칭 (색만 다른 밋밋함 제거)
+        // Hill: low mound arc + short hatching on the right (relieves the flat colour-only look)
         const s = 1.7 + rnd * 1.5;
         if (!fitsLand(s * 1.1)) continue;
         const peakX = jx + (hash2(jx + 7, jy + 3) - 0.5) * s * 0.3;
@@ -484,7 +490,7 @@ function stampRect(
         ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.5)`;
         ctx.lineWidth = 0.7;
         ctx.stroke(mound);
-        // 우측 경사 해칭 1~2획
+        // One or two hatching strokes on the right slope
         ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.3)`;
         ctx.lineWidth = 0.55;
         ctx.beginPath();
@@ -498,7 +504,7 @@ function stampRect(
         }
         ctx.stroke();
       } else if (opts.waves !== false && isWaterBiome(b) && rnd < 0.24) {
-        // 해안 파도: 육지 근처 물에 잔물결 획 (고지도 스타일)
+        // Coastal waves: ripple strokes in near-shore water (antique-map style)
         const d = layers.waterDist[i];
         if (d >= 4 && d <= WAVE_DIST) {
           const fade = 1 - (d - 4) / (WAVE_DIST - 4);
@@ -515,8 +521,9 @@ function stampRect(
     }
   }
 
-  // 산: 성긴 별도 그리드 + 행마다 반 칸 엇갈림 — 균일 격자 '삼각형 카펫'이 아니라
-  // 겹치는 산줄기(chain)로 읽히게 한다 (Tolkien풍: 크고 굵은 봉우리의 열)
+  // Mountains: a sparser separate grid with alternate rows shifted half a step — reads as
+  // overlapping chains rather than a uniform 'triangle carpet' (Tolkien-esque: rows of
+  // large, bold peaks)
   const mStep = 11;
   const mgx0 = Math.max(0, Math.floor((x0 - mStep * 2) / mStep) * mStep);
   const mgy0 = Math.max(0, Math.floor((y0 - mStep * 2) / mStep) * mStep);
@@ -535,8 +542,8 @@ function stampRect(
       if (rnd >= 0.9) continue;
       {
         const rel = (height[i] - seaLevel) / Math.max(0.0001, 1 - seaLevel);
-        if (b === B.SNOW && (rel < 0.55 || rnd > 0.65)) continue; // 설원엔 드문 설봉만
-        // 산: 능선 꺾임 지터 + 좌측면 밝음/우측면 잉크 워시로 볼륨 (판화풍)
+        if (b === B.SNOW && (rel < 0.55 || rnd > 0.65)) continue; // only sparse snow peaks on snowfields
+        // Mountain: ridge-kink jitter + bright left face / ink-washed right face for volume (woodcut style)
         const s = 3.6 + rnd * 3.6;
         const left_h = hash2(jx - 100, jy);
         const right_h = hash2(jx + 100, jy);
@@ -549,7 +556,7 @@ function stampRect(
         const rmx = (rbX + peakX) / 2 + (right_h - 0.5) * s * 0.2;
         const rmy = (rbY + peakY) / 2 + (right_h - 0.5) * s * 0.16;
 
-        // 좌측면: 밝게 (햇빛)
+        // Left face: bright (sunlit)
         const leftFace = new Path2D();
         leftFace.moveTo(lbX, lbY);
         leftFace.lineTo(lmx, lmy);
@@ -558,7 +565,7 @@ function stampRect(
         leftFace.closePath();
         ctx.fillStyle = "rgba(255,251,240,0.32)";
         ctx.fill(leftFace);
-        // 우측면: 잉크 워시 (그늘)
+        // Right face: ink wash (shade)
         const rightFace = new Path2D();
         rightFace.moveTo(peakX, peakY);
         rightFace.lineTo(rmx, rmy);
@@ -568,7 +575,7 @@ function stampRect(
         ctx.fillStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.16)`;
         ctx.fill(rightFace);
 
-        // 능선 잉크선
+        // Ridge ink line
         ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.8)`;
         ctx.lineWidth = 0.9;
         ctx.beginPath();
@@ -579,19 +586,19 @@ function stampRect(
         ctx.lineTo(rbX, rbY);
         ctx.stroke();
 
-        // 산악 음영 해칭 (우측 경사면에 4~6겹의 부드러운 곡선 해칭)
+        // Mountain shading hatch (4–6 soft curved strokes on the right slope)
         ctx.strokeStyle = `rgba(${ink[0]},${ink[1]},${ink[2]},0.4)`;
         ctx.lineWidth = 0.6;
         ctx.beginPath();
         const hatchCount = 4 + Math.floor(rnd * 3);
         for (let h = 1; h <= hatchCount; h++) {
           const t = h / (hatchCount + 1);
-          // 해칭 시작점 (우측 경사면을 따라 이동)
+          // Hatch start point (walking down the right slope)
           const startX = peakX + t * (rbX - peakX);
           const startY = peakY + t * (rbY - peakY);
 
           const hatchLen = s * 0.45 * (1 - t * 0.4) * (0.8 + 0.4 * hash2(jx + h, jy));
-          // 직선이 아니라 안쪽으로 살짝 휘어지도록 컨트롤 포인트 설정
+          // Control points set so the stroke curves slightly inwards rather than running straight
           const endX = startX - hatchLen * 0.5;
           const endY = startY + hatchLen;
           const cpX = startX - hatchLen * 0.1;

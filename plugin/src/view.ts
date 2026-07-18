@@ -25,7 +25,7 @@ import { ImageSuggestModal, MarkerModal, RegionModal, TextEditModal } from "./mo
 
 export const VIEW_TYPE_FMAP = "vellum-map-view";
 
-/** 빌드 시 인라인되는 워커 소스 (esbuild define) */
+/** Worker source inlined at build time (esbuild define) */
 declare const __WORKER_CODE__: string;
 
 type Tool = "select" | "marker" | "region" | "raise" | "lower" | "paint" | "draw" | "arrow";
@@ -43,7 +43,7 @@ const TOOL_DEFS: { id: Tool; icon: string; label: string }[] = [
 
 const DRAW_COLORS = ["#8a1c1c", "#1c1a14", "#2a5a8a", "#1e6e3a", "#7a4a1a", "#6a2c8a"];
 
-/** 페인트 브러시로 칠할 수 있는 바이옴 (단축키 1~5 순서) */
+/** Biomes the paint brush can apply (shortcut order 1–5) */
 const PAINT_BIOMES: { code: number; key: string; label: string }[] = [
   { code: B.OCEAN, key: "water", label: "Water" },
   { code: B.GRASS, key: "grass", label: "Grassland" },
@@ -62,7 +62,7 @@ export class VellumView extends TextFileView {
   private paintErase = false;
   private paintBarEl: HTMLElement | null = null;
 
-  // 지형 파이프라인 캐시
+  // Terrain pipeline caches
   private baseHeight: Float32Array | null = null;
   private baseKey = "";
   private classifier: Classifier | null = null;
@@ -71,9 +71,9 @@ export class VellumView extends TextFileView {
   private contours: ContourSet | null = null;
   private contourMinor: Path2D | null = null;
   private contourMajor: Path2D | null = null;
-  private bathyPath: Path2D | null = null;   // 해저 등심선
+  private bathyPath: Path2D | null = null;   // bathymetric lines
   private coastPath: Path2D | null = null;
-  private riverLines: { pts: [number, number][]; widths: number[] }[] = []; // 붓 리본용 강줄기
+  private riverLines: { pts: [number, number][]; widths: number[] }[] = []; // rivers for the brush ribbons
   private baseImage: HTMLImageElement | null = null;
   private imageUrl: string | null = null;
 
@@ -99,7 +99,7 @@ export class VellumView extends TextFileView {
   private selectedRegionId: string | null = null;
   private selectedOrnId: string | null = null;
   private selectedAnnoId: string | null = null;
-  private ornBoxes: Map<string, OrnBox> = new Map(); // 세계 좌표 bbox
+  private ornBoxes: Map<string, OrnBox> = new Map(); // world-space bounding boxes
   private dragMode: "none" | "pan" | "marker" | "brush" | "regionMove" | "regionVertex" | "ornMove" | "ornResize" | "anno" | "annoMove" | "annoErase" = "none";
   private dragAnnoId: string | null = null;
   private dragAnnoOrig: [number, number][] | null = null;
@@ -118,16 +118,16 @@ export class VellumView extends TextFileView {
 
   private finalizeTimer: number | null = null;
   private regenTimer: number | null = null;
-  private renderToken = 0;      // 프로그레시브 렌더 취소 토큰
-  private renderRAF = 0;        // 진행 중 rAF 핸들
-  private fullDetailCanvas: HTMLCanvasElement | null = null; // 전체 맵 픽셀 캐시 (CACHE_SCALE 배율)
-  private cacheValid = false;  // true = 지형 변경 없음, draw()에서 크롭 드로우 사용
+  private renderToken = 0;      // cancellation token for the progressive render
+  private renderRAF = 0;        // in-flight rAF handle
+  private fullDetailCanvas: HTMLCanvasElement | null = null; // full-map pixel cache (at CACHE_SCALE)
+  private cacheValid = false;  // true = terrain unchanged; draw() uses a cropped blit
   private detailTimer: number | null = null;
   private worker: Worker | null = null;
   private workerUrl: string | null = null;
   private workerReqId = 0;
   private workerReqs = new Map<number, (d: { base: Float32Array; terrain: TerrainResult }) => void>();
-  private genToken = 0;         // 비동기 생성 취소 토큰
+  private genToken = 0;         // cancellation token for async generation
   private resizeObs: ResizeObserver | null = null;
   private ready = false;
   private pendingFocusName: string | null = null;
@@ -170,7 +170,7 @@ export class VellumView extends TextFileView {
     this.baseKey = "";
   }
 
-  /** [[지도.fmap#마커이름]] 서브패스 링크 → 해당 마커 강조 */
+  /** [[map.fmap#markerName]] subpath link → highlight that marker */
   setEphemeralState(state: unknown): void {
     const sub = (state as { subpath?: string } | null)?.subpath;
     if (typeof sub === "string" && sub.length > 1) {
@@ -201,7 +201,7 @@ export class VellumView extends TextFileView {
 
     this.ready = true;
     this.rebuild();
-    ensureFontsLoaded(() => this.draw()); // 번들 폰트 로드 후 재렌더
+    ensureFontsLoaded(() => this.draw()); // re-render once the bundled fonts have loaded
   }
 
   async onClose(): Promise<void> {
@@ -218,7 +218,7 @@ export class VellumView extends TextFileView {
     this.workerReqs.clear();
   }
 
-  // ── 빌드/재생성 ───────────────────────────────────────
+  // ── Build / regeneration ─────────────────────────────
 
   private rebuild(): void {
     this.buildPanel();
@@ -240,8 +240,8 @@ export class VellumView extends TextFileView {
     };
   }
 
-  /** 전체 파이프라인 재생성. 노이즈 베이스는 파라미터가 바뀔 때만 다시 계산한다. */
-  /** 워커 준비 (인라인 소스 → Blob URL). 실패 시 null로 두고 동기 폴백. */
+  /** Regenerate the whole pipeline. The noise base is recomputed only when parameters change. */
+  /** Prepare the worker (inlined source → Blob URL). On failure, stay null and fall back to sync. */
   private ensureWorker(): void {
     if (this.worker || typeof Worker === "undefined") return;
     try {
@@ -253,7 +253,7 @@ export class VellumView extends TextFileView {
         const cb = this.workerReqs.get(e.data.id);
         if (cb) { this.workerReqs.delete(e.data.id); cb(e.data); }
       };
-      this.worker.onerror = () => { this.worker = null; }; // 오류 시 동기 폴백
+      this.worker.onerror = () => { this.worker = null; }; // fall back to sync on error
     } catch {
       this.worker = null;
     }
@@ -264,7 +264,7 @@ export class VellumView extends TextFileView {
       const id = ++this.workerReqId;
       this.workerReqs.set(id, resolve);
       const genMap = { width: this.map.width, height: this.map.height, gen: this.map.gen };
-      // 버퍼는 복사(transfer 안 함) — main이 계속 소유해야 하므로
+      // Buffers are copied (not transferred) — the main thread must keep ownership
       const editsBuf = this.edits ? this.edits.buffer.slice(0) : null;
       const paintBuf = this.paint ? this.paint.buffer.slice(0) : null;
       const baseBuf = !needBase && this.baseHeight ? this.baseHeight.buffer.slice(0) : null;
@@ -272,7 +272,7 @@ export class VellumView extends TextFileView {
     });
   }
 
-  /** 지형 재생성 — 무거운 생성(침식·수문)은 워커에서 비동기 실행해 UI가 얼지 않는다. */
+  /** Terrain regeneration — the heavy work (erosion, hydrology) runs async in the worker so the UI never freezes. */
   private async regenerate(): Promise<void> {
     const key = JSON.stringify([this.map.gen, this.map.width, this.map.height]);
     const needBase = !this.baseHeight || this.baseKey !== key;
@@ -289,20 +289,20 @@ export class VellumView extends TextFileView {
         this.regenSync(key, needBase);
         return;
       }
-      if (token !== this.genToken || !this.ready) return; // 더 새로운 요청에 밀림
+      if (token !== this.genToken || !this.ready) return; // superseded by a newer request
       this.baseHeight = res.base;
       this.baseKey = key;
       this.terrain = res.terrain;
       if (needBase) this.setHint("");
     } else {
       this.regenSync(key, needBase);
-      return; // regenSync가 이후 파이프라인까지 처리
+      return; // regenSync handles the rest of the pipeline
     }
 
     this.finishRegen();
   }
 
-  /** 동기 폴백 (워커 미지원 환경) */
+  /** Synchronous fallback (environments without Worker support) */
   private regenSync(key: string, needBase: boolean): void {
     if (needBase) {
       this.baseHeight = generateBase(this.map);
@@ -312,7 +312,7 @@ export class VellumView extends TextFileView {
     this.finishRegen();
   }
 
-  /** 지형 계산 후 공통 파이프라인 (분류·등고선·벡터·렌더) */
+  /** Shared pipeline after terrain computation (classification, contours, vectors, render) */
   private finishRegen(): void {
     if (!this.terrain) return;
     this.classifier = new Classifier(this.map.gen, this.map.width, this.map.height);
@@ -334,9 +334,9 @@ export class VellumView extends TextFileView {
   }
 
   /**
-   * 타일 단위 프로그레시브 레이어 렌더.
-   * 화면 중앙(현재 뷰포트)에 가까운 타일부터 그려 넣어, 큰 지도도
-   * 한 번에 얼지 않고 순차적으로 채워진다.
+   * Tile-based progressive layer render.
+   * Tiles nearest the viewport centre are drawn first, so even a large map fills in
+   * gradually instead of freezing in one go.
    */
   private startProgressiveRender(): void {
     if (!this.terrain) return;
@@ -349,7 +349,7 @@ export class VellumView extends TextFileView {
 
     const TILE = 192;
     const cols = Math.ceil(t.w / TILE), rows = Math.ceil(t.h / TILE);
-    // 뷰포트 중심에 해당하는 셀을 기준으로 타일을 가까운 순 정렬
+    // Sort tiles by distance from the cell under the viewport centre
     const { w: vw, h: vh } = this.viewSize();
     const c = this.toWorld(vw / 2, vh / 2);
     const ccx = c.x * cols, ccy = c.y * rows;
@@ -364,8 +364,8 @@ export class VellumView extends TextFileView {
     let i = 0;
     const opts = this.renderOpts();
     const step = () => {
-      if (token !== this.renderToken || this.terrain !== t) return; // 취소됨
-      const budgetEnd = performance.now() + 10; // 프레임당 ~10ms만 작업
+      if (token !== this.renderToken || this.terrain !== t) return; // cancelled
+      const budgetEnd = performance.now() + 10; // only ~10ms of work per frame
       while (i < tiles.length && performance.now() < budgetEnd) {
         const { tx, ty } = tiles[i++];
         const x0 = tx * TILE, y0 = ty * TILE;
@@ -392,22 +392,22 @@ export class VellumView extends TextFileView {
     }, delay);
   }
 
-  /** 벡터 라인 캐시: 손그림(rough) 등심선·주/보조 등고선·해안선·테이퍼 강줄기 */
+  /** Vector line cache: hand-drawn (rough) bathymetry, major/minor contours, coastline, tapered rivers */
   private buildVectorPaths(): void {
     const cs = this.contours;
     this.contourMinor = null;
     this.contourMajor = null;
     this.bathyPath = null;
     this.coastPath = null;
-    this.hatchRows = null; // 지형 변경 → 헤칭도 재생성 (waterDist 준비 후 지연 빌드)
+    this.hatchRows = null; // terrain changed → rebuild hatching too (built lazily once waterDist is ready)
     this.landHatchRows = null;
     this.riverLines = [];
     if (!cs || !this.terrain) return;
     const sea = this.terrain.seaLevel;
     const seed = this.map.gen.seed;
-    let sc = seed * 2 + 17; // 링마다 다른 흔들림 시드
+    let sc = seed * 2 + 17; // a different jitter seed per ring
 
-    // 등고선: 해저(등심선) / 해안 / 육지(보조·주곡선) 분리 — 손그림 이중 패스로 잉크 질감
+    // Contours: split into bathymetry / coast / land (minor & major) — double hand-drawn passes for ink texture
     const bathy = new Path2D();
     const minor = new Path2D();
     const major = new Path2D();
@@ -422,11 +422,11 @@ export class VellumView extends TextFileView {
         continue;
       }
       if (Math.abs(level.z - sea) < 1e-9) {
-        // 해칭은 제거 — 무작위 길이 곡선 해칭이 '털'처럼 보여 미감을 해쳤다.
-        // 물쪽 처리(동심 잔선)는 픽셀 레이어가 담당한다.
+        // Hatching removed here — random-length curved hatching looked like 'fur' and hurt the aesthetic.
+        // The water side (concentric rings) is handled by the pixel layer.
         const coast = new Path2D();
         for (const ring of level.rings) {
-          // 이중 패스: 잉크가 두 번 지나간 손그림 해안선
+          // Double pass: a hand-drawn coastline the ink has crossed twice
           sketchToPath(coast, roughRing(ring, 1.0, sc), true);
           sketchToPath(coast, roughRing(ring, 0.7, sc + 5000), true);
           sc++;
@@ -435,7 +435,7 @@ export class VellumView extends TextFileView {
         continue;
       }
       landIdx++;
-      const target = landIdx % 3 === 0 ? major : minor; // 3레벨마다 주곡선
+      const target = landIdx % 3 === 0 ? major : minor; // a major contour every 3 levels
       for (const ring of level.rings) {
         sketchToPath(target, roughRing(ring, landIdx % 3 === 0 ? 0.85 : 1.0, sc++), true);
       }
@@ -444,22 +444,22 @@ export class VellumView extends TextFileView {
     this.contourMajor = major;
     this.bathyPath = hasBathy ? bathy : null;
 
-    // 강줄기: 단순화 → 사행(meander) 흔들림 → 스무딩 (하류로 갈수록 굵게).
-    // D8 유향이 만드는 일직선 구간을 크게 단순화한 뒤 흔들어 자연스러운 굽이로.
+    // Rivers: simplify → meander jitter → smoothing (thickening downstream).
+    // Aggressively simplify the straight runs the D8 flow directions create, then jitter into natural bends.
     this.riverLines = [];
     const smoothed: ({ pts: [number, number][]; widths: number[] } | null)[] = [];
     for (const rv of this.terrain.rivers) {
       if (rv.pts.length < 3) { smoothed.push(null); continue; }
       const simplified = simplifyLine(rv.pts, 0.9);
       const sm = chaikin(roughLine(simplified, 0.95, sc++), 3, false);
-      // 폭 배열을 sm 길이에 맞춰 리샘플
+      // Resample the width array to sm's length
       const widths = sm.map((_, i) => {
         const oi = Math.min(rv.widths.length - 1, Math.round((i / (sm.length - 1)) * (rv.widths.length - 1)));
         return rv.widths[oi];
       });
       smoothed.push({ pts: sm, widths });
     }
-    // 지류 끝점을 본류의 (흔들린) 렌더 중심선 최근접 점에 스냅 — 합류 이음새 완전 밀착
+    // Snap each tributary's endpoint to the nearest point on its parent's (jittered) rendered centreline — seamless confluences
     this.terrain.rivers.forEach((rv, idx) => {
       const line = smoothed[idx];
       if (!line || rv.joins === undefined) return;
@@ -472,7 +472,7 @@ export class VellumView extends TextFileView {
         const d = dx * dx + dy * dy;
         if (d < bestD) { bestD = d; best = k; }
       }
-      // 스냅 거리가 비정상적으로 멀면 (5셀+) 그대로 둔다
+      // If the snap distance is abnormally large (5+ cells), leave it as-is
       if (best >= 0 && bestD < 25) {
         line.pts[line.pts.length - 1] = [parent.pts[best][0], parent.pts[best][1]];
       }
@@ -481,11 +481,12 @@ export class VellumView extends TextFileView {
   }
 
   /**
-   * 벡터 잉크선 렌더 (draw·export 공용). unit=셀당 화면 픽셀(draw: cam.scale, export: scale).
-   * 등고선·해안선은 번짐 밑칠+본선으로, 강은 가변폭 붓 리본으로 그린다.
+   * Vector ink-line render (shared by draw & export). unit = screen pixels per cell
+   * (draw: cam.scale, export: scale). Contours and coastline use a bleed undercoat +
+   * main stroke; rivers are variable-width brush ribbons.
    */
   private drawVectorLines(ctx: CanvasRenderingContext2D, pal: Palette, unit: number): void {
-    const px = (target: number) => target / unit; // 목표 화면 px → 셀 단위 선폭
+    const px = (target: number) => target / unit; // target screen px → line width in cells
     const cl = pal.coastline;
     const cc = this.map.style === "color" ? "40,48,44" : `${cl[0]},${cl[1]},${cl[2]}`;
 
@@ -494,10 +495,10 @@ export class VellumView extends TextFileView {
       ctx.lineWidth = px(0.7);
       ctx.stroke(this.bathyPath);
     }
-    // 등고선은 은은한 보조 정보 — 진하면 '나무결 테라스'가 되어 지도를 지저분하게 만든다
+    // Contours are subtle supporting information — too dark and they become 'wood-grain terraces' that clutter the map
     if (this.map.showContours) {
       if (this.contourMinor) {
-        ctx.strokeStyle = `rgba(${cc},0.05)`;  // 번짐 밑칠
+        ctx.strokeStyle = `rgba(${cc},0.05)`;  // bleed undercoat
         ctx.lineWidth = px(2);
         ctx.stroke(this.contourMinor);
         ctx.strokeStyle = `rgba(${cc},0.16)`;
@@ -513,8 +514,8 @@ export class VellumView extends TextFileView {
         ctx.stroke(this.contourMajor);
       }
     }
-    // 해안 헤칭: 등距離 점선 잔선 (동판화 water-lining) — 해안 본선보다 아래에.
-    // 물 쪽·육지 쪽 각각 토글.
+    // Coastal hatching: equidistant dashed lines (copperplate water-lining) — beneath the main coast stroke.
+    // Water side and land side toggle independently.
     if (this.map.coastHatching || this.map.landHatching) {
       if (!this.hatchRows) this.buildCoastHatch();
       ctx.save();
@@ -523,14 +524,14 @@ export class VellumView extends TextFileView {
       if (this.map.coastHatching && this.hatchRows) {
         this.hatchRows.forEach((row, k) => {
           ctx.setLineDash([5.2, 3.0]);
-          ctx.lineDashOffset = k * 2.9; // 줄마다 대시 위상을 어긋나게 — 손으로 그은 느낌
+          ctx.lineDashOffset = k * 2.9; // offset the dash phase per row — hand-drawn feel
           ctx.strokeStyle = `rgba(${cl[0]},${cl[1]},${cl[2]},${row.alpha})`;
           ctx.stroke(row.path);
         });
       }
       if (this.map.landHatching && this.landHatchRows) {
         this.landHatchRows.forEach((row, k) => {
-          ctx.setLineDash([4.2, 2.6]); // 육지 쪽은 살짝 촘촘한 대시
+          ctx.setLineDash([4.2, 2.6]); // slightly tighter dashes on the land side
           ctx.lineDashOffset = k * 2.3 + 1.4;
           ctx.strokeStyle = `rgba(${cl[0]},${cl[1]},${cl[2]},${row.alpha})`;
           ctx.stroke(row.path);
@@ -538,8 +539,8 @@ export class VellumView extends TextFileView {
       }
       ctx.restore();
     }
-    // 해안선: 만년필 잉크 — 굵은 매직 띠가 아니라 가늘고 진한 펜선.
-    // coastPath는 흔들림이 다른 이중 링 지오메트리라, 얇게 그으면 펜이 두 번 지나간 자국이 된다.
+    // Coastline: fountain-pen ink — a thin, dark pen line, not a fat marker band.
+    // coastPath is double-ring geometry with different jitter, so a thin stroke reads as a pen passing twice.
     if (this.coastPath) {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
@@ -555,8 +556,8 @@ export class VellumView extends TextFileView {
       const oc = pal.ocean;
       const isInk = this.map.style === "ink";
 
-      // 선폭: 발원지에서 실처럼 가늘게 시작 → 하류에서 완만하게 굵어짐.
-      // 상한 3.0은 하구 깔때기(폭 데이터 ×2.2)가 살아나도록 여유를 둔 값.
+      // Width: thread-thin at the source → gently thickening downstream.
+      // The 3.0 cap leaves headroom so the estuary funnel (width data ×2.2) survives.
       const wAt = (i: number, n: number, wArr: number[]) => {
         const baseW = Math.min(3.0, wArr[Math.min(wArr.length - 1, i)] * 0.5 + 0.1);
         const taper = Math.min(1, i / Math.min(5, n - 1));
@@ -566,8 +567,8 @@ export class VellumView extends TextFileView {
       ctx.lineCap = "round";
       ctx.lineJoin = "round";
 
-      // 세그먼트별 stroke는 라운드캡 알파가 겹쳐 점선 아티팩트가 생긴다 → 가변폭 리본 fill (한 번에 칠함)
-      // 패스 1: 옅은 물 색 워시 — 잉크를 살짝 섞어 채도를 낮춘다 (쨍한 파란 실핏줄 방지)
+      // Per-segment strokes overlap their round-cap alpha and create dotted artefacts → fill a variable-width ribbon in one go
+      // Pass 1: pale water-colour wash — mixed with a little ink to desaturate (prevents garish blue capillaries)
       const wr = Math.round(oc[0] * 0.72 + ck[0] * 0.28);
       const wg = Math.round(oc[1] * 0.74 + ck[1] * 0.26);
       const wb = Math.round(oc[2] * 0.78 + ck[2] * 0.22);
@@ -583,7 +584,7 @@ export class VellumView extends TextFileView {
         }));
       }
 
-      // 패스 2: 깊이 심(core) — 잉크 갈색이 아니라 짙은 물 색 (강 가운데가 깊어 보이게)
+      // Pass 2: depth core — deep water colour rather than ink brown (makes the river's centre look deep)
       const dr = Math.round(pal.deep[0] * 0.62);
       const dg = Math.round(pal.deep[1] * 0.66);
       const db = Math.round(pal.deep[2] * 0.78);
@@ -601,7 +602,7 @@ export class VellumView extends TextFileView {
     }
   }
 
-  /** 풍배선 (나침반 중심 방사선) — draw()·exportPNG 공용. 세계 좌표 컨텍스트에서 호출 */
+  /** Rhumb lines (radiating from the compass) — shared by draw() and exportPNG. Call within a world-space context */
   private drawRhumbLines(ctx: CanvasRenderingContext2D, W: number, H: number, s: number, pal: Palette): void {
     if (!this.map.showRhumbLines) return;
     const compasses = this.map.ornaments.filter((orn) => orn.type === "compass");
@@ -636,9 +637,9 @@ export class VellumView extends TextFileView {
     ctx.restore();
   }
 
-  // ── 전체 맵 픽셀 캐시 ─────────────────────────────────
+  // ── Full-map pixel cache ─────────────────────────────
 
-  /** 지형 데이터 변경 시 전체 맵 재렌더 예약. pan/zoom에서는 절대 호출하지 않는다. */
+  /** Schedule a full-map re-render when terrain data changes. Never called for pan/zoom. */
   private scheduleDetail(): void {
     this.cacheValid = false;
     if (this.detailTimer) window.clearTimeout(this.detailTimer);
@@ -650,14 +651,14 @@ export class VellumView extends TextFileView {
   }
 
   /**
-   * 전체 맵을 CACHE_SCALE 배율로 한 번 렌더하여 fullDetailCanvas에 저장한다.
-   * 이후 pan/zoom/scroll 에서는 draw()가 이 캔버스를 크롭하여 재사용 — 깜빡임 없음.
+   * Render the entire map once at CACHE_SCALE and store it in fullDetailCanvas.
+   * From then on, pan/zoom/scroll just crop this canvas in draw() — no flicker.
    */
   private renderDetail(): void {
     const t = this.terrain, cls = this.classifier;
     if (!t || !cls || this.map.mode !== "generated") { this.cacheValid = false; return; }
 
-    const SCALE = 3; // 셀당 픽셀 수 (512×384 → 1536×1152 캐시)
+    const SCALE = 3; // pixels per cell (512×384 → 1536×1152 cache)
     const CW = t.w * SCALE, CH = t.h * SCALE;
 
     if (!this.fullDetailCanvas) this.fullDetailCanvas = document.createElement("canvas");
@@ -681,12 +682,12 @@ export class VellumView extends TextFileView {
       return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
     };
 
-    // 물가 하이라이트 파라미터 (base 렌더의 paintBaseRect와 동일)
+    // Shoreline highlight parameters (identical to the base render's paintBaseRect)
     const coastW2 = Math.max(0, Math.min(12, Math.round(this.map.coastWidth ?? 0)));
     const coastRGB2: [number, number, number] = (this.map.coastColor && hexToRGB(this.map.coastColor)) ||
       [Math.min(255, pal.ocean[0] * 1.16), Math.min(255, pal.ocean[1] * 1.14), Math.min(255, pal.ocean[2] * 1.1)];
 
-    // 해안 동심 잔선용 물 거리 필드 (셀 해상도 → 쌍선형 샘플, 255 센티널은 클램프)
+    // Water distance field for coastal concentric rings (cell resolution → bilinear sample, 255 sentinel clamped)
     const wd = this.layers ? this.layers.waterDist : null;
     const dAt = (cx: number, cy: number): number => {
       if (!wd) return 255;
@@ -727,7 +728,7 @@ export class VellumView extends TextFileView {
         let r: number, g: number, bl: number;
 
         if (el < sea || t.lake[ci]) {
-          // base 렌더와 동일한 물 색 규칙: 램프 압축 + 호수 중간 깊이 고정 + 물가 하이라이트
+          // Same water-colour rules as the base render: ramp compression + fixed mid-depth lakes + shoreline highlight
           const rawDepth = Math.min(1, Math.max(0, (sea - el) / 0.25));
           const depth = t.lake[ci] ? 0.4 : 0.22 + 0.78 * Math.pow(rawDepth, 0.7);
           r = col[0] + (pal.deep[0] - pal.ocean[0]) * depth;
@@ -740,7 +741,7 @@ export class VellumView extends TextFileView {
             g += (coastRGB2[1] - g) * f;
             bl += (coastRGB2[2] - bl) * f;
           }
-          // 수면 결 + 해안 동심 잔선 (base 렌더와 동일한 고지도 디테일)
+          // Surface grain + coastal concentric rings (same antique-map detail as the base render)
           const ex = oceanExtraShade(cxf, cyf, dHere);
           r += ex; g += ex * 0.98; bl += ex * 0.9;
         } else {
@@ -769,14 +770,14 @@ export class VellumView extends TextFileView {
     }
     dctx.putImageData(img, 0, 0);
 
-    // 스탬프와 벡터 라인을 캔버스에 영구적으로 구워 넣는다 (Bake)
+    // Bake the stamps and vector lines permanently into the canvas
     if (this.layers) {
       dctx.save();
       dctx.scale(SCALE, SCALE);
-      // 스탬프 (나무, 산)
+      // Stamps (trees, mountains)
       dctx.drawImage(this.layers.stamps, 0, 0, W, H);
-      // 벡터 라인 (해안선, 등고선, 강)
-      // SCALE이 적용된 상태이므로 unit = 1을 넘겨서 1배율 기준으로 렌더링
+      // Vector lines (coastline, contours, rivers)
+      // SCALE is already applied, so pass unit = 1 to render at 1× proportions
       this.drawVectorLines(dctx, pal, 1);
       dctx.restore();
     }
@@ -785,9 +786,9 @@ export class VellumView extends TextFileView {
     this.draw();
   }
 
-  // ── 즉석 브러시 (증분 갱신) ───────────────────────────
+  // ── Instant brush (incremental updates) ──────────────
 
-  /** 브러시 영역만 지형·픽셀 다시 계산 — 스트로크 중 수 ms로 즉석 반영 */
+  /** Recompute terrain & pixels for the brushed area only — a few ms mid-stroke for instant feedback */
   private patchRect(r: Rect): void {
     if (!this.terrain || !this.baseHeight || !this.classifier || !this.layers) return;
     updateTerrainRect(
@@ -795,12 +796,12 @@ export class VellumView extends TextFileView {
       this.classifier, r.x0, r.y0, r.x1, r.y1,
     );
     updateLayersRect(this.layers, this.terrain, this.map.style, this.renderOpts(), r.x0, r.y0, r.x1, r.y1);
-    this.cacheValid = false; // 편집 중엔 캐시 무효 → 붓 뗀 뒤 scheduleDetail이 재렌더
+    this.cacheValid = false; // cache is invalid whilst editing → scheduleDetail re-renders once the brush lifts
     this.draw();
     this.scheduleFinalize();
   }
 
-  /** 붓을 뗀 뒤 강·등고선까지 포함한 전체 재계산 */
+  /** Full recomputation, including rivers and contours, after the brush lifts */
   private scheduleFinalize(): void {
     if (this.finalizeTimer) window.clearTimeout(this.finalizeTimer);
     this.finalizeTimer = window.setTimeout(() => {
@@ -841,7 +842,7 @@ export class VellumView extends TextFileView {
     this.patchRect(rect);
   }
 
-  /** 바이옴 페인트 — 물↔육지가 바뀌면 고도 델타도 함께 보정 */
+  /** Biome paint — when water↔land flips, the elevation delta is corrected as well */
   private applyPaintBrush(sx: number, sy: number): void {
     if (!this.terrain) return;
     const rect = this.brushRect(sx, sy);
@@ -872,7 +873,7 @@ export class VellumView extends TextFileView {
     this.patchRect(rect);
   }
 
-  // ── 이미지 모드 ───────────────────────────────────────
+  // ── Image mode ───────────────────────────────────────
 
   private async loadBaseImage(path: string): Promise<void> {
     const file = this.app.vault.getAbstractFileByPath(path);
@@ -928,10 +929,10 @@ export class VellumView extends TextFileView {
     this.canvasEl.style.height = `${h}px`;
     this.fitCameraOnce();
     this.draw();
-    // 창 크기 변경은 지형 데이터를 바꾸지 않으므로 캐시를 재렌더할 필요 없음
+    // Window resizing doesn't change terrain data, so no cache re-render is needed
   }
 
-  // ── 그리기 ────────────────────────────────────────────
+  // ── Drawing ──────────────────────────────────────────
 
   private draw(): void {
     const dpr = window.devicePixelRatio || 1;
@@ -948,7 +949,7 @@ export class VellumView extends TextFileView {
     const pal = getPalette(this.map.style, this.map.styleColors);
     const ink = `rgb(${pal.coastline[0]},${pal.coastline[1]},${pal.coastline[2]})`;
 
-    // 전체 맵 캐시가 유효하면 카메라 변환으로 올바른 영역을 잘라 그린다 (재렌더 없음)
+    // If the full-map cache is valid, crop the right region via the camera transform (no re-render)
     const useCache = this.cacheValid && this.fullDetailCanvas !== null && !this.map.fastRender;
 
     ctx.save();
@@ -960,23 +961,23 @@ export class VellumView extends TextFileView {
       ctx.drawImage(this.baseImage, 0, 0);
     } else if (this.layers) {
       if (useCache) {
-        // 전체 맵 캐시에서 현재 뷰포트에 해당하는 영역만 크롭 드로우
-        // fullDetailCanvas는 SCALE=3 배율이므로: 셀 좌표 * 3 = 캐시 픽셀 좌표
+        // Crop-draw only the region of the full-map cache under the current viewport
+        // fullDetailCanvas is at SCALE=3: cell coordinate × 3 = cache pixel coordinate
         ctx.restore();
-        // 물리 픽셀 단위로 직접 그리기 위해 transform 초기화
+        // Reset the transform to draw directly in physical pixels
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         const SCALE = 3;
         const cdc = this.fullDetailCanvas!;
-        // 현재 카메라가 가리키는 셀 범위
+        // Cell range the camera currently shows
         const cellX0 = -ox / s, cellY0 = -oy / s;
         const cellX1 = cellX0 + vw / s, cellY1 = cellY0 + vh / s;
-        // 캐시 좌표 범위 (클램프)
+        // Cache coordinate range (clamped)
         const sx = Math.max(0, cellX0 * SCALE);
         const sy = Math.max(0, cellY0 * SCALE);
         const sx2 = Math.min(cdc.width, cellX1 * SCALE);
         const sy2 = Math.min(cdc.height, cellY1 * SCALE);
         
-        // 화면 목적지 (물리 픽셀 기준)
+        // Screen destination (in physical pixels)
         const dstX = ((sx / SCALE) * s + ox) * dpr;
         const dstY = ((sy / SCALE) * s + oy) * dpr;
         const dstW = ((sx2 - sx) / SCALE) * s * dpr;
@@ -986,7 +987,7 @@ export class VellumView extends TextFileView {
         ctx.imageSmoothingQuality = "high";
         if (dstW > 0 && dstH > 0) ctx.drawImage(cdc, sx, sy, sx2 - sx, sy2 - sy, dstX, dstY, dstW, dstH);
         
-        // 벡터 렌더링을 위해 다시 기본 CSS 픽셀 변환 설정
+        // Restore the default CSS-pixel transform for vector rendering
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         ctx.save();
         ctx.translate(ox, oy);
@@ -998,7 +999,7 @@ export class VellumView extends TextFileView {
         this.drawVectorLines(ctx, pal, s);
       }
 
-      // 풍배선 그리기 (나침반 중심 기준 방사선)
+      // Draw the rhumb lines (radiating from the compass centre)
       this.drawRhumbLines(ctx, W, H, s, pal);
 
       drawMapEffects(ctx, W, H, s, pal.coastline, this.map.decor, this.map.style);
@@ -1008,11 +1009,11 @@ export class VellumView extends TextFileView {
     }
     ctx.restore();
 
-    // 화면 해상도 종이 결 오버레이 (배율과 무관하게 붓펜 질감 — 지도와 함께 팬)
+    // Screen-resolution paper-grain overlay (brush-pen texture independent of zoom — pans with the map)
     this.applyPaperGrain(ctx, ox, oy, vw, vh);
 
-    // 레이어 순서: 지역 → 그림/선/화살표 → 배치요소(스티커·텍스트) → 마커 최상단
-    // (마커는 정보이므로 꾸미기 스티커에 가려지지 않는다)
+    // Layer order: regions → drawings/lines/arrows → placed elements (stickers, text) → markers on top
+    // (markers are information, so decorative stickers never cover them)
     this.drawRegions(ctx, W, H, s, ox, oy);
     this.drawAnnotations(ctx, W, H, s, ox, oy);
 
@@ -1031,7 +1032,7 @@ export class VellumView extends TextFileView {
 
   private grainPattern: CanvasPattern | null = null;
 
-  /** 종이 결을 화면 공간에 얹되, 팬 오프셋만큼 이동해 종이가 지도에 붙은 듯 보이게 */
+  /** Lay the paper grain in screen space, offset by the pan so the paper appears stuck to the map */
   private applyPaperGrain(ctx: CanvasRenderingContext2D, ox: number, oy: number, vw: number, vh: number): void {
     if (this.map.mode !== "generated") return;
     if (!this.grainPattern) {
@@ -1051,7 +1052,7 @@ export class VellumView extends TextFileView {
     ctx.restore();
   }
 
-  /** 선택된 배치 요소의 점선 박스 + 크기 조절 핸들 (화면 좌표) */
+  /** Dashed box + resize handle for the selected placed element (screen coordinates) */
   private drawOrnSelection(
     ctx: CanvasRenderingContext2D, W: number, H: number, s: number, ox: number, oy: number,
   ): void {
@@ -1065,7 +1066,7 @@ export class VellumView extends TextFileView {
     ctx.setLineDash([5, 4]);
     ctx.strokeRect(x - 4, y - 4, w + 8, h + 8);
     ctx.setLineDash([]);
-    // 크기 조절 핸들 (우하단)
+    // Resize handle (bottom right)
     ctx.fillStyle = "#e8b64c";
     ctx.strokeStyle = "#3a3226";
     ctx.beginPath();
@@ -1088,7 +1089,7 @@ export class VellumView extends TextFileView {
       ctx.closePath();
       ctx.fillStyle = hexToRgba(rg.color, selected ? 0.28 : 0.18);
       ctx.fill();
-      // 어두운 밑선(항상 보이게) + 색 점선 위에 → 어떤 배경/색에서도 경계 유지
+      // Dark underline (always visible) with a coloured dashed line on top → the border holds on any background or colour
       ctx.strokeStyle = "rgba(28,22,14,0.5)";
       ctx.lineWidth = (selected ? 2.6 : 2) + 1.6;
       ctx.stroke();
@@ -1097,7 +1098,7 @@ export class VellumView extends TextFileView {
       ctx.setLineDash([7, 5]);
       ctx.stroke();
       ctx.setLineDash([]);
-      // 라벨 (세리프 소제목풍)
+      // Label (serif subheading style)
       const [cx, cy] = centroid(rg.points);
       const lx = cx * W * s + ox, ly = cy * H * s + oy;
       ctx.font = `600 13px ${FONT_SERIF}`;
@@ -1108,7 +1109,7 @@ export class VellumView extends TextFileView {
       ctx.fillRect(lx - tw / 2 - 7, ly - 10, tw + 14, 20);
       ctx.fillStyle = "#f0e8d4";
       ctx.fillText(rg.name, lx, ly);
-      // 선택된 지역의 꼭짓점 핸들
+      // Vertex handles for the selected region
       if (selected) {
         for (const [px, py] of rg.points) {
           const hx = px * W * s + ox, hy = py * H * s + oy;
@@ -1123,7 +1124,7 @@ export class VellumView extends TextFileView {
       }
     }
 
-    // 지역 그리는 중 미리보기
+    // Preview whilst drawing a region
     if (this.drawingRegion && this.drawingRegion.length > 0) {
       ctx.beginPath();
       this.drawingRegion.forEach(([px, py], idx) => {
@@ -1149,7 +1150,7 @@ export class VellumView extends TextFileView {
     for (const a of list) {
       if (a.points.length < 2) continue;
       const px = a.points.map(([x, y]) => [x * W * s + ox, y * H * s + oy] as [number, number]);
-      // 선택 하이라이트
+      // Selection highlight
       if (a.id === this.selectedAnnoId) {
         ctx.save();
         ctx.strokeStyle = "rgba(232,182,76,0.6)";
@@ -1166,8 +1167,8 @@ export class VellumView extends TextFileView {
   }
 
   /**
-   * 마커 배지 지름(px). 지도 비례(WYSIWYG) — unit=셀당 화면px.
-   * 편집기(unit=cam.scale)와 내보내기(unit=export scale)가 같은 공식을 쓴다.
+   * Marker badge diameter (px). Proportional to the map (WYSIWYG) — unit = screen px per cell.
+   * The editor (unit = cam.scale) and export (unit = export scale) share the same formula.
    */
   private markerSizePx(m: Marker, unit: number): number {
     const { w: W, h: H } = this.worldSize();
@@ -1175,13 +1176,13 @@ export class VellumView extends TextFileView {
     return base * unit;
   }
 
-  /** 마커 하나를 픽셀 좌표에 그린다 (편집기·내보내기 공용) */
+  /** Draw one marker in pixel space (shared by editor & export) */
   private paintMarker(
     ctx: CanvasRenderingContext2D, m: Marker, sx: number, sy: number, size: number, bold: boolean,
   ): void {
     drawMarkerIcon(ctx, m.icon, sx, sy, size, m.color, this.map.style);
     if (m.name) {
-      // 이름표: 상자 대신 지도에 직접 쓴 지명 — 종이색 후광 + 잉크 세리프 + 자간
+      // Name tag: a place name written directly on the map instead of a box — paper halo + ink serif + letter spacing
       const fs = Math.max(9, size * 0.44);
       const pal = getPalette(this.map.style, this.map.styleColors);
       const cl = pal.coastline;
@@ -1189,11 +1190,11 @@ export class VellumView extends TextFileView {
 
       ctx.save();
       ctx.font = `${bold ? "700" : "600"} ${fs}px ${FONT_SERIF}`;
-      try { (ctx as unknown as { letterSpacing: string }).letterSpacing = `${fs * 0.1}px`; } catch { /* 미지원 무시 */ }
+      try { (ctx as unknown as { letterSpacing: string }).letterSpacing = `${fs * 0.1}px`; } catch { /* ignore if unsupported */ }
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.lineJoin = "round";
-      // 종이색 후광 (글자가 지형 위에서도 읽히게)
+      // Paper-coloured halo (keeps the text readable over terrain)
       ctx.strokeStyle = this.map.style === "color" ? "rgba(250,252,255,0.85)" : "rgba(244,236,214,0.85)";
       ctx.lineWidth = Math.max(2.5, fs * 0.3);
       ctx.strokeText(m.name, sx, y);
@@ -1212,7 +1213,7 @@ export class VellumView extends TextFileView {
       if (sx < -80 || sy < -80 || sx > vw + 80 || sy > vh + 80) continue;
       const hover = m.id === this.hoverMarkerId;
       let size = this.markerSizePx(m, s) * (hover ? 1.12 : 1);
-      // 포커스 플래시 중이면 마커가 두근거림
+      // The marker pulses during a focus flash
       if (this.flash && Math.abs(this.flash.x - m.x) < 1e-6 && Math.abs(this.flash.y - m.y) < 1e-6) {
         const el = (performance.now() - this.flash.t0) / 1000;
         size += Math.max(0, Math.sin(el * Math.PI * 3) * size * 0.3 * (1 - el / 2.2));
@@ -1224,7 +1225,7 @@ export class VellumView extends TextFileView {
   private drawOverlays(
     ctx: CanvasRenderingContext2D, W: number, H: number, s: number, ox: number, oy: number,
   ): void {
-    // 포커스 플래시: 겹 파동 링 + 글로우
+    // Focus flash: layered ripple rings + glow
     if (this.flash) {
       const el = (performance.now() - this.flash.t0) / 2200;
       if (el < 1) {
@@ -1251,7 +1252,7 @@ export class VellumView extends TextFileView {
       }
     }
 
-    // 브러시 커서
+    // Brush cursor
     if ((this.tool === "raise" || this.tool === "lower" || this.tool === "paint") && this.map.mode === "generated") {
       ctx.beginPath();
       ctx.arc(this.lastPointer.x, this.lastPointer.y, this.brushRadius, 0, Math.PI * 2);
@@ -1261,7 +1262,7 @@ export class VellumView extends TextFileView {
     }
   }
 
-  // ── 좌표/히트 테스트 ─────────────────────────────────
+  // ── Coordinates / hit testing ────────────────────────
 
   private toWorld(sx: number, sy: number): { x: number; y: number } {
     const { w: W, h: H } = this.worldSize();
@@ -1278,7 +1279,7 @@ export class VellumView extends TextFileView {
       const sizePx = this.markerSizePx(m, this.cam.scale);
       const mx = m.x * W * this.cam.scale + this.cam.x;
       const my = m.y * H * this.cam.scale + this.cam.y;
-      // 배지 중심은 앵커 위 size*0.78, 판정 반경은 배지 반지름 + 여유
+      // Badge centre sits size*0.78 above the anchor; hit radius = badge radius + margin
       if (Math.hypot(sx - mx, sy - (my - sizePx * 0.78)) < Math.max(12, sizePx * 0.7)) return m;
     }
     return null;
@@ -1291,7 +1292,7 @@ export class VellumView extends TextFileView {
     return null;
   }
 
-  /** 지우개: 커서 아래 주석 삭제 */
+  /** Eraser: delete the annotation under the cursor */
   private eraseAnnoAt(sx: number, sy: number): void {
     const a = this.hitAnnotation(sx, sy);
     if (a) {
@@ -1301,7 +1302,7 @@ export class VellumView extends TextFileView {
     }
   }
 
-  /** 주석(그림) 히트 (화면 좌표) */
+  /** Annotation (drawing) hit test (screen coordinates) */
   private hitAnnotation(sx: number, sy: number): Annotation | null {
     const { w: W, h: H } = this.worldSize();
     const s = this.cam.scale;
@@ -1313,7 +1314,7 @@ export class VellumView extends TextFileView {
     return null;
   }
 
-  /** 배치 요소 히트 (화면 좌표 → 세계 bbox) */
+  /** Placed-element hit test (screen coordinates → world bbox) */
   private hitOrnament(sx: number, sy: number): Ornament | null {
     const { w: W, h: H } = this.worldSize();
     void W; void H;
@@ -1328,7 +1329,7 @@ export class VellumView extends TextFileView {
     return null;
   }
 
-  /** 선택된 요소의 크기 조절 핸들 히트 (화면 좌표) */
+  /** Hit test for the selected element's resize handle (screen coordinates) */
   private hitOrnHandle(sx: number, sy: number): Ornament | null {
     if (!this.selectedOrnId) return null;
     const orn = this.map.ornaments.find((o) => o.id === this.selectedOrnId);
@@ -1339,7 +1340,7 @@ export class VellumView extends TextFileView {
     return Math.hypot(sx - hx - 4, sy - hy - 4) < 10 ? orn : null;
   }
 
-  /** 선택된 지역의 꼭짓점 히트 (화면 좌표) */
+  /** Hit test for the selected region's vertices (screen coordinates) */
   private hitRegionVertex(sx: number, sy: number): { region: Region; idx: number } | null {
     if (!this.selectedRegionId) return null;
     const rg = this.map.regions.find((r) => r.id === this.selectedRegionId);
@@ -1353,7 +1354,7 @@ export class VellumView extends TextFileView {
     return null;
   }
 
-  // ── 이벤트 ────────────────────────────────────────────
+  // ── Events ───────────────────────────────────────────
 
   private bindEvents(): void {
     const el = this.canvasEl;
@@ -1368,7 +1369,7 @@ export class VellumView extends TextFileView {
       this.cam.y = my - (my - this.cam.y) * (ns / this.cam.scale);
       this.cam.scale = ns;
       this.draw();
-      // 줌은 지형 데이터를 바꾸지 않으므로 캐시 유효 — 재렌더 없음
+      // Zooming doesn't change terrain data, so the cache stays valid — no re-render
     }, { passive: false });
 
     this.registerDomEvent(el, "pointerdown", (e: PointerEvent) => {
@@ -1382,7 +1383,7 @@ export class VellumView extends TextFileView {
       if (this.tool === "select") {
         const m = this.hitMarker(sx, sy);
         if (m) { this.dragMode = "marker"; this.dragMarkerId = m.id; return; }
-        // 배치 요소: 크기 핸들 → 본체
+        // Placed elements: resize handle first, then the body
         const handleOrn = this.hitOrnHandle(sx, sy);
         if (handleOrn) {
           const box = this.ornBoxes.get(handleOrn.id)!;
@@ -1427,7 +1428,7 @@ export class VellumView extends TextFileView {
           this.draw();
           return;
         }
-        // 주석(그림) 히트 → 선택·이동
+        // Annotation (drawing) hit → select & move
         const anno = this.hitAnnotation(sx, sy);
         if (anno) {
           this.selectedAnnoId = anno.id;
@@ -1576,7 +1577,7 @@ export class VellumView extends TextFileView {
               this.currentAnno.points = [this.currentAnno.points[0], [wpos.x, wpos.y]];
             } else {
               const last = this.currentAnno.points[this.currentAnno.points.length - 1];
-              // 일정 거리 이상 이동 시에만 점 추가 (부드럽고 가벼움)
+              // Only add a point after moving a minimum distance (smooth and light)
               if (Math.hypot(wpos.x - last[0], wpos.y - last[1]) * this.worldSize().w > 3) {
                 this.currentAnno.points.push([wpos.x, wpos.y]);
               }
@@ -1611,7 +1612,7 @@ export class VellumView extends TextFileView {
         el.style.cursor = m ? "pointer" : this.tool === "select" ? "grab" : "crosshair";
         this.draw();
       } else if (this.tool === "raise" || this.tool === "lower" || this.tool === "paint") {
-        this.draw(); // 브러시 커서 갱신
+        this.draw(); // refresh the brush cursor
       }
     });
 
@@ -1642,7 +1643,7 @@ export class VellumView extends TextFileView {
         const a = this.currentAnno;
         this.currentAnno = null;
         if (a && a.points.length >= 2) {
-          // 최소 길이 확인 (오클릭 무시)
+          // Minimum length check (ignores stray clicks)
           let span = 0;
           for (let i = 1; i < a.points.length; i++) span += Math.hypot(a.points[i][0] - a.points[i - 1][0], a.points[i][1] - a.points[i - 1][1]);
           if (span * this.worldSize().w > 6) {
@@ -1665,7 +1666,7 @@ export class VellumView extends TextFileView {
       if (mode === "annoErase") return;
       if (mode === "brush") this.persist();
       if (mode === "pan" && this.dragMoved) {
-        // 팬은 지형 데이터를 바꾸지 않으므로 캐시 유효 — 재렌더 없음
+        // Panning doesn't change terrain data, so the cache stays valid — no re-render
       }
     });
 
@@ -1678,7 +1679,7 @@ export class VellumView extends TextFileView {
       if (this.tool === "select") {
         const rect = el.getBoundingClientRect();
         const orn = this.hitOrnament(e.clientX - rect.left, e.clientY - rect.top);
-        // 텍스트를 갖는 요소만 더블클릭 편집 (나침반·범선·괴물은 순수 꾸미기)
+        // Only text-bearing elements are double-click editable (compass, ship and monster are pure decoration)
         if (orn && (orn.type === "title" || orn.type === "label" || orn.type === "note" || orn.type === "banner")) {
           this.editOrnText(orn);
           return;
@@ -1732,14 +1733,14 @@ export class VellumView extends TextFileView {
         this.selectedAnnoId = null;
         this.persist();
       }
-      // 선택된 배치 요소 레이어 이동: Ctrl+↑/↓ 한 칸, Ctrl+Shift+↑/↓ 맨 앞/뒤
+      // Move the selected element between layers: Ctrl+↑/↓ one step, Ctrl+Shift+↑/↓ front/back
       if (this.selectedOrnId && (e.ctrlKey || e.metaKey) && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
         e.preventDefault();
         const up = e.key === "ArrowUp";
         if (e.shiftKey) {
           this.reorderById(this.map.ornaments, this.selectedOrnId, up);
         } else if (!this.reorderStep(this.map.ornaments, this.selectedOrnId, up ? 1 : -1)) {
-          return; // 이미 맨 끝 — 저장/재드로우 불필요
+          return; // already at the end — no save/redraw needed
         }
         this.persist();
         return;
@@ -1761,7 +1762,7 @@ export class VellumView extends TextFileView {
     });
   }
 
-  // ── 마커/지역 조작 ────────────────────────────────────
+  // ── Marker / region manipulation ─────────────────────
 
   private addMarkerAt(x: number, y: number): void {
     const marker: Marker = { id: newId(), x, y, name: "", icon: "pin", color: "#c0392b" };
@@ -1814,12 +1815,12 @@ export class VellumView extends TextFileView {
     menu.showAtMouseEvent(e);
   }
 
-  // ── 해안 헤칭 (동판화풍 등距離 잔선) ─────────────────
+  // ── Coastal hatching (copperplate equidistant lines) ─
 
   private hatchRows: { path: Path2D; alpha: number }[] | null = null;
   private landHatchRows: { path: Path2D; alpha: number }[] | null = null;
 
-  /** 거리 필드 등치선 → 정돈된 판화 잔선 Path2D 행 배열 */
+  /** Distance-field iso-lines → an array of tidy engraved-line Path2D rows */
   private hatchRowsFrom(
     dist: Uint8Array, w: number, h: number,
     isos: [number, number][], seedBase: number,
@@ -1834,7 +1835,7 @@ export class VellumView extends TextFileView {
       if (rings.length === 0) continue;
       const path = new Path2D();
       for (const ring of rings) {
-        // 마칭스퀘어 계단을 chaikin으로 눅이고 아주 약한 흔들림만 — 정돈된 판화 선
+        // Soften the marching-squares stairs with Chaikin and add only the faintest jitter — tidy engraved lines
         sketchToPath(path, roughRing(chaikin(ring, 1, true), 0.18, sc++), true);
       }
       rows.push({ path, alpha });
@@ -1843,8 +1844,9 @@ export class VellumView extends TextFileView {
   }
 
   /**
-   * 해안을 따라 겹겹이 새겨지는 점선 잔선(water-lining)을 만든다.
-   * 물 쪽(waterDist)과 육지 쪽(landDistance) 각각 — 멀어질수록 간격이 벌어지고 옅어진다.
+   * Builds the layered dashed water-lining engraved along the coast.
+   * Water side (waterDist) and land side (landDistance) separately — spacing widens
+   * and lines fade with distance.
    */
   private buildCoastHatch(): void {
     if (!this.layers || !this.terrain) { this.hatchRows = null; this.landHatchRows = null; return; }
@@ -1854,7 +1856,7 @@ export class VellumView extends TextFileView {
       [[2.1, 0.42], [4.3, 0.3], [7.0, 0.2], [10.6, 0.12]],
       this.map.gen.seed * 3 + 71,
     );
-    // 육지 쪽: 해안 바로 안쪽에 짧게 3줄 — 판화 지도의 육지 음영
+    // Land side: three short rows just inside the coast — an engraved map's land shading
     this.landHatchRows = this.hatchRowsFrom(
       landDistance(t.biome, t.w, t.h, 10), t.w, t.h,
       [[1.7, 0.3], [3.4, 0.18], [5.6, 0.1]],
@@ -1862,7 +1864,7 @@ export class VellumView extends TextFileView {
     );
   }
 
-  /** 같은 종류 배열 안에서 앞(맨 위)/뒤(맨 아래)로 순서 변경 */
+  /** Reorder within an array of the same kind: to the front (top) or back (bottom) */
   private reorderById<T extends { id: string }>(arr: T[], id: string, toFront: boolean): void {
     const idx = arr.findIndex((x) => x.id === id);
     if (idx < 0) return;
@@ -1870,7 +1872,7 @@ export class VellumView extends TextFileView {
     if (toFront) arr.push(item); else arr.unshift(item);
   }
 
-  /** 한 칸 앞으로(+1)/뒤로(-1) — 배열에서 뒤쪽일수록 위에 그려진다 */
+  /** One step forwards (+1) / backwards (-1) — later in the array draws on top */
   private reorderStep<T extends { id: string }>(arr: T[], id: string, dir: 1 | -1): boolean {
     const idx = arr.findIndex((x) => x.id === id);
     const to = idx + dir;
@@ -1930,7 +1932,7 @@ export class VellumView extends TextFileView {
     ).open();
   }
 
-  // ── 배치 요소 조작 ────────────────────────────────────
+  // ── Placed-element manipulation ──────────────────────
 
   private editOrnText(orn: Ornament): void {
     const heading = orn.type === "title" ? "제목 편집" : orn.type === "note" ? "메모 편집 (Ctrl+Enter 저장)" : orn.type === "banner" ? "리본 문구 편집" : "텍스트 편집";
@@ -1984,7 +1986,7 @@ export class VellumView extends TextFileView {
       sticker: { sizeF: 0.045 },
     };
     const d = defaults[type];
-    // 화면 중앙의 세계 좌표에 배치
+    // Place at the world coordinates of the screen centre
     const { w: vw, h: vh } = this.viewSize();
     const wpos = this.toWorld(vw / 2, vh / 2);
     const orn: Ornament = {
@@ -2006,12 +2008,12 @@ export class VellumView extends TextFileView {
     if (isText) this.editOrnText(orn);
   }
 
-  // ── 사용자 스티커 이미지 캐시 ────────────────────────
+  // ── User sticker image cache ─────────────────────────
 
   private stickerImages: StickerImages = new Map();
   private stickerLoading = new Set<string>();
 
-  /** 배치된 커스텀 스티커의 이미지를 지연 로드 (완료 시 재드로우) */
+  /** Lazily load images for placed custom stickers (redraws on completion) */
   private ensureStickerImages(): void {
     for (const orn of this.map.ornaments) {
       const p = orn.imagePath;
@@ -2050,7 +2052,7 @@ export class VellumView extends TextFileView {
     this.draw();
   }
 
-  // ── 페인트 도구 세부 설정 바 ─────────────────────────
+  // ── Paint tool settings bar ──────────────────────────
 
   private buildPaintBar(): void {
     const bar = this.rootEl.createDiv({ cls: "fms-paintbar is-hidden" });
@@ -2112,7 +2114,7 @@ export class VellumView extends TextFileView {
     });
   }
 
-  // ── 저장/리샘플 ───────────────────────────────────────
+  // ── Persistence / resampling ─────────────────────────
 
   private syncLayersToMap(): void {
     if (this.edits && this.edits.some((v) => v !== 0)) {
@@ -2155,7 +2157,7 @@ export class VellumView extends TextFileView {
     this.draw();
   }
 
-  // ── PNG 내보내기 ──────────────────────────────────────
+  // ── PNG export ───────────────────────────────────────
 
   async exportPNG(): Promise<void> {
     const { w: W, h: H } = this.worldSize();
@@ -2173,7 +2175,7 @@ export class VellumView extends TextFileView {
       ctx.drawImage(this.baseImage, 0, 0);
     } else if (this.layers) {
       if (this.cacheValid && this.fullDetailCanvas) {
-        // 3x 상세 캐시 (스탬프·벡터선 포함) — 편집기 화면과 동일한 고품질
+        // 3× detail cache (stamps & vector lines included) — same high quality as the editor view
         ctx.drawImage(this.fullDetailCanvas, 0, 0, W, H);
       } else {
         ctx.drawImage(this.layers.base, 0, 0);
@@ -2186,7 +2188,7 @@ export class VellumView extends TextFileView {
     if (this.map.showGrid) drawCoordinateGrid(ctx, W, H, scale, pal.coastline);
     ctx.restore();
 
-    // 종이 결 오버레이 (편집기와 동일)
+    // Paper-grain overlay (identical to the editor)
     if (this.map.mode === "generated") {
       const g = this.map.texture.grain ?? 0.5;
       const pat = g > 0.001 ? ctx.createPattern(paperGrainTile(), "repeat") : null;
@@ -2200,7 +2202,7 @@ export class VellumView extends TextFileView {
       }
     }
 
-    // 지역·마커 (내보내기 픽셀 좌표)
+    // Regions & markers (export pixel coordinates)
     for (const rg of this.map.regions) {
       if (rg.points.length < 3) continue;
       ctx.beginPath();
@@ -2226,20 +2228,20 @@ export class VellumView extends TextFileView {
       ctx.fillStyle = "#f0e8d4";
       ctx.fillText(rg.name, cx * W * scale, cy * H * scale);
     }
-    // 주석(그림)
+    // Annotations (drawings)
     for (const a of this.map.annotations) {
       if (a.points.length < 2) continue;
       const px = a.points.map(([x, y]) => [x * W * scale, y * H * scale] as [number, number]);
       strokeAnnotationPx(ctx, a, px, a.width * scale);
     }
-    // 배치 요소(스티커·텍스트) → 마커 최상단 — 편집기와 동일한 레이어 순서
+    // Placed elements (stickers, text) → markers on top — same layer order as the editor
     ctx.save();
     ctx.scale(scale, scale);
     drawOrnaments(ctx, this.map.ornaments, W, H, scale, pal.coastline, this.map.style, this.stickerImages);
     ctx.restore();
     for (const m of this.map.markers) {
       const sx = m.x * W * scale, sy = m.y * H * scale;
-      // 편집기와 동일한 지도 비례 공식 (unit=scale) → WYSIWYG
+      // Same map-proportional formula as the editor (unit = scale) → WYSIWYG
       this.paintMarker(ctx, m, sx, sy, this.markerSizePx(m, scale), false);
     }
 
@@ -2261,7 +2263,7 @@ export class VellumView extends TextFileView {
     new Notice(`지도를 내보냈습니다: ${path}`);
   }
 
-  // ── 외부 연동 ─────────────────────────────────────────
+  // ── External integration ─────────────────────────────
 
   focusMarkerByNote(notePath: string): boolean {
     const m = this.map.markers.find((mm) => mm.notePath === notePath);
@@ -2289,7 +2291,7 @@ export class VellumView extends TextFileView {
     this.draw();
   }
 
-  // ── 툴바 ──────────────────────────────────────────────
+  // ── Toolbar ──────────────────────────────────────────
 
   private buildToolbar(): void {
     const bar = this.rootEl.createDiv({ cls: "fms-toolbar" });
@@ -2331,13 +2333,13 @@ export class VellumView extends TextFileView {
     this.hintEl.toggleClass("is-visible", !!text);
   }
 
-  // ── 설정 패널 ─────────────────────────────────────────
+  // ── Settings panel ───────────────────────────────────
 
   private markerListEl: HTMLElement | null = null;
   private ornListEl: HTMLElement | null = null;
   private activePanelTab = "terrain";
 
-  /** 패널 상단 탭 바 + 4개 탭 컨테이너 생성 */
+  /** Build the panel's top tab bar plus its four tab containers */
   private makePanelTabs(root: HTMLElement): Record<string, HTMLElement> {
     const bar = root.createDiv({ cls: "fms-tabs" });
     const bodies = root.createDiv({ cls: "fms-tab-bodies" });
@@ -2390,7 +2392,7 @@ export class VellumView extends TextFileView {
         lb.createSpan({ text: label });
       }
 
-      // 생성: 기본은 "완전 랜덤" 한 방 — 세부 조정은 아래 고급 설정에서
+      // Generation: the default is one-shot "fully random" — fine-tuning lives in the advanced settings below
       const secGen = this.panelSection(tTerrain, "생성");
       const randBtn = secGen.createEl("button", { text: "🎲 완전 랜덤 생성", cls: "fms-btn" });
       const seedRow = secGen.createDiv({ cls: "fms-row" });
@@ -2411,9 +2413,9 @@ export class VellumView extends TextFileView {
         this.regenDebounced(50);
       };
       randBtn.onclick = () => {
-        // 시드 + 모든 생성 파라미터를 시드 파생으로 랜덤화 (같은 시드 = 같은 세계)
+        // Randomise the seed plus every generation parameter derived from it (same seed = same world)
         const seed = Math.floor(Math.random() * 1000000);
-        const keep = this.map.gen; // 토글(강·눈·사막·숲)은 유지
+        const keep = this.map.gen; // keep the toggles (rivers, snow, desert, forest)
         this.map.gen = randomizeGenParams(seed);
         this.map.gen.rivers = keep.rivers;
         this.map.gen.snow = keep.snow;
@@ -2421,12 +2423,12 @@ export class VellumView extends TextFileView {
         this.map.gen.forest = keep.forest;
         seedInput.value = String(seed);
         this.requestSave();
-        this.buildPanel(); // 고급 슬라이더 값 갱신
+        this.buildPanel(); // refresh the advanced slider values
         this.regenerate();
       };
       secGen.createDiv({ cls: "fms-note", text: "대륙·섬·해수면 등을 알아서 정합니다. 세부 조정은 고급 설정에서." });
 
-      // 고급 설정: 지형 파라미터 전체 (기본 접힘)
+      // Advanced settings: all terrain parameters (collapsed by default)
       const secBase = this.panelSection(tTerrain, "고급 · 대륙과 바다", true);
       this.slider(secBase, "해수면 높이", 0.2, 0.75, 0.01, this.map.gen.seaLevel, (v) => (this.map.gen.seaLevel = v));
       this.slider(secBase, "대륙 수", 0, 8, 1, this.map.gen.continentCount, (v) => (this.map.gen.continentCount = v));
@@ -2462,7 +2464,7 @@ export class VellumView extends TextFileView {
         this.regenerate();
       };
 
-      // 지도 크기
+      // Map size
       const secSize = this.panelSection(tTerrain, "지도 크기");
       const sizeRow = secSize.createDiv({ cls: "fms-row" });
       const wInput = sizeRow.createEl("input", { cls: "fms-seed-input", type: "number" });
@@ -2499,7 +2501,7 @@ export class VellumView extends TextFileView {
       };
       secSize.createDiv({ cls: "fms-note", text: "128~3072 셀. 큰 지도는 타일 단위로 순차 렌더됩니다(청크). 클수록 생성이 느려지니 주의. 브러시 편집은 보간되어 유지됩니다." });
 
-      // 지형 색상
+      // Terrain colours
       const secColors = this.panelSection(tStyle, "지형 색상");
       const pal = getPalette(this.map.style, this.map.styleColors);
       const slotOf: Record<string, [number, number, number]> = {
@@ -2529,7 +2531,7 @@ export class VellumView extends TextFileView {
         this.updatePaintBar();
       };
 
-      // 해안선
+      // Coastline
       const secCoast = this.panelSection(tStyle, "해안선");
       this.slider(secCoast, "폭", 0, 12, 1, this.map.coastWidth, (v) => (this.map.coastWidth = v));
       const coastRow = secCoast.createDiv({ cls: "fms-row" });
@@ -2550,7 +2552,7 @@ export class VellumView extends TextFileView {
         this.regenerate();
       };
 
-      // 전체 효과
+      // Whole-map effects
       const secDecor = this.panelSection(tStyle, "전체 효과");
       const decorRow = secDecor.createDiv({ cls: "fms-check-row" });
       const decorDefs: [keyof typeof this.map.decor, string][] = [
@@ -2563,22 +2565,22 @@ export class VellumView extends TextFileView {
         cb.onchange = () => {
           this.map.decor[key] = cb.checked;
           this.requestSave();
-          if (key === "waves") this.regenDebounced(50); // 스탬프 레이어 재생성 필요
+          if (key === "waves") this.regenDebounced(50); // stamp layer needs rebuilding
           else this.draw();
         };
         lb.createSpan({ text: label });
       }
 
-      // 질감 (슬라이더 커스텀)
+      // Texture (custom sliders)
       const secTex = this.panelSection(tStyle, "질감", true);
-      // grain·아이콘 크기는 즉시 재렌더(draw), 명암·얼룩은 베이스 재생성
+      // grain & icon size redraw immediately (draw); shading & mottle regenerate the base
       this.slider(secTex, "종이 결", 0, 1.2, 0.05, this.map.texture.grain, (v) => (this.map.texture.grain = v), false);
       this.slider(secTex, "명암(워시)", 0, 2, 0.05, this.map.texture.relief, (v) => (this.map.texture.relief = v), true);
       this.slider(secTex, "종이 얼룩", 0, 2, 0.05, this.map.texture.mottle, (v) => (this.map.texture.mottle = v), true);
       this.slider(secTex, "아이콘 크기", 0.5, 3, 0.1, this.map.texture.markerScale, (v) => (this.map.texture.markerScale = v), false);
     }
 
-    // 지도 요소 (자유 배치) — 텍스트 요소와 순수 꾸미기 요소를 분리
+    // Map elements (free placement) — text elements separated from pure decorations
     const secText = this.panelSection(tElements, "텍스트 요소");
     const textRow = secText.createDiv({ cls: "fms-orn-row" });
     const textDefs: [OrnamentType, string, string][] = [
@@ -2599,7 +2601,7 @@ export class VellumView extends TextFileView {
     {
       const inkRGB = getPalette(this.map.style, this.map.styleColors).coastline;
       const inkFn = (a: number) => `rgba(${inkRGB[0]},${inkRGB[1]},${inkRGB[2]},${a})`;
-      // 미리보기 썸네일 버튼 (마우스오버로 이름 확인)
+      // Preview thumbnail buttons (hover to see the name)
       const makeCell = (grid: HTMLElement, label: string, drawThumb: (g: CanvasRenderingContext2D) => void, onClick: () => void) => {
         const btn = grid.createEl("button", { cls: "fms-sticker-cell", attr: { "aria-label": `${label} 추가`, title: label } });
         const cv = btn.createEl("canvas");
@@ -2618,7 +2620,7 @@ export class VellumView extends TextFileView {
       for (const cat of STICKER_CATS) {
         secDeco.createDiv({ cls: "fms-sticker-cat", text: cat.label });
         const grid = secDeco.createDiv({ cls: "fms-sticker-grid" });
-        // 기존 장식 요소를 알맞은 카테고리에 정식 분류 (바다: 범선·괴물 / 지도: 나침반)
+        // File the legacy decorations under their proper categories (sea: ship & monster / map: compass)
         const legacy: [OrnamentType, string][] =
           cat.id === "sea" ? [["ship", "범선"], ["monster", "바다 괴물"]] :
           cat.id === "map" ? [["compass", "나침반"]] : [];
@@ -2634,7 +2636,7 @@ export class VellumView extends TextFileView {
           }, () => this.addOrnament("sticker", st.id));
         }
       }
-      // 사용자 제작 스티커 (볼트 이미지)
+      // User-made stickers (vault images)
       const customBtn = secDeco.createEl("button", { text: "내 스티커 추가 (볼트 이미지)…", cls: "fms-btn" });
       customBtn.onclick = () => {
         new ImageSuggestModal(this.app, (file) => {
@@ -2644,7 +2646,7 @@ export class VellumView extends TextFileView {
       secDeco.createDiv({ cls: "fms-note", text: "클릭해 지도 중앙에 추가 — 드래그 이동·크기 조절·Delete 삭제. 내 스티커는 볼트의 PNG(투명 배경 권장)를 사용합니다." });
     }
 
-    // 스타일
+    // Style
     const secStyle = this.panelSection(tStyle, "스타일");
     const styleRow = secStyle.createDiv({ cls: "fms-row" });
     styleRow.createSpan({ cls: "fms-row-label", text: "테마" });
@@ -2666,7 +2668,7 @@ export class VellumView extends TextFileView {
       cb.onchange = () => {
         this.map.showContours = cb.checked;
         this.requestSave();
-        this.cacheValid = false; // 등고선은 상세 캐시에 구워지므로 재렌더 필요
+        this.cacheValid = false; // contours are baked into the detail cache, so a re-render is needed
         this.scheduleDetail();
         this.draw();
       };
@@ -2716,7 +2718,7 @@ export class VellumView extends TextFileView {
       };
       rhumbLb.createSpan({ text: "풍배선 표시" });
 
-      // 빠른 렌더 (품질 저하) 체크박스
+      // Fast render (lower quality) checkbox
       const renderRow = secStyle.createDiv({ cls: "fms-check-row" });
       const fastLb = renderRow.createEl("label", { cls: "fms-check" });
       const fastCb = fastLb.createEl("input", { type: "checkbox" });
@@ -2724,7 +2726,7 @@ export class VellumView extends TextFileView {
       fastCb.onchange = () => {
         this.map.fastRender = fastCb.checked;
         this.requestSave();
-        this.cacheValid = false; // fastRender 전환 시 캐시 상태 리셋
+        this.cacheValid = false; // reset cache state when toggling fastRender
         if (this.detailTimer) { window.clearTimeout(this.detailTimer); this.detailTimer = null; }
         this.draw();
         if (!this.map.fastRender) this.scheduleDetail();
@@ -2732,7 +2734,7 @@ export class VellumView extends TextFileView {
       fastLb.createSpan({ text: "⚡ 빠른 렌더 (품질 저하)" });
     }
 
-    // 배경 (이미지 모드)
+    // Background (image mode)
     const secBg = this.panelSection(tFile, "지도 배경");
     if (this.map.mode === "image") {
       secBg.createDiv({ cls: "fms-note", text: `이미지: ${this.map.baseImagePath ?? "?"}` });
@@ -2762,18 +2764,18 @@ export class VellumView extends TextFileView {
       secBg.createDiv({ cls: "fms-note", text: "손그림·외부 제작 지도를 불러와 마커를 배치할 수 있습니다." });
     }
 
-    // 내보내기
+    // Export
     const secExport = this.panelSection(tFile, "내보내기");
     const exportBtn = secExport.createEl("button", { text: "PNG 이미지로 내보내기 (2×)", cls: "fms-btn" });
     exportBtn.onclick = () => void this.exportPNG();
 
-    // 배치된 요소 레이어 목록
+    // Placed-element layer list
     const secLayers = this.panelSection(tElements, "배치된 요소 (레이어)");
     this.ornListEl = secLayers.createDiv({ cls: "fms-orn-list" });
     this.buildPanelOrnList();
     secLayers.createDiv({ cls: "fms-note", text: "목록 위쪽 = 지도에서 앞. 캔버스에서 Ctrl+↑/↓(한 칸), Ctrl+Shift+↑/↓(맨 앞/뒤)로도 이동." });
 
-    // 마커 목록
+    // Marker list
     const secMk = this.panelSection(tElements, "마커");
     this.markerListEl = secMk.createDiv({ cls: "fms-marker-list" });
     this.buildPanelMarkerList();
@@ -2798,7 +2800,7 @@ export class VellumView extends TextFileView {
     }
   }
 
-  /** 배치 요소 레이어 목록 — 위쪽 = 지도에서 앞(나중에 그려짐) */
+  /** Placed-element layer list — top of the list = front of the map (drawn later) */
   private buildPanelOrnList(): void {
     const list = this.ornListEl;
     if (!list) return;
@@ -2807,7 +2809,7 @@ export class VellumView extends TextFileView {
       list.createDiv({ cls: "fms-note", text: "요소를 추가하면 여기서 순서를 바꿀 수 있습니다." });
       return;
     }
-    // 배열 뒤 = 위에 그려짐 → 목록은 위가 앞이 되도록 역순
+    // Later in the array = drawn on top → list is reversed so the top row is the front
     for (let i = this.map.ornaments.length - 1; i >= 0; i--) {
       const orn = this.map.ornaments[i];
       const item = list.createDiv({ cls: `fms-orn-item${orn.id === this.selectedOrnId ? " is-active" : ""}` });
@@ -2851,7 +2853,7 @@ export class VellumView extends TextFileView {
     }
   }
 
-  /** 선택 변경 시 목록 하이라이트만 갱신 (재구성 없이) */
+  /** Refresh only the list highlight on selection change (no rebuild) */
   private refreshOrnListActive(): void {
     const list = this.ornListEl;
     if (!list) return;
@@ -2881,7 +2883,7 @@ export class VellumView extends TextFileView {
     }
   }
 
-  // ── 그리기 도구 설정 바 ───────────────────────────────
+  // ── Drawing tool settings bar ────────────────────────
 
   private buildDrawBar(): void {
     const bar = this.rootEl.createDiv({ cls: "fms-paintbar fms-drawbar is-hidden" });
@@ -2932,8 +2934,8 @@ export class VellumView extends TextFileView {
     this.canvasEl.style.cursor = this.drawErase ? "cell" : "crosshair";
   }
 
-  /** 스타일드 커스텀 드롭다운 (HTML select 대체) */
-  /** 지도 테마에 맞춘 커스텀 드롭다운 (네이티브 select 미사용) */
+  /** Styled custom dropdown (replaces the HTML select) */
+  /** A custom dropdown matched to the map theme (no native select) */
   private customSelect(
     parent: HTMLElement,
     options: [string, string][],
@@ -3032,7 +3034,7 @@ export class VellumView extends TextFileView {
   }
 }
 
-// ── 유틸 ────────────────────────────────────────────────
+// ── Utilities ───────────────────────────────────────────
 
 function fmt(v: number, step: number): string {
   return step >= 1 ? String(Math.round(v)) : v.toFixed(2);

@@ -1,14 +1,14 @@
 /**
- * 헤드리스 시각 검증 — 브라우저 없이 합성 렌더를 PNG로 저장한다.
+ * Headless visual verification — saves the composite render as PNGs without a browser.
  *   npx esbuild test/render-png.ts --bundle --platform=node --external:skia-canvas --outfile=test/render-png.js
  *   node test/render-png.js
- * 출력: test/out/*.png (전체 + 자동 크롭: 산맥·강·해안숲·범선·괴물)
+ * Output: test/out/*.png (full map + auto crops: mountains, rivers, coastal forest, ship, monster)
  */
 import { Canvas, Path2D as SkPath2D, FontLibrary } from "skia-canvas";
 import * as fs from "fs";
 import * as path from "path";
 
-// DOM 스텁 (render2d가 document.createElement("canvas")를 쓴다)
+// DOM stub (render2d uses document.createElement("canvas"))
 (globalThis as unknown as Record<string, unknown>).document = {
   createElement: (tag: string) => {
     if (tag !== "canvas") throw new Error("canvas only");
@@ -17,11 +17,11 @@ import * as path from "path";
 };
 (globalThis as unknown as Record<string, unknown>).Path2D = SkPath2D;
 
-// 번들 폰트 (woff2 미지원이면 시스템 폰트 폴백)
+// Bundled fonts (falls back to system fonts if woff2 is unsupported)
 try {
   FontLibrary.use("FMS Serif", [path.join(__dirname, "../fonts/Cinzel*.woff2")]);
   FontLibrary.use("FMS Hand", [path.join(__dirname, "../fonts/Gaegu*.woff2")]);
-} catch { /* 폴백 */ }
+} catch { /* fallback */ }
 
 /* eslint-disable import/first */
 import { Ornament, defaultDecor, defaultMapData } from "../src/types";
@@ -60,7 +60,7 @@ const sea = terrain.seaLevel;
 const cl = pal.coastline;
 let sc = 999;
 
-// 등고선 (view.drawVectorLines과 동일한 새 알파)
+// Contours (same updated alphas as view.drawVectorLines)
 {
   const bathy = new (SkPath2D as unknown as typeof Path2D)();
   const minor = new (SkPath2D as unknown as typeof Path2D)();
@@ -100,7 +100,7 @@ let sc = 999;
   ctx.strokeStyle = `rgba(${cl[0]},${cl[1]},${cl[2]},0.26)`;
   ctx.lineWidth = 0.9;
   ctx.stroke(major);
-  // 해안 헤칭: 등치선 점선 잔선 — 물 쪽 + 육지 쪽 (view.buildCoastHatch 미러)
+  // Coastal hatching: dashed iso-line rows — water side + land side (mirrors view.buildCoastHatch)
   {
     const M = 19;
     const strokeRows = (dist: Uint8Array, isos: [number, number][], dash: [number, number], off: number) => {
@@ -125,7 +125,7 @@ let sc = 999;
     strokeRows(layers.waterDist, [[2.1, 0.42], [4.3, 0.3], [7.0, 0.2], [10.6, 0.12]], [5.2, 3.0], 0);
     strokeRows(landDistance(terrain.biome, W, H, 10), [[1.7, 0.3], [3.4, 0.18], [5.6, 0.1]], [4.2, 2.6], 1.4);
   }
-  // 해안선: 만년필 (얇고 진한 이중 펜선)
+  // Coastline: fountain pen (thin, dark double pen line)
   if (coast) {
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -138,7 +138,7 @@ let sc = 999;
   }
 }
 
-// 강 (view.drawVectorLines 미러: 워시 + 짙은 물색 심)
+// Rivers (mirrors view.drawVectorLines: wash + deep-water core)
 {
   const oc = pal.ocean, ck = pal.coastline, dp = pal.deep;
   const smoothedR = terrain.rivers.map((rv) => {
@@ -147,7 +147,7 @@ let sc = 999;
     const widths = sm.map((_, i) => rv.widths[Math.min(rv.widths.length - 1, Math.round((i / (sm.length - 1)) * (rv.widths.length - 1)))]);
     return { sm, widths };
   });
-  // 지류 끝점을 본류 렌더 중심선에 스냅 (view.buildVectorPaths 미러)
+  // Snap tributary endpoints to the parent's rendered centreline (mirrors view.buildVectorPaths)
   terrain.rivers.forEach((rv, idx) => {
     const line = smoothedR[idx];
     if (!line || rv.joins === undefined) return;
@@ -183,7 +183,7 @@ let sc = 999;
   }
 }
 
-// 지도 효과·격자·배치 요소 (범선/괴물 포함)
+// Map effects, grid, placed elements (incl. ship & monster)
 drawMapEffects(ctx, W, H, scale, cl, defaultDecor(), "parchment");
 drawCoordinateGrid(ctx, W, H, scale, cl);
 const ornaments: Ornament[] = [
@@ -197,7 +197,7 @@ const ornaments: Ornament[] = [
 drawOrnaments(ctx, ornaments, W, H, scale, cl);
 ctx.restore();
 
-// 마커 + 새 이름표 스타일
+// Markers + the new name-tag style
 const markers = [
   { x: 0.36, y: 0.42, name: "왕도 세이도라", icon: "castle", color: "#c0392b" },
   { x: 0.62, y: 0.58, name: "항구도시 벨마르", icon: "anchor", color: "#2471a3" },
@@ -219,7 +219,7 @@ for (const m of markers) {
   ctx.restore();
 }
 
-// 종이 결 오버레이
+// Paper-grain overlay
 {
   const pat = ctx.createPattern(paperGrainTile() as unknown as CanvasImageSource, "repeat");
   if (pat) {
@@ -232,7 +232,7 @@ for (const m of markers) {
   }
 }
 
-// 저장: 전체 + 크롭
+// Saving: full map + crops
 function saveCrop(name: string, cx0: number, cy0: number, cw: number, chh: number, outW: number): void {
   const crop = new Canvas(outW, Math.round((chh / cw) * outW));
   const g = crop.getContext("2d");
@@ -243,7 +243,7 @@ function saveCrop(name: string, cx0: number, cy0: number, cw: number, chh: numbe
 
 c.toFileSync(path.join(OUT, "full.png"));
 
-// 자동 크롭 대상 탐색 (산맥·강·해안숲)
+// Find auto-crop targets (mountains, rivers, coastal forest)
 function densest(pred: (i: number) => boolean): { x: number; y: number } {
   let best = { x: 0, y: 0, n: -1 };
   for (let y = 0; y < H - 50; y += 8) {
@@ -257,7 +257,7 @@ function densest(pred: (i: number) => boolean): { x: number; y: number } {
 }
 const mtn = densest((i) => terrain.biome[i] === 7);
 const rvr = densest((i) => terrain.river[i] === 1);
-// 해안 숲: 숲이면서 6셀 내에 물이 있는 셀
+// Coastal forest: forest cells with water within 6 cells
 const coastForest = densest((i) => {
   if (terrain.biome[i] !== 4) return false;
   const x = i % W, y = (i / W) | 0;
@@ -275,9 +275,9 @@ saveCrop("crop-ship.png", 0.62 * W - 30, 0.86 * H - 25, 60, 50, 480);
 saveCrop("crop-monster.png", 0.84 * W - 30, 0.4 * H - 25, 60, 50, 480);
 saveCrop("crop-marker.png", 0.36 * W - 30, 0.42 * H - 25, 60, 50, 480);
 
-// 강 연결부 크롭: 하구(바다 접점)와 지류 합류점
+// River connection crops: mouth (sea contact) and tributary junction
 {
-  // 하구: 마지막 점이 물인 강 (장식과 겹치지 않는 중앙부 우선)
+  // Mouth: rivers whose final point is water (preferring the middle, clear of decorations)
   const mouths = terrain.rivers.filter((rv) => {
     const [x, y] = rv.pts[rv.pts.length - 1];
     return terrain.height[y * W + x] < sea && y > H * 0.25 && y < H * 0.9;
@@ -287,7 +287,7 @@ saveCrop("crop-marker.png", 0.36 * W - 30, 0.42 * H - 25, 60, 50, 480);
     const [mx, my] = mouth.pts[mouth.pts.length - 1];
     saveCrop("crop-river-mouth.png", Math.max(0, mx - 20), Math.max(0, my - 17), 40, 34, 480);
   }
-  // 합류점: 마지막 점이 육지인 강 (본류에 겹침 연장된 지류)
+  // Junction: rivers whose final point is land (tributaries extended onto the parent)
   const junc = terrain.rivers.find((rv) => {
     const [x, y] = rv.pts[rv.pts.length - 1];
     return terrain.height[y * W + x] >= sea;
@@ -298,7 +298,7 @@ saveCrop("crop-marker.png", 0.36 * W - 30, 0.42 * H - 25, 60, 50, 480);
   }
 }
 
-// 내장 스티커 쇼케이스 (양피지 배경 그리드)
+// Built-in sticker showcase (parchment-background grid)
 {
   const { STICKERS } = require("../src/stickers") as typeof import("../src/stickers");
   const cols = 5, cell = 130;
@@ -325,7 +325,7 @@ saveCrop("crop-marker.png", 0.36 * W - 30, 0.42 * H - 25, 60, 50, 480);
   sc2.toFileSync(path.join(OUT, "stickers.png"));
 }
 
-// 축소 크기 스티커 선명도 검증 (선폭 = 크기 비례): r 10/16/28
+// Small-size sticker sharpness check (line width proportional to size): r 10/16/28
 {
   const { STICKERS } = require("../src/stickers") as typeof import("../src/stickers");
   const picks = ["tower", "castle", "lighthouse", "windmill", "scroll"];
@@ -342,7 +342,7 @@ saveCrop("crop-marker.png", 0.36 * W - 30, 0.42 * H - 25, 60, 50, 480);
       g.save();
       g.lineJoin = "round";
       g.lineCap = "round";
-      g.lineWidth = Math.max(rr * 0.032, 0.55); // drawOrnaments와 동일 규칙
+      g.lineWidth = Math.max(rr * 0.032, 0.55); // same rule as drawOrnaments
       st.draw(g, col * cell + cell / 2, row * cell + cell / 2, rr, inkFn, "rgba(242,232,206,0.92)");
       g.restore();
     });

@@ -1,18 +1,18 @@
-# ── 의존성 ──────────────────────────────────────────────
+# ── Dependencies ────────────────────────────────────────
 **/node_modules/
 
-# ── 빌드/생성 산출물 ────────────────────────────────────
-# 플러그인 테스트 하네스 번들 (esbuild 결과) — .ts 소스만 커밋
+# ── Build / generated artefacts ─────────────────────────
+# Plugin test-harness bundles (esbuild output) — only the .ts sources are committed
 plugin/test/*.js
-# 헤드리스 렌더 시각 검증 출력물
+# Headless-render visual verification output
 plugin/test/out/
-# 릴리스 스테이징 폴더 (배포 zip은 docs/download/ 에 커밋됨)
+# Release staging folder (distribution zips are committed in dist/ and docs/download/)
 plugin/release/
-# 잡다한 렌더 임시물
+# Miscellaneous render temporaries
 plugin/test-skia.png
 *.tsbuildinfo
 
-# ── 로컬 도구/에디터 설정 ───────────────────────────────
+# ── Local tool / editor settings ────────────────────────
 .claude/
 .vscode/
 .idea/

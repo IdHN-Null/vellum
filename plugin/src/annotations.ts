@@ -2,7 +2,7 @@ import { Annotation } from "./types";
 import { sketchToPath } from "./rough";
 import { brushArrow, inkStroke } from "./ink";
 
-/** 한 주석을 픽셀 좌표계에 그린다 (ptsPx: 이미 화면/내보내기 픽셀로 변환된 점열) */
+/** Draw one annotation in pixel space (ptsPx: points already converted to screen/export pixels) */
 export function strokeAnnotationPx(
   ctx: CanvasRenderingContext2D,
   a: Annotation,
@@ -17,7 +17,7 @@ export function strokeAnnotationPx(
     return;
   }
   if (a.dashed) {
-    // 점선 경로
+    // Dashed path
     ctx.save();
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
@@ -31,11 +31,11 @@ export function strokeAnnotationPx(
     ctx.restore();
     return;
   }
-  // 실선 자유곡선: 잉크 다중패스 + 번짐
+  // Solid freehand curve: multi-pass ink + bleed
   inkStroke(ctx, ptsPx, { color: a.color, width: w, closed: false, passes: 2, bleed: 2, amp: Math.max(0.6, w * 0.3) });
 }
 
-/** 점-폴리라인 최소거리 (히트 테스트용, 픽셀) */
+/** Minimum point-to-polyline distance (for hit testing, in pixels) */
 export function distToPolyline(px: number, py: number, ptsPx: [number, number][]): number {
   let best = Infinity;
   for (let i = 0; i < ptsPx.length - 1; i++) {

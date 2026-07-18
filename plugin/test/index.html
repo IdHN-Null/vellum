@@ -7,7 +7,7 @@
 </head>
 <body>
 <script>
-  // 번들 폰트를 강제 로드한 뒤 렌더 (canvas가 폰트를 쓰려면 로드 완료 필요)
+  // Force-load the bundled fonts before rendering (canvas needs them fully loaded)
   Promise.all([
     document.fonts.load('600 40px "FMS Serif"'),
     document.fonts.load('600 40px "FMS Hand"'),

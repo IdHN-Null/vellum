@@ -1,6 +1,6 @@
 # Vellum
 
-🌐 **English (US)** · [English (UK)](README.en-GB.md) · [Español](README.es.md) · [中文](README.zh.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
+🌐 [English (US)](README.md) · **English (UK)** · [Español](README.es.md) · [中文](README.zh.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 
 **From imagination to map.** A fantasy map generator & editor for Obsidian that lets you create and refine your own worlds.
 
@@ -43,6 +43,6 @@ npm test       # pure-logic unit tests
 This repository uses a `master` (release) / `dev` (integration) / `feat/*` (feature) branch strategy.
 Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
 
-## License
+## Licence
 
 [MIT](plugin/LICENSE)

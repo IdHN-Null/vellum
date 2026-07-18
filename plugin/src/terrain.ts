@@ -6,7 +6,7 @@ function smoothstep(a: number, b: number, x: number): number {
   return t * t * (3 - 2 * t);
 }
 
-/** 바이옴 코드 */
+/** Biome codes */
 export const B = {
   DEEP: 0,
   OCEAN: 1,
@@ -19,11 +19,11 @@ export const B = {
   SNOW: 8,
 } as const;
 
-/** 벡터 강줄기: 점 + 점별 폭(셀 단위, 유량에 비례해 하류로 갈수록 굵어짐) */
+/** Vector river: points plus per-point width (in cells, widening downstream with flow) */
 export interface RiverPath {
   pts: [number, number][];
   widths: number[];
-  /** 합류하는 본류의 rivers 배열 인덱스 (렌더에서 끝점을 본류 중심선에 스냅) */
+  /** Index into the rivers array of the main stream this one joins (the renderer snaps the endpoint onto its centreline) */
   joins?: number;
 }
 
@@ -32,22 +32,23 @@ export interface TerrainResult {
   h: number;
   height: Float32Array; // 0..1
   biome: Uint8Array;
-  river: Uint8Array;    // 0/1 강 마스크
-  lake: Uint8Array;     // 0/1 호수 마스크
+  river: Uint8Array;    // 0/1 river mask
+  lake: Uint8Array;     // 0/1 lake mask
   rivers: RiverPath[];
   seaLevel: number;
 }
 
 /**
- * 시드·파라미터 → 정규화 노이즈 + 수리 침식 하이트맵 (편집·강 미적용).
- * 침식은 비싸지만(수만 물방울) 이 결과가 캐시되므로 브러시 성능에 영향 없다.
+ * Seed & parameters → normalised noise + hydraulically eroded heightmap (edits and
+ * rivers not yet applied). Erosion is expensive (tens of thousands of droplets), but
+ * this result is cached, so brush performance is unaffected.
  */
 export function generateBase(map: MapData): Float32Array {
   const w = map.width, h = map.height;
   const g = map.gen;
   const nH = new Noise2D(g.seed);
   const nD = new Noise2D(g.seed + 1013);
-  const nW = new Noise2D(g.seed + 5501); // 도메인 워핑용
+  const nW = new Noise2D(g.seed + 5501); // for domain warping
 
   const base = new Float32Array(w * h);
   const contFreq = 1.2 + g.continents * 0.75;
@@ -55,7 +56,7 @@ export function generateBase(map: MapData): Float32Array {
   const detGain = 0.42 + Math.min(g.roughness, 2) * 0.09;
   const aspect = h / w;
 
-  // 대륙·섬 중심 배치 (개수 명시 제어). continentCount=0이면 순수 노이즈 방식.
+  // Continent/island centre placement (explicit count control). continentCount=0 falls back to pure noise.
   const cc = Math.max(0, Math.round(g.continentCount ?? 0));
   const ic = Math.max(0, Math.round(g.islandCount ?? 0));
   const useBlobs = cc > 0 || ic > 0;
@@ -70,11 +71,11 @@ export function generateBase(map: MapData): Float32Array {
       const cx = 0.18 + rng() * 0.64;
       const cy = 0.18 + rng() * 0.64;
       const r = contR * (0.72 + rng() * 0.6);
-      // 산맥 등뼈: 대륙마다 내부를 관통하는 능선 1줄기 보장 (판타지 지도 문법)
+      // Mountain spine: guarantee one ridge line through each continent's interior (fantasy-map grammar)
       const ang = rng() * Math.PI;
       const sl = r * (0.5 + rng() * 0.25);
       const ca = Math.cos(ang), sa = Math.sin(ang);
-      const ucy = cy * aspect; // 거리 계산은 aspect 보정 공간에서
+      const ucy = cy * aspect; // distances are computed in aspect-corrected space
       blobs.push({
         cx, cy, r, s: 1,
         spine: { x0: cx - ca * sl, y0: ucy - sa * sl, x1: cx + ca * sl, y1: ucy + sa * sl, w: r * 0.115 },
@@ -100,10 +101,10 @@ export function generateBase(map: MapData): Float32Array {
       let v: number;
 
       if (useBlobs) {
-        // 도메인 워핑: 좌표를 노이즈로 밀어 원형 블롭을 유기적으로
+        // Domain warping: push coordinates around with noise so circular blobs turn organic
         const wx = nxc + fbm(nW, nxc * 3, nyc * 3, 4) * 0.12;
         const wy = nyc + fbm(nW, nxc * 3 + 11, nyc * 3 + 7, 4) * 0.12;
-        // 평원(plateau) 마스크: 내부는 평평(1), 해안 근처서만 하강 → 돔이 아닌 평지 중심
+        // Plateau mask: flat (1) in the interior, dropping only near the coast → plains-centred, not domed
         let land = 0;
         for (const b of blobs) {
           const dx = wx - b.cx, dy = (wy - b.cy) * aspect;
@@ -114,18 +115,18 @@ export function generateBase(map: MapData): Float32Array {
           }
         }
         const coastN = fbm(nD, nxc * contFreq * 3 + 7, nyc * contFreq * 3 + 3, detOct, 2, detGain);
-        const edge = land + coastN * 0.22; // 해안선 거칠기
+        const edge = land + coastN * 0.22; // coastline roughness
 
         if (edge < 0.5) {
-          v = edge * 0.9; // 바다: 0..0.45 (멀수록 깊게)
+          v = edge * 0.9; // sea: 0..0.45 (deeper the farther out)
         } else {
           const inland = Math.min(1, (edge - 0.5) * 2.5);
-          // 산맥: 저주파 마스크로 위치를 정하고, 능선(ridged) 노이즈로 선형 산맥 형성
+          // Mountains: a low-frequency mask picks the location; ridged noise forms linear ranges
           const maskN = (fbm(nH, nxc * 1.7 + 4, nyc * 1.7 + 4, 3) + 1) * 0.5;
           const rr = fbm(nD, nxc * 3.4 + 20, nyc * 3.4 + 20, 5);
           const ridge = Math.max(0, 1 - Math.abs(rr) * 1.5);
           const gate = smoothstep(0.46, 0.76, maskN);
-          // 대륙 등뼈 산맥: 세그먼트 거리 기반, 봉우리 노이즈로 굴곡
+          // Continental spine range: segment-distance based, with peak noise for undulation
           let spine = 0;
           for (const b of blobs) {
             const sp = b.spine;
@@ -139,18 +140,18 @@ export function generateBase(map: MapData): Float32Array {
             const ds = Math.hypot(dxs, dys);
             if (ds < sp.w * 1.4) {
               const prof = Math.max(0, 1 - ds / sp.w);
-              const envelope = Math.sin(Math.PI * tt) ** 0.6; // 양끝 테이퍼
+              const envelope = Math.sin(Math.PI * tt) ** 0.6; // taper at both ends
               const peaks = 0.55 + 0.45 * ((fbm(nD, wx * 7 + 40, wy * 7 + 40, 3) + 1) * 0.5);
               spine = Math.max(spine, prof * envelope * peaks * 0.8);
             }
           }
           const mtn = Math.max(ridge * gate, spine) * Math.min(1, inland * 2.5);
-          // 평원은 넓고 낮게, 산맥은 선형으로 도드라지게 → 도시·왕국에 적합
-          // (진폭 0.58: 침식 후에도 MOUNTAIN 분류 임계를 넘는 능선이 남도록)
+          // Plains broad and low, ranges linear and prominent → suits cities and kingdoms
+          // (amplitude 0.58: leaves ridges above the MOUNTAIN threshold even after erosion)
           v = 0.52 + inland * 0.06 + mtn * 0.58 + coastN * 0.02;
         }
       } else {
-        // 기존 순수 노이즈 방식 (continentCount=섬=0)
+        // Legacy pure-noise mode (continentCount = islands = 0)
         const b = fbm(nH, nx * contFreq, ny * contFreq, 4, 2, 0.5);
         const d = fbm(nD, nx * contFreq * 4 + 7.3, ny * contFreq * 4 + 3.1, detOct, 2, detGain);
         v = b * 0.7 + d * 0.3 * (0.6 + g.roughness * 0.4);
@@ -162,9 +163,9 @@ export function generateBase(map: MapData): Float32Array {
     }
   }
   if (useBlobs) {
-    // 절대 스케일 유지 (정규화하면 산봉우리 높이에 따라 평원 rel이 왜곡돼 산악화됨).
-    // 고고도는 소프트 압축 — 하드 클램프가 만드는 '설원 고원 카펫'(넓은 rel=1 평면) 방지,
-    // 만년설은 진짜 봉우리 끝에만 남는다.
+    // Keep absolute scale (normalising would warp plains' rel with the peak height and turn them mountainous).
+    // Soft-compress high altitudes — avoids the 'snowfield-plateau carpet' (broad rel=1 plane) a hard clamp
+    // produces; permanent snow survives only on true peaks.
     for (let i = 0; i < base.length; i++) {
       let v = base[i];
       if (v > 0.86) v = 0.86 + (v - 0.86) * 0.38;
@@ -180,8 +181,8 @@ export function generateBase(map: MapData): Float32Array {
 }
 
 /**
- * 물방울 수리 침식 — 경사면을 깎아 계곡을 새기고 저지대에 퇴적한다.
- * 절차 노이즈 특유의 '고른 울퉁불퉁함'이 사라지고 배수 지형이 생긴다.
+ * Droplet hydraulic erosion — carves valleys into slopes and deposits in lowlands.
+ * Removes procedural noise's characteristic 'uniform bumpiness' and produces drainage terrain.
  */
 function erode(
   height: Float32Array, w: number, h: number,
@@ -203,11 +204,11 @@ function erode(
       const i00 = yi * w + xi;
       const h00 = height[i00], h10 = height[i00 + 1];
       const h01 = height[i00 + w], h11 = height[i00 + w + 1];
-      // 쌍선형 그래디언트·높이
+      // Bilinear gradient and height
       const gx = (h10 - h00) * (1 - fy) + (h11 - h01) * fy;
       const gy = (h01 - h00) * (1 - fx) + (h11 - h10) * fx;
       const oldH = h00 * (1 - fx) * (1 - fy) + h10 * fx * (1 - fy) + h01 * (1 - fx) * fy + h11 * fx * fy;
-      if (oldH < sea - 0.03) break; // 바다 도달
+      if (oldH < sea - 0.03) break; // reached the sea
 
       dx = dx * INERTIA - gx * (1 - INERTIA);
       dy = dy * INERTIA - gy * (1 - INERTIA);
@@ -251,13 +252,13 @@ function erode(
   }
 }
 
-/** 베이스 + 편집 델타 → 최종 고도 (한 셀) */
+/** Base + edit delta → final elevation (one cell) */
 export function composeHeight(base: number, edit: number): number {
   const v = base + edit / 254;
   return v < 0 ? 0 : v > 1 ? 1 : v;
 }
 
-/** 바이옴 분류기 — 전체/부분 재분류가 동일 규칙을 공유 */
+/** Biome classifier — full and partial reclassification share the same rules */
 export class Classifier {
   private g: GenParams;
   private nM: Noise2D;
@@ -297,7 +298,7 @@ export class Classifier {
   }
 }
 
-/** 페인트 오버라이드 적용 (한 셀) */
+/** Apply a paint override (one cell) */
 export function applyPaintAt(
   biome: number, paintVal: number, el: number, sea: number,
 ): number {
@@ -306,7 +307,7 @@ export function applyPaintAt(
   return b === B.OCEAN && el < sea - 0.12 ? B.DEEP : b;
 }
 
-/** 전체 지형 합성: 고도 → 수문(호수·강) → 분류 → 페인트 */
+/** Full terrain composition: elevation → hydrology (lakes, rivers) → classification → paint */
 export function composeTerrain(
   map: MapData,
   base: Float32Array,
@@ -345,7 +346,7 @@ export function composeTerrain(
   return { w, h, height, biome, river, lake, rivers, seaLevel: sea };
 }
 
-/** 브러시 영역만 재계산 (수문은 finalize에서) */
+/** Recompute only the brushed area (hydrology waits for finalize) */
 export function updateTerrainRect(
   t: TerrainResult,
   map: MapData,
@@ -370,7 +371,7 @@ export function updateTerrainRect(
   }
 }
 
-// ── 수문 시뮬레이션: 웅덩이 채우기 → 유향 → 유량 누적 → 강·호수 ──
+// ── Hydrology simulation: depression filling → flow direction → flow accumulation → rivers & lakes ──
 
 interface Hydrology {
   river: Uint8Array;
@@ -387,8 +388,8 @@ function hydrology(
 ): Hydrology {
   const n = w * h;
 
-  // 1) Priority-flood 웅덩이 채우기 (경계에서 낮은 순으로 물을 채워 스필 레벨 결정)
-  //    epsilon 기울기를 더해 평탄면에서도 배수 방향이 생기게 한다.
+  // 1) Priority-flood depression filling (water rises from the border, lowest first, fixing spill levels).
+  //    An epsilon gradient is added so flat surfaces still drain somewhere.
   const filled = new Float32Array(height);
   const visited = new Uint8Array(n);
   const heap = new MinHeap(n);
@@ -418,13 +419,13 @@ function hydrology(
     }
   }
 
-  // 2) 호수: 채워진 높이가 원 지형보다 유의미하게 높고 해수면 위인 곳
+  // 2) Lakes: where the filled level is meaningfully above the raw terrain and above sea level
   const lake = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     if (filled[i] > sea && filled[i] - height[i] > 0.006) lake[i] = 1;
   }
 
-  // 3) 유향: 채워진 표면에서 가장 가파른 하강 이웃
+  // 3) Flow direction: steepest descending neighbour on the filled surface
   const flowDir = new Int32Array(n).fill(-1);
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -441,10 +442,10 @@ function hydrology(
     }
   }
 
-  // 4) 유량 누적: 높은 곳부터 하류로 물을 흘려보낸다
+  // 4) Flow accumulation: pour water downstream starting from the highest cells
   const order = new Uint32Array(n);
   for (let i = 0; i < n; i++) order[i] = i;
-  // Float32 키 내림차순 정렬
+  // Sort by Float32 key, descending
   const sorted = Array.from(order).sort((a, b) => filled[b] - filled[a]);
   const acc = new Float32Array(n).fill(1);
   for (const i of sorted) {
@@ -452,26 +453,26 @@ function hydrology(
     if (d >= 0) acc[d] += acc[i];
   }
 
-  // 5) 강 셀: 유량이 임계값을 넘는 육지.
-  // 임계값이 낮으면 지도 전체가 실핏줄 강으로 덮여 지저분해진다 — 큰 물줄기 위주로.
+  // 5) River cells: land whose flow exceeds the threshold.
+  // A low threshold buries the whole map under capillary rivers — favour major waterways.
   const T = n / (50 + 620 * Math.max(0.02, riverDensity));
   const river = new Uint8Array(n);
   for (let i = 0; i < n; i++) {
     if (height[i] >= sea && !lake[i] && acc[i] >= T) river[i] = 1;
   }
 
-  // 6) 벡터 강줄기 추적: 발원지에서 하류로, 유량에 따라 폭 증가.
-  // traced에는 (강 인덱스+1)을 기록 — 지류가 어느 본류에 합류하는지 알 수 있다.
+  // 6) Vector river tracing: source to downstream, width growing with flow.
+  // traced stores (river index + 1) — telling us which main stream a tributary joins.
   const rivers: RiverPath[] = [];
   const traced = new Int32Array(n);
   const widthOf = (a: number): number => 0.5 + Math.log2(a / T + 1) * 0.55;
 
-  // 지형 높이 범위 (정규화용)
+  // Terrain height range (for normalisation)
   const heightRange = Math.max(0.001, 1.0 - sea);
 
   for (let i = 0; i < n; i++) {
     if (!river[i] || traced[i]) continue;
-    // 발원지: 상류에 강 셀이 없는 강 셀
+    // Source: a river cell with no upstream river cell
     let isSource = true;
     const x = i % w, y = (i / w) | 0;
     for (let d = 0; d < 8 && isSource; d++) {
@@ -482,15 +483,15 @@ function hydrology(
     }
     if (!isSource) continue;
 
-    // 발원지가 해수면 근처(저지대)에 있으면 바다에서 흘러들어오는 것처럼 보이는 단편이 생성됨.
-    // 지형 높이의 상위 92% 이하인 저지대 셀에서는 발원지로 인정하지 않음.
+    // A source near sea level produces fragments that look like rivers flowing in from the sea.
+    // Reject sources in low-lying cells below 8% of the terrain height range.
     const relSrcHeight = (height[i] - sea) / heightRange;
     if (relSrcHeight < 0.08) continue;
 
     const pts: [number, number][] = [];
     const widths: number[] = [];
     const marked: number[] = [];
-    const riverIdx = rivers.length + 1; // 임시 id (traced에 기록)
+    const riverIdx = rivers.length + 1; // provisional id (recorded in traced)
     let joins: number | undefined;
     let cur = i;
     for (let step = 0; step < w + h; step++) {
@@ -500,7 +501,7 @@ function hydrology(
       const next = flowDir[cur];
       if (next < 0) break;
 
-      // 하구: 물속으로 3셀 연장 + 폭을 깔때기처럼 벌려 바다로 스며드는 어귀(estuary)를 만든다
+      // River mouth: extend 3 cells into the water, flaring the width like a funnel to form an estuary
       if (height[next] < sea || lake[next]) {
         const wBase = widthOf(acc[cur]);
         const flare = [1.25, 1.7, 2.2];
@@ -514,7 +515,8 @@ function hydrology(
       }
 
       if (traced[next]) {
-        // 본류 합류: 합류 셀까지만 긋고, 어느 본류인지 기록 (렌더가 본류 중심선에 스냅)
+        // Confluence: draw only up to the junction cell and record which main stream it is
+        // (the renderer snaps onto that stream's centreline)
         joins = traced[next] - 1;
         pts.push([next % w, (next / w) | 0]);
         widths.push(widthOf(acc[next]));
@@ -524,8 +526,8 @@ function hydrology(
       marked.push(cur);
       cur = next;
     }
-    // 짧은 단편은 버린다 — 강은 소수의 긴 물줄기가 그림이 된다.
-    // 버린 강의 traced 흔적은 지워 지류 합류 인덱스가 어긋나지 않게 한다.
+    // Discard short fragments — a few long waterways make the picture.
+    // Clear a discarded river's traced marks so tributary join indices stay consistent.
     if (pts.length >= 10) {
       rivers.push({ pts, widths, joins });
     } else {
@@ -533,7 +535,7 @@ function hydrology(
     }
   }
 
-  // 7) 강바닥을 살짝 파서 음영 부여
+  // 7) Slightly carve the riverbed to give it shading
   for (let i = 0; i < n; i++) {
     if (river[i] && height[i] >= sea) {
       const dent = 0.004 + 0.005 * Math.min(1, acc[i] / (T * 10));
@@ -544,7 +546,7 @@ function hydrology(
   return { river, lake, rivers };
 }
 
-/** (키, 인덱스) 최소 힙 — priority flood용 */
+/** (key, index) min-heap — for priority flood */
 class MinHeap {
   private keys: Float64Array;
   private vals: Int32Array;

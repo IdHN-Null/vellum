@@ -1,4 +1,4 @@
-/** 시드 기반 2D 그래디언트 노이즈 + fBm. 외부 의존성 없음. */
+/** Seeded 2D gradient noise + fBm. No external dependencies. */
 
 export function mulberry32(seed: number): () => number {
   let a = seed >>> 0;

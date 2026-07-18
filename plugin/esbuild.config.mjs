@@ -3,7 +3,7 @@ import process from "process";
 
 const prod = process.argv[2] === "production";
 
-// 1) 워커를 먼저 번들해 문자열로 얻는다 (main에 인라인 → 3파일만으로 오프라인 동작)
+// 1) Bundle the worker first and capture it as a string (inlined into main → three files work offline)
 const workerBuild = await esbuild.build({
   entryPoints: ["src/worker.ts"],
   bundle: true,

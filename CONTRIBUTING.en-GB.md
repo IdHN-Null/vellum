@@ -1,6 +1,6 @@
 # Contributing Guide — Branch Policy
 
-🌐 **English (US)** · [English (UK)](CONTRIBUTING.en-GB.md) · [Español](CONTRIBUTING.es.md) · [中文](CONTRIBUTING.zh.md) · [日本語](CONTRIBUTING.ja.md) · [한국어](CONTRIBUTING.ko.md)
+🌐 [English (US)](CONTRIBUTING.md) · **English (UK)** · [Español](CONTRIBUTING.es.md) · [中文](CONTRIBUTING.zh.md) · [日本語](CONTRIBUTING.ja.md) · [한국어](CONTRIBUTING.ko.md)
 
 This repository runs on the five branch types below. In one line:
 
@@ -16,7 +16,7 @@ This repository runs on the five branch types below. In one line:
 
 - Despite the name, its real job is **integration**. **Do not write code directly here.**
 - To land a feature you developed separately, open a **PR from `feat/*` into `dev`**.
-- Once `dev` has stabilized, merge it into `master` via PR.
+- Once `dev` has stabilised, merge it into `master` via PR.
 
 ## 3. `feat/{feature-name}` — feature development
 
@@ -25,7 +25,7 @@ This repository runs on the five branch types below. In one line:
   `npm run build && npm test` passes.
 - **No self-approving your own PR.** (No merging without review.)
 - Once a PR is approved and merged, the branch is **deleted automatically** (repository setting).
-- Built something cool or fun that you'd rather show off than merge?
+- Built something brilliant or fun that you'd rather show off than merge?
   Push the branch and simply don't open a PR.
 
 ## 4. `test/{test-name}` — experiments

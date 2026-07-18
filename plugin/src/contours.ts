@@ -1,36 +1,38 @@
 /**
- * 하이트맵 → 벡터 등고선 추출 (마칭 스퀘어) + Douglas-Peucker 단순화.
- * 지도 밖을 매우 낮은 값으로 취급해 모든 등고선이 닫힌 링이 되도록 한다.
- * 좌표 단위는 하이트맵 셀(픽셀)이며, 겹친 링은 evenodd 채우기로 구멍을 표현한다.
+ * Heightmap → vector contour extraction (marching squares) + Douglas-Peucker simplification.
+ * The area outside the map is treated as a very low value, so every contour closes into a ring.
+ * Coordinates are in heightmap cells (pixels); nested rings express holes via even-odd filling.
  */
 
 export type Ring = [number, number][];
 
 export interface ContourLevel {
-  z: number;      // 이 레벨의 등고 높이 (0..1)
+  z: number;      // contour height of this level (0..1)
   rings: Ring[];
 }
 
 export interface ContourSet {
   levels: ContourLevel[];
-  step: number;   // 레벨 간 높이 간격
+  step: number;   // height interval between levels
 }
 
 /**
- * precision(0..2)에 따라 레벨 수와 단순화 강도를 정해 등고선 집합을 만든다.
- * bathy > 0이면 해수면 아래 등심선도 포함한다 (z < sea, 얕은 것부터 깊은 순 아님 — 오름차순 유지).
+ * Builds the contour set, choosing level count and simplification strength from
+ * precision (0..2). With bathy > 0, sub-sea-level bathymetric lines are included
+ * as well (z < sea; kept in ascending order, not shallow-to-deep).
  */
 export function extractContours(
   height: Float32Array, w: number, h: number,
   sea: number, precision: number, bathy = 2,
 ): ContourSet {
-  // 등고선은 근대 지형도 기법이라 판타지 지도에선 절제 — 기본을 성기게 (정밀도 슬라이더로 추가 가능)
+  // Contours are a modern-cartography technique, so keep them restrained on a fantasy
+  // map — sparse by default (the precision slider can add more)
   const levelCount = Math.round(3 + precision * 4);          // 3..11
-  const epsilon = Math.max(0.4, 2.2 - precision * 0.9);      // 셀 단위, 정밀할수록 작게
+  const epsilon = Math.max(0.4, 2.2 - precision * 0.9);      // in cells; smaller at higher precision
   const step = (1 - sea) / levelCount;
 
   const levels: ContourLevel[] = [];
-  // 해저 등심선 (깊은 순으로 추가해 전체 오름차순 유지)
+  // Bathymetric lines (added deepest-first so the whole list stays ascending)
   for (let k = bathy; k >= 1; k--) {
     const iso = sea - k * 0.055;
     if (iso <= 0.02) continue;
@@ -50,8 +52,9 @@ export function extractContours(
 }
 
 /**
- * 임의 스칼라 필드의 등치선 링 추출 — 해안 헤칭(waterDist 등距離 잔선) 등에 사용.
- * 단순화·미세 링 필터 포함.
+ * Extract iso-line rings from an arbitrary scalar field — used for coastal hatching
+ * (equidistant waterDist rings) and similar. Includes simplification and a filter
+ * for tiny rings.
  */
 export function extractIsoRings(
   field: Float32Array, w: number, h: number, iso: number,
@@ -62,26 +65,26 @@ export function extractIsoRings(
     .filter((r) => r.length >= 3 && Math.abs(ringArea(r)) > minArea);
 }
 
-/** 열린 폴리라인 단순화 (강줄기용 Douglas-Peucker) */
+/** Open polyline simplification (Douglas-Peucker, for rivers) */
 export function simplifyLine(pts: Ring, epsilon: number): Ring {
   return dpSimplify(pts, epsilon);
 }
 
-// ── 마칭 스퀘어 ─────────────────────────────────────────
+// ── Marching squares ────────────────────────────────────
 
 function marchingSquares(f: Float32Array, w: number, h: number, iso: number): Ring[] {
-  const OUT = -10; // 지도 밖 = 항상 등고선 아래 → 링이 경계에서 닫힘
+  const OUT = -10; // outside the map = always below the contour → rings close at the border
   const sample = (x: number, y: number): number =>
     x < 0 || y < 0 || x >= w || y >= h ? OUT : f[y * w + x];
 
-  // 세그먼트를 평탄 배열로 수집: [x1,y1,x2,y2, ...]
+  // Collect segments into a flat array: [x1,y1,x2,y2, ...]
   const segs: number[] = [];
   for (let y = -1; y < h; y++) {
     for (let x = -1; x < w; x++) {
-      const a = sample(x, y);         // 좌상
-      const b = sample(x + 1, y);     // 우상
-      const c = sample(x + 1, y + 1); // 우하
-      const d = sample(x, y + 1);     // 좌하
+      const a = sample(x, y);         // top-left
+      const b = sample(x + 1, y);     // top-right
+      const c = sample(x + 1, y + 1); // bottom-right
+      const d = sample(x, y + 1);     // bottom-left
       let idx = 0;
       if (a >= iso) idx |= 8;
       if (b >= iso) idx |= 4;
@@ -93,7 +96,7 @@ function marchingSquares(f: Float32Array, w: number, h: number, iso: number): Ri
         const dv = vb - va;
         return dv === 0 ? 0.5 : (iso - va) / dv;
       };
-      // 각 변 위의 교차점
+      // Intersection points on each edge
       const topX = x + t(a, b), topY = y;
       const rightX = x + 1, rightY = y + t(b, c);
       const botX = x + t(d, c), botY = y + 1;
@@ -105,7 +108,7 @@ function marchingSquares(f: Float32Array, w: number, h: number, iso: number): Ri
         case 2: put(botX, botY, rightX, rightY); break;
         case 3: put(leftX, leftY, rightX, rightY); break;
         case 4: put(topX, topY, rightX, rightY); break;
-        case 5: // 대각 모호(b,d 위) → 셀 중앙값으로 결정
+        case 5: // diagonal ambiguity (b, d above) → resolve via the cell-centre value
           if ((a + b + c + d) / 4 >= iso) {
             put(topX, topY, leftX, leftY); put(botX, botY, rightX, rightY);
           } else {
@@ -116,7 +119,7 @@ function marchingSquares(f: Float32Array, w: number, h: number, iso: number): Ri
         case 7: put(leftX, leftY, topX, topY); break;
         case 8: put(leftX, leftY, topX, topY); break;
         case 9: put(topX, topY, botX, botY); break;
-        case 10: // 대각 모호(a,c 위)
+        case 10: // diagonal ambiguity (a, c above)
           if ((a + b + c + d) / 4 >= iso) {
             put(topX, topY, rightX, rightY); put(leftX, leftY, botX, botY);
           } else {
@@ -133,13 +136,13 @@ function marchingSquares(f: Float32Array, w: number, h: number, iso: number): Ri
   return chainSegments(segs);
 }
 
-/** 세그먼트들을 끝점 매칭으로 닫힌 링으로 연결 */
+/** Chain segments into closed rings via endpoint matching */
 function chainSegments(segs: number[]): Ring[] {
   const count = segs.length / 4;
   const key = (x: number, y: number): string =>
     `${Math.round(x * 1024)},${Math.round(y * 1024)}`;
 
-  // 끝점 → 세그먼트 인덱스 목록
+  // Endpoint → list of segment indices
   const byPoint = new Map<string, number[]>();
   for (let i = 0; i < count; i++) {
     for (const k of [key(segs[i * 4], segs[i * 4 + 1]), key(segs[i * 4 + 2], segs[i * 4 + 3])]) {
@@ -161,11 +164,11 @@ function chainSegments(segs: number[]): Ring[] {
     ];
     const headKey = key(ring[0][0], ring[0][1]);
 
-    // 꼬리를 계속 연장
+    // Keep extending the tail
     for (;;) {
       const tail = ring[ring.length - 1];
       const tk = key(tail[0], tail[1]);
-      if (tk === headKey && ring.length > 2) { ring.pop(); break; } // 닫힘
+      if (tk === headKey && ring.length > 2) { ring.pop(); break; } // closed
       const candidates = byPoint.get(tk);
       let next = -1;
       if (candidates) {
@@ -173,11 +176,11 @@ function chainSegments(segs: number[]): Ring[] {
           if (!used[ci]) { next = ci; break; }
         }
       }
-      if (next < 0) break; // 열린 채 종료 (수치 오차 등) → 그대로 사용
+      if (next < 0) break; // ends open (numerical error etc.) → use as-is
       used[next] = 1;
       const nx1 = segs[next * 4], ny1 = segs[next * 4 + 1];
       const nx2 = segs[next * 4 + 2], ny2 = segs[next * 4 + 3];
-      // 꼬리와 일치하지 않는 쪽 끝점을 붙인다
+      // Append whichever endpoint does not match the tail
       if (key(nx1, ny1) === tk) ring.push([nx2, ny2]);
       else ring.push([nx1, ny1]);
     }
@@ -186,11 +189,11 @@ function chainSegments(segs: number[]): Ring[] {
   return rings;
 }
 
-// ── 단순화 (Douglas-Peucker) ────────────────────────────
+// ── Simplification (Douglas-Peucker) ────────────────────
 
 export function simplifyRing(ring: Ring, epsilon: number): Ring {
   if (epsilon <= 0 || ring.length < 8) return ring;
-  // 닫힌 링: 시작점에서 가장 먼 점을 찾아 두 개의 열린 사슬로 나눠 처리
+  // Closed ring: find the point farthest from the start and process as two open chains
   let far = 0, farD = -1;
   for (let i = 1; i < ring.length; i++) {
     const dx = ring[i][0] - ring[0][0], dy = ring[i][1] - ring[0][1];
@@ -217,7 +220,7 @@ function dpSimplify(pts: Ring, epsilon: number): Ring {
     const len2 = dx * dx + dy * dy || 1;
     let maxD = -1, maxI = -1;
     for (let i = s + 1; i < e; i++) {
-      // 선분까지의 수직 거리²
+      // Squared perpendicular distance to the segment
       const px = pts[i][0] - sx, py = pts[i][1] - sy;
       const cross = px * dy - py * dx;
       const d = (cross * cross) / len2;
@@ -234,8 +237,8 @@ function dpSimplify(pts: Ring, epsilon: number): Ring {
 }
 
 /**
- * Chaikin 코너 컷팅 — 각진 폴리라인을 부드러운 곡선으로.
- * closed=true면 링, false면 열린 선(강줄기)으로 처리한다.
+ * Chaikin corner cutting — turns an angular polyline into a smooth curve.
+ * closed=true treats it as a ring; false as an open line (rivers).
  */
 export function chaikin(pts: Ring, iterations = 2, closed = true): Ring {
   let cur = pts;

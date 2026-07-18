@@ -1,12 +1,13 @@
 /**
- * 잉크·만년필·붓 질감 렌더링. 일정 굵기 벡터선 대신
- *  - 가변폭 리본(붓 눌림/펜촉),
- *  - 다중 패스 + 저농도 번짐(ink bleed),
- *  로 손으로 그은 잉크선처럼 보이게 한다.
+ * Ink, fountain-pen and brush texture rendering. Instead of constant-width vector
+ * lines, it uses
+ *  - variable-width ribbons (brush pressure / nib), and
+ *  - multiple passes with a low-opacity ink bleed,
+ * so strokes look like hand-drawn ink.
  */
 import { Pt, roughLine, sketchToPath } from "./rough";
 
-/** 점열을 Catmull-Rom으로 촘촘히 리샘플 (부드러운 리본 경계용) */
+/** Densely resample points with Catmull-Rom (for smooth ribbon edges) */
 function resample(pts: Pt[], subdiv = 3): Pt[] {
   if (pts.length < 3) return pts.slice();
   const out: Pt[] = [];
@@ -26,8 +27,8 @@ function resample(pts: Pt[], subdiv = 3): Pt[] {
 }
 
 /**
- * 가변폭 리본 Path2D. widthAt(t,i)로 진행에 따른 굵기를 지정.
- * 끝을 뾰족하게 하려면 widthAt이 0에 수렴하게 하면 된다.
+ * Variable-width ribbon Path2D. widthAt(t, i) sets the width along the stroke.
+ * To taper an end to a point, let widthAt converge to 0.
  */
 export function ribbonPath(pts: Pt[], widthAt: (t: number, i: number) => number): Path2D {
   const rs = resample(pts, 3);
@@ -50,11 +51,11 @@ export function ribbonPath(pts: Pt[], widthAt: (t: number, i: number) => number)
   return path;
 }
 
-/** 끝이 뾰족한 붓 리본 (강줄기 등): wStart→wEnd 선형, 양끝 테이퍼 */
+/** Pointed brush ribbon (rivers etc.): linear wStart→wEnd, tapered at both ends */
 export function taperedRibbon(pts: Pt[], wStart: number, wEnd: number): Path2D {
   return ribbonPath(pts, (t) => {
     const w = wStart + (wEnd - wStart) * t;
-    // 양끝을 살짝 좁혀 붓 눌림 느낌
+    // Narrow both ends slightly for a brush-pressure feel
     const endTaper = Math.min(1, t / 0.08) * Math.min(1, (1 - t) / 0.06);
     return w * (0.55 + 0.45 * endTaper);
   });
@@ -63,11 +64,11 @@ export function taperedRibbon(pts: Pt[], wStart: number, wEnd: number): Path2D {
 export interface InkOpts {
   color: string;
   width: number;
-  bleed?: number;   // 번짐 배율 (기본 2.4)
+  bleed?: number;   // bleed multiplier (default 2.4)
   bleedAlpha?: number;
-  passes?: number;  // 겹쳐 긋기 (기본 2)
+  passes?: number;  // overdraw passes (default 2)
   seed?: number;
-  amp?: number;     // 흔들림 (셀/px)
+  amp?: number;     // jitter (cells/px)
   closed?: boolean;
 }
 
@@ -82,8 +83,8 @@ function rgbaFrom(color: string, a: number): string {
 }
 
 /**
- * 손잉크 선: 넓은 저농도 번짐 밑칠 + 여러 겹 얇은 선.
- * pts는 이미 목표 픽셀 좌표. 매 프레임 호출해도 가벼운 편.
+ * Hand-inked line: a wide low-opacity bleed undercoat plus several thin passes.
+ * pts are already in target pixel space. Light enough to call every frame.
  */
 export function inkStroke(ctx: CanvasRenderingContext2D, pts: Pt[], o: InkOpts): void {
   if (pts.length < 2) return;
@@ -94,7 +95,7 @@ export function inkStroke(ctx: CanvasRenderingContext2D, pts: Pt[], o: InkOpts):
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
 
-  // 번짐 밑칠
+  // Bleed undercoat
   const bleed = o.bleed ?? 2.4;
   if (bleed > 0) {
     const p = new Path2D();
@@ -103,7 +104,7 @@ export function inkStroke(ctx: CanvasRenderingContext2D, pts: Pt[], o: InkOpts):
     ctx.lineWidth = o.width * bleed;
     ctx.stroke(p);
   }
-  // 다중 패스
+  // Multiple passes
   for (let k = 0; k < passes; k++) {
     const p = new Path2D();
     sketchToPath(p, roughLine(pts, amp, seed + k * 811), !!o.closed);
@@ -115,8 +116,9 @@ export function inkStroke(ctx: CanvasRenderingContext2D, pts: Pt[], o: InkOpts):
 }
 
 /**
- * 붓 화살표: 테이퍼 리본 몸통 + 깔끔한 화살촉.
- * 화살촉은 항상 몸통보다 확실히 넓게(자연스러운 비율), 뒤가 살짝 파인 barb 형태.
+ * Brush arrow: tapered ribbon body plus a clean arrowhead.
+ * The head is always clearly wider than the body (natural proportion), with a slightly
+ * notched barb at the back.
  */
 export function brushArrow(ctx: CanvasRenderingContext2D, pts: Pt[], color: string, width: number, dashed: boolean): void {
   if (pts.length < 2) return;
@@ -124,14 +126,14 @@ export function brushArrow(ctx: CanvasRenderingContext2D, pts: Pt[], color: stri
   const prev = pts[pts.length - 2];
   const ang = Math.atan2(tip[1] - prev[1], tip[0] - prev[0]);
   const dx = Math.cos(ang), dy = Math.sin(ang);
-  const nx = -dy, ny = dx; // 법선
+  const nx = -dy, ny = dx; // normal
 
   const headLen = width * 3.4 + 6;
-  const headHalf = width * 1.9 + 4;   // 몸통보다 확실히 넓게
-  const barb = 0.32;                  // 뒤쪽 파임 정도
+  const headHalf = width * 1.9 + 4;   // clearly wider than the body
+  const barb = 0.32;                  // depth of the rear notch
   const baseX = tip[0] - dx * headLen, baseY = tip[1] - dy * headLen;
   const notchX = tip[0] - dx * headLen * (1 - barb), notchY = tip[1] - dy * headLen * (1 - barb);
-  // 몸통은 화살촉 파임 지점까지만
+  // The body runs only up to the arrowhead notch
   const bodyEnd: Pt = [notchX, notchY];
   const body = pts.slice(0, -1).concat([bodyEnd]);
 
@@ -152,7 +154,7 @@ export function brushArrow(ctx: CanvasRenderingContext2D, pts: Pt[], color: stri
     ctx.fill(taperedRibbon(body, width * 0.5, width * 1.0));
   }
 
-  // 화살촉 (tip → 왼날개 → 뒤 파임 → 오른날개)
+  // Arrowhead (tip → left wing → rear notch → right wing)
   const head = new Path2D();
   head.moveTo(tip[0], tip[1]);
   head.lineTo(baseX + nx * headHalf, baseY + ny * headHalf);
@@ -164,8 +166,8 @@ export function brushArrow(ctx: CanvasRenderingContext2D, pts: Pt[], color: stri
 }
 
 /**
- * 리본의 왼쪽/오른쪽 강둑(경계선)을 각각 분리된 Path2D로 생성하여
- * 양끝의 납작한 수평선(flat end cut) 없이 깔끔하게 외곽선만 그릴 수 있도록 한다.
+ * Build the ribbon's left/right banks (edges) as separate Path2Ds, so the outline
+ * can be drawn cleanly without the flat end cuts at either tip.
  */
 export function ribbonBanks(pts: Pt[], widthAt: (t: number, i: number) => number): [Path2D, Path2D] {
   const rs = resample(pts, 3);

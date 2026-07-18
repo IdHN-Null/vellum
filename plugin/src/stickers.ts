@@ -1,7 +1,7 @@
 /**
- * 내장 벡터 스티커 라이브러리 — 하늘·바다·땅·지도 4계열.
- * 모든 스티커는 (cx,cy) 중심, 반경 r 기준의 상대 좌표로 그리고,
- * 지도 잉크 색과 종이 색을 받아 스타일과 조화를 이룬다.
+ * Built-in vector sticker library — four families: sky, sea, land, map.
+ * Every sticker draws in coordinates relative to a centre (cx, cy) and radius r,
+ * and receives the map's ink and paper colours so it harmonises with the style.
  */
 
 import { ribbonPath } from "./ink";
@@ -10,7 +10,7 @@ export type InkFn = (a: number) => string;
 
 type Pt = [number, number];
 
-/** 2차 베지어를 n등분 샘플 (캘리그래피 테이퍼 리본용) */
+/** Sample a quadratic Bézier into n segments (for calligraphic tapered ribbons) */
 function sampleQuad(p0: Pt, c: Pt, p1: Pt, n = 14): Pt[] {
   const out: Pt[] = [];
   for (let k = 0; k <= n; k++) {
@@ -23,7 +23,7 @@ function sampleQuad(p0: Pt, c: Pt, p1: Pt, n = 14): Pt[] {
   return out;
 }
 
-/** 안으로 감기는 나선 점열 (캘리그래피 컬) */
+/** Inward-winding spiral points (calligraphic curl) */
 function spiralPts(cx: number, cy: number, r0: number, turns: number, phase: number, dir = 1): Pt[] {
   const out: Pt[] = [];
   const total = turns * Math.PI * 2;
@@ -38,7 +38,7 @@ export interface StickerDef {
   id: string;
   label: string;
   cat: "sky" | "sea" | "land" | "map";
-  /** 바운딩 박스 절반 크기 (r 배수) [wF, hF] */
+  /** Bounding-box half sizes (multiples of r) [wF, hF] */
   box: [number, number];
   draw: (ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, ink: InkFn, paper: string) => void;
 }
@@ -51,12 +51,12 @@ export const STICKER_CATS: { id: StickerDef["cat"]; label: string }[] = [
 ];
 
 export const STICKERS: StickerDef[] = [
-  // ── 하늘 ─────────────────────────────────────────────
+  // ── Sky ──────────────────────────────────────────────
   {
     id: "cloud", label: "구름", cat: "sky", box: [1.2, 0.72],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
-      // 납작한 층운(stratus) — 밑변이 평평하고 윗면만 뭉실, 아래 각인선으로 판화 느낌
+      // Flat stratus cloud — level base with a billowy top, engraved lines below for a woodcut feel
       const base = cy + r * 0.28;
       const p = new Path2D();
       p.moveTo(cx - r * 0.98, base);
@@ -70,7 +70,7 @@ export const STICKERS: StickerDef[] = [
       ctx.fill(p);
       ctx.strokeStyle = ink(0.82);
       ctx.stroke(p);
-      // 아래 각인선 (수평 결 2줄)
+      // Engraved lines below (2 horizontal grain strokes)
       ctx.strokeStyle = ink(0.35);
       ctx.lineWidth = lw * 0.7;
       ctx.beginPath();
@@ -83,9 +83,9 @@ export const STICKERS: StickerDef[] = [
   {
     id: "sun", label: "태양", cat: "sky", box: [1.05, 1.05],
     draw(ctx, cx, cy, r, ink, paper) {
-      // 헤럴드풍 '태양(sun in splendor)' — 얼굴 없이 절제된 광선과 이중 원반
+      // Heraldic 'sun in splendour' — restrained rays and a double disc, no face
       const lw = ctx.lineWidth;
-      // 16방향 뾰족한 광선 (긴/짧은 교대)
+      // 16 pointed rays (alternating long/short)
       ctx.fillStyle = ink(0.8);
       for (let k = 0; k < 16; k++) {
         const a = (k * Math.PI) / 8;
@@ -100,7 +100,7 @@ export const STICKERS: StickerDef[] = [
         ctx.closePath();
         ctx.fill();
       }
-      // 원반 + 이중 링
+      // Disc + double ring
       ctx.beginPath();
       ctx.arc(cx, cy, r * 0.5, 0, Math.PI * 2);
       ctx.fillStyle = paper;
@@ -112,7 +112,7 @@ export const STICKERS: StickerDef[] = [
       ctx.beginPath();
       ctx.arc(cx, cy, r * 0.36, 0, Math.PI * 2);
       ctx.stroke();
-      // 중심에서 뻗는 짧은 각인선 8개 (표정 대신 방사 문양)
+      // 8 short engraved lines radiating from the centre (a radial motif instead of a face)
       ctx.beginPath();
       for (let k = 0; k < 8; k++) {
         const a = (k * Math.PI) / 4 + Math.PI / 8;
@@ -136,7 +136,7 @@ export const STICKERS: StickerDef[] = [
       ctx.fill(p);
       ctx.strokeStyle = ink(0.85);
       ctx.stroke(p);
-      // 안쪽 음영선 (판화 결) — 반짝이 대신
+      // Inner shading line (woodcut grain) — instead of sparkles
       ctx.strokeStyle = ink(0.4);
       ctx.lineWidth = lw * 0.7;
       ctx.beginPath();
@@ -144,7 +144,7 @@ export const STICKERS: StickerDef[] = [
       ctx.bezierCurveTo(cx - r * 0.5, cy - r * 0.42, cx - r * 0.5, cy + r * 0.42, cx - r * 0.04, cy + r * 0.4);
       ctx.stroke();
       ctx.lineWidth = lw;
-      // 절제된 4각 별 하나 (작게)
+      // One restrained four-pointed star (small)
       const s = r * 0.13, sx = cx + r * 0.5, sy = cy - r * 0.34;
       ctx.fillStyle = ink(0.6);
       ctx.beginPath();
@@ -179,20 +179,20 @@ export const STICKERS: StickerDef[] = [
     },
   },
 
-  // ── 바다 ─────────────────────────────────────────────
+  // ── Sea ──────────────────────────────────────────────
   {
     id: "whale", label: "고래", cat: "sea", box: [1.3, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
-      // 고래 — 길쭉한 몸통 + 각진 꼬리 지느러미 + 각인선 (동판화 자연지 삽화 느낌)
+      // Whale — elongated body + angular tail fluke + engraved lines (copperplate natural-history feel)
       const p = new Path2D();
-      p.moveTo(cx - r * 1.0, cy + r * 0.04);                                   // 주둥이 끝
+      p.moveTo(cx - r * 1.0, cy + r * 0.04);                                   // snout tip
       p.quadraticCurveTo(cx - r * 0.9, cy - r * 0.44, cx - r * 0.3, cy - r * 0.46);
-      p.quadraticCurveTo(cx + r * 0.4, cy - r * 0.48, cx + r * 0.66, cy - r * 0.16); // 등
-      p.lineTo(cx + r * 0.82, cy - r * 0.5);                                   // 꼬리자루→위 갈래
+      p.quadraticCurveTo(cx + r * 0.4, cy - r * 0.48, cx + r * 0.66, cy - r * 0.16); // back
+      p.lineTo(cx + r * 0.82, cy - r * 0.5);                                   // tailstock → upper fluke
       p.lineTo(cx + r * 1.16, cy - r * 0.44);
-      p.lineTo(cx + r * 0.94, cy - r * 0.06);                                  // 갈래 사이 파임
-      p.lineTo(cx + r * 1.16, cy + r * 0.28);                                  // 아래 갈래
+      p.lineTo(cx + r * 0.94, cy - r * 0.06);                                  // notch between flukes
+      p.lineTo(cx + r * 1.16, cy + r * 0.28);                                  // lower fluke
       p.lineTo(cx + r * 0.8, cy + r * 0.2);
       p.quadraticCurveTo(cx + r * 0.5, cy + r * 0.34, cx - r * 0.1, cy + r * 0.34);
       p.quadraticCurveTo(cx - r * 0.72, cy + r * 0.34, cx - r * 1.0, cy + r * 0.04);
@@ -201,14 +201,14 @@ export const STICKERS: StickerDef[] = [
       ctx.fill(p);
       ctx.strokeStyle = ink(0.85);
       ctx.stroke(p);
-      // 턱선 (입)
+      // Jawline (mouth)
       ctx.strokeStyle = ink(0.55);
       ctx.lineWidth = lw * 0.8;
       ctx.beginPath();
       ctx.moveTo(cx - r * 0.98, cy + r * 0.06);
       ctx.quadraticCurveTo(cx - r * 0.75, cy + r * 0.16, cx - r * 0.4, cy + r * 0.12);
       ctx.stroke();
-      // 가슴지느러미
+      // Pectoral fin
       ctx.strokeStyle = ink(0.85);
       ctx.lineWidth = lw;
       const fin = new Path2D();
@@ -218,7 +218,7 @@ export const STICKERS: StickerDef[] = [
       fin.closePath();
       ctx.fillStyle = paper;
       ctx.fill(fin); ctx.stroke(fin);
-      // 몸통 각인선 2줄
+      // Two engraved body lines
       ctx.strokeStyle = ink(0.35);
       ctx.lineWidth = lw * 0.65;
       ctx.beginPath();
@@ -228,12 +228,12 @@ export const STICKERS: StickerDef[] = [
       ctx.quadraticCurveTo(cx, cy - r * 0.14, cx + r * 0.48, cy + r * 0.02);
       ctx.stroke();
       ctx.lineWidth = lw;
-      // 눈
+      // Eye
       ctx.fillStyle = ink(0.9);
       ctx.beginPath();
       ctx.arc(cx - r * 0.68, cy - r * 0.08, Math.max(0.9, r * 0.04), 0, Math.PI * 2);
       ctx.fill();
-      // 분수 (V자 두 갈래)
+      // Spout (two-pronged V)
       ctx.strokeStyle = ink(0.6);
       ctx.lineCap = "round";
       ctx.beginPath();
@@ -248,13 +248,13 @@ export const STICKERS: StickerDef[] = [
     id: "fish", label: "물고기 떼", cat: "sea", box: [1.0, 0.8],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
-      // 유선형 물고기 — 지느러미·아가미·비늘선 각인 (동판화 어류 삽화)
+      // Streamlined fish — engraved fins, gills and scale lines (copperplate ichthyology plate)
       const fish = (x: number, y: number, s: number) => {
         const p = new Path2D();
-        p.moveTo(x - s, y);                                                 // 주둥이
+        p.moveTo(x - s, y);                                                 // snout
         p.quadraticCurveTo(x - s * 0.2, y - s * 0.5, x + s * 0.5, y - s * 0.14);
-        p.lineTo(x + s * 0.9, y - s * 0.44);                               // 위 꼬리
-        p.quadraticCurveTo(x + s * 0.78, y, x + s * 0.9, y + s * 0.44);    // 아래 꼬리
+        p.lineTo(x + s * 0.9, y - s * 0.44);                               // upper tail
+        p.quadraticCurveTo(x + s * 0.78, y, x + s * 0.9, y + s * 0.44);    // lower tail
         p.lineTo(x + s * 0.5, y + s * 0.14);
         p.quadraticCurveTo(x - s * 0.2, y + s * 0.5, x - s, y);
         p.closePath();
@@ -263,20 +263,20 @@ export const STICKERS: StickerDef[] = [
         ctx.strokeStyle = ink(0.82);
         ctx.lineWidth = lw;
         ctx.stroke(p);
-        // 아가미선
+        // Gill line
         ctx.strokeStyle = ink(0.45);
         ctx.lineWidth = lw * 0.7;
         ctx.beginPath();
         ctx.moveTo(x - s * 0.5, y - s * 0.22);
         ctx.quadraticCurveTo(x - s * 0.36, y, x - s * 0.5, y + s * 0.22);
-        // 등지느러미 결
+        // Dorsal fin grain
         ctx.moveTo(x + s * 0.02, y - s * 0.24);
         ctx.lineTo(x + s * 0.16, y - s * 0.34);
         ctx.moveTo(x + s * 0.16, y - s * 0.18);
         ctx.lineTo(x + s * 0.3, y - s * 0.28);
         ctx.stroke();
         ctx.lineWidth = lw;
-        // 눈
+        // Eye
         ctx.fillStyle = ink(0.85);
         ctx.beginPath();
         ctx.arc(x - s * 0.62, y - s * 0.06, Math.max(0.8, s * 0.06), 0, Math.PI * 2);
@@ -297,11 +297,11 @@ export const STICKERS: StickerDef[] = [
       for (let t = 0; t <= 4.6 * Math.PI; t += 0.15) {
         const rr = r * 0.05 + (r * 0.85 * t) / (4.6 * Math.PI);
         const x = cx + Math.cos(t + 0.8) * rr;
-        const y = cy + Math.sin(t + 0.8) * rr * 0.82; // 살짝 눌린 타원
+        const y = cy + Math.sin(t + 0.8) * rr * 0.82; // slightly squashed ellipse
         if (first) { ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      // 튀는 물방울
+      // Splashing droplets
       ctx.strokeStyle = ink(0.5);
       ctx.beginPath();
       ctx.moveTo(cx + r * 0.75, cy - r * 0.55);
@@ -329,40 +329,41 @@ export const STICKERS: StickerDef[] = [
     },
   },
 
-  // ── 땅 ───────────────────────────────────────────────
+  // ── Land ─────────────────────────────────────────────
   {
     id: "dragon", label: "드래곤", cat: "land", box: [1.25, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
-      // 비행 실루엣 — 머리(좌)·큰 박쥐 날개(우상)·화살촉 꼬리(우)가 뚜렷이 분리된 문장풍
+      // Flight silhouette — heraldic, with head (left), large bat wing (upper right) and
+      // arrowhead tail (right) clearly separated
       const p = new Path2D();
-      p.moveTo(cx - r * 1.15, cy - r * 0.5);                                          // 윗턱 끝
-      p.lineTo(cx - r * 0.9, cy - r * 0.4);                                           // 입 안쪽
-      p.lineTo(cx - r * 1.06, cy - r * 0.26);                                         // 아랫턱 끝
-      p.quadraticCurveTo(cx - r * 0.82, cy - r * 0.24, cx - r * 0.72, cy - r * 0.18); // 턱→목 앞
-      p.quadraticCurveTo(cx - r * 0.56, cy - r * 0.06, cx - r * 0.48, cy + r * 0.08); // 가슴
-      p.lineTo(cx - r * 0.38, cy + r * 0.28);                                         // 앞다리
+      p.moveTo(cx - r * 1.15, cy - r * 0.5);                                          // upper jaw tip
+      p.lineTo(cx - r * 0.9, cy - r * 0.4);                                           // inside the mouth
+      p.lineTo(cx - r * 1.06, cy - r * 0.26);                                         // lower jaw tip
+      p.quadraticCurveTo(cx - r * 0.82, cy - r * 0.24, cx - r * 0.72, cy - r * 0.18); // jaw → front of neck
+      p.quadraticCurveTo(cx - r * 0.56, cy - r * 0.06, cx - r * 0.48, cy + r * 0.08); // chest
+      p.lineTo(cx - r * 0.38, cy + r * 0.28);                                         // foreleg
       p.lineTo(cx - r * 0.28, cy + r * 0.12);
-      p.quadraticCurveTo(cx - r * 0.05, cy + r * 0.3, cx + r * 0.16, cy + r * 0.24);  // 배
-      p.lineTo(cx + r * 0.24, cy + r * 0.46);                                         // 뒷다리
+      p.quadraticCurveTo(cx - r * 0.05, cy + r * 0.3, cx + r * 0.16, cy + r * 0.24);  // belly
+      p.lineTo(cx + r * 0.24, cy + r * 0.46);                                         // hind leg
       p.lineTo(cx + r * 0.34, cy + r * 0.24);
-      p.quadraticCurveTo(cx + r * 0.68, cy + r * 0.22, cx + r * 0.92, cy + r * 0.4);  // 꼬리 아랫면
-      p.lineTo(cx + r * 0.94, cy + r * 0.56);                                         // 화살촉
+      p.quadraticCurveTo(cx + r * 0.68, cy + r * 0.22, cx + r * 0.92, cy + r * 0.4);  // underside of tail
+      p.lineTo(cx + r * 0.94, cy + r * 0.56);                                         // arrowhead
       p.lineTo(cx + r * 1.18, cy + r * 0.42);
       p.lineTo(cx + r * 0.99, cy + r * 0.3);
-      p.quadraticCurveTo(cx + r * 0.72, cy + r * 0.06, cx + r * 0.44, cy + r * 0.02); // 꼬리 윗면
-      p.lineTo(cx + r * 0.38, cy - r * 0.06);                                         // 날개 뿌리(뒤)
-      p.quadraticCurveTo(cx + r * 0.62, cy - r * 0.42, cx + r * 0.56, cy - r * 0.9);  // 날개 뒷변→날개 끝
-      p.quadraticCurveTo(cx + r * 0.28, cy - r * 0.58, cx + r * 0.12, cy - r * 0.74); // 막 스캘럽1
-      p.quadraticCurveTo(cx - r * 0.06, cy - r * 0.44, cx - r * 0.22, cy - r * 0.52); // 막 스캘럽2
-      p.quadraticCurveTo(cx - r * 0.36, cy - r * 0.3, cx - r * 0.46, cy - r * 0.24);  // 날개 앞변→어깨
-      p.quadraticCurveTo(cx - r * 0.62, cy - r * 0.34, cx - r * 0.7, cy - r * 0.52);  // 목 뒤
-      p.lineTo(cx - r * 0.58, cy - r * 0.72);                                         // 뿔
-      p.lineTo(cx - r * 0.78, cy - r * 0.58);                                         // 두개골 뒤
-      p.quadraticCurveTo(cx - r * 0.98, cy - r * 0.58, cx - r * 1.15, cy - r * 0.5);  // 이마→윗턱
+      p.quadraticCurveTo(cx + r * 0.72, cy + r * 0.06, cx + r * 0.44, cy + r * 0.02); // top of tail
+      p.lineTo(cx + r * 0.38, cy - r * 0.06);                                         // wing root (rear)
+      p.quadraticCurveTo(cx + r * 0.62, cy - r * 0.42, cx + r * 0.56, cy - r * 0.9);  // trailing edge → wing tip
+      p.quadraticCurveTo(cx + r * 0.28, cy - r * 0.58, cx + r * 0.12, cy - r * 0.74); // membrane scallop 1
+      p.quadraticCurveTo(cx - r * 0.06, cy - r * 0.44, cx - r * 0.22, cy - r * 0.52); // membrane scallop 2
+      p.quadraticCurveTo(cx - r * 0.36, cy - r * 0.3, cx - r * 0.46, cy - r * 0.24);  // leading edge → shoulder
+      p.quadraticCurveTo(cx - r * 0.62, cy - r * 0.34, cx - r * 0.7, cy - r * 0.52);  // back of neck
+      p.lineTo(cx - r * 0.58, cy - r * 0.72);                                         // horn
+      p.lineTo(cx - r * 0.78, cy - r * 0.58);                                         // back of skull
+      p.quadraticCurveTo(cx - r * 0.98, cy - r * 0.58, cx - r * 1.15, cy - r * 0.5);  // forehead → upper jaw
       p.closePath();
       ctx.fillStyle = ink(0.85);
       ctx.fill(p);
-      // 눈 (종이색 점)
+      // Eye (paper-coloured dot)
       ctx.fillStyle = paper;
       ctx.beginPath();
       ctx.arc(cx - r * 0.88, cy - r * 0.48, Math.max(0.9, r * 0.04), 0, Math.PI * 2);
@@ -372,7 +373,7 @@ export const STICKERS: StickerDef[] = [
   {
     id: "tent", label: "야영지", cat: "land", box: [1.0, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
-      // 천막
+      // Tent
       const p = new Path2D();
       p.moveTo(cx - r * 0.78, cy + r * 0.55);
       p.lineTo(cx, cy - r * 0.62);
@@ -382,7 +383,7 @@ export const STICKERS: StickerDef[] = [
       ctx.fill(p);
       ctx.strokeStyle = ink(0.85);
       ctx.stroke(p);
-      // 입구 플랩
+      // Door flap
       const door = new Path2D();
       door.moveTo(cx - r * 0.2, cy + r * 0.55);
       door.lineTo(cx, cy + r * 0.02);
@@ -390,7 +391,7 @@ export const STICKERS: StickerDef[] = [
       ctx.fillStyle = ink(0.22);
       ctx.fill(door);
       ctx.stroke(door);
-      // 깃대 + 페넌트
+      // Flagpole + pennant
       ctx.beginPath();
       ctx.moveTo(cx, cy - r * 0.62);
       ctx.lineTo(cx, cy - r * 0.92);
@@ -402,7 +403,7 @@ export const STICKERS: StickerDef[] = [
       ctx.closePath();
       ctx.fillStyle = ink(0.7);
       ctx.fill();
-      // 지면선
+      // Ground line
       ctx.strokeStyle = ink(0.5);
       ctx.beginPath();
       ctx.moveTo(cx - r * 0.95, cy + r * 0.56);
@@ -415,14 +416,14 @@ export const STICKERS: StickerDef[] = [
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
-      // 온전한 기둥 (왼쪽)
+      // Intact column (left)
       const col = new Path2D();
       col.rect(cx - r * 0.62, cy - r * 0.55, r * 0.28, r * 1.1);
       ctx.fill(col); ctx.stroke(col);
       const cap = new Path2D();
       cap.rect(cx - r * 0.7, cy - r * 0.68, r * 0.44, r * 0.14);
       ctx.fill(cap); ctx.stroke(cap);
-      // 부러진 기둥 (오른쪽) — 윗면 들쭉날쭉
+      // Broken column (right) — jagged top
       const br = new Path2D();
       br.moveTo(cx + r * 0.12, cy + r * 0.55);
       br.lineTo(cx + r * 0.12, cy - r * 0.1);
@@ -432,7 +433,7 @@ export const STICKERS: StickerDef[] = [
       br.lineTo(cx + r * 0.4, cy + r * 0.55);
       br.closePath();
       ctx.fill(br); ctx.stroke(br);
-      // 기둥 홈(플루트)
+      // Column flutes
       ctx.strokeStyle = ink(0.3);
       ctx.beginPath();
       ctx.moveTo(cx - r * 0.53, cy - r * 0.5); ctx.lineTo(cx - r * 0.53, cy + r * 0.5);
@@ -440,7 +441,7 @@ export const STICKERS: StickerDef[] = [
       ctx.moveTo(cx + r * 0.21, cy - r * 0.1); ctx.lineTo(cx + r * 0.21, cy + r * 0.48);
       ctx.moveTo(cx + r * 0.31, cy - r * 0.04); ctx.lineTo(cx + r * 0.31, cy + r * 0.48);
       ctx.stroke();
-      // 쓰러진 석재 + 잔해
+      // Fallen masonry + rubble
       ctx.strokeStyle = ink(0.8);
       ctx.save();
       ctx.translate(cx + r * 0.68, cy + r * 0.44);
@@ -456,7 +457,7 @@ export const STICKERS: StickerDef[] = [
         ctx.arc(cx + r * dx, cy + r * dy, r * s, 0, Math.PI * 2);
         ctx.fill();
       }
-      // 지면선
+      // Ground line
       ctx.strokeStyle = ink(0.5);
       ctx.beginPath();
       ctx.moveTo(cx - r * 0.9, cy + r * 0.56);
@@ -469,7 +470,7 @@ export const STICKERS: StickerDef[] = [
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
-      // 몸통 (살짝 테이퍼)
+      // Body (slightly tapered)
       const body = new Path2D();
       body.moveTo(cx - r * 0.34, cy + r * 0.6);
       body.lineTo(cx - r * 0.26, cy - r * 0.42);
@@ -477,7 +478,7 @@ export const STICKERS: StickerDef[] = [
       body.lineTo(cx + r * 0.34, cy + r * 0.6);
       body.closePath();
       ctx.fill(body); ctx.stroke(body);
-      // 총안 (crenellation)
+      // Crenellation
       const cren = new Path2D();
       cren.moveTo(cx - r * 0.34, cy - r * 0.42);
       cren.lineTo(cx - r * 0.34, cy - r * 0.6);
@@ -493,7 +494,7 @@ export const STICKERS: StickerDef[] = [
       cren.lineTo(cx + r * 0.34, cy - r * 0.42);
       cren.closePath();
       ctx.fill(cren); ctx.stroke(cren);
-      // 창·문
+      // Window and door
       ctx.fillStyle = ink(0.75);
       ctx.beginPath();
       ctx.rect(cx - r * 0.035, cy - r * 0.18, r * 0.07, r * 0.2);
@@ -504,14 +505,14 @@ export const STICKERS: StickerDef[] = [
       door.arc(cx, cy + r * 0.34, r * 0.11, Math.PI, 0);
       door.lineTo(cx + r * 0.11, cy + r * 0.6);
       ctx.fill(door);
-      // 석재 틈 몇 개
+      // A few masonry joints
       ctx.strokeStyle = ink(0.3);
       ctx.beginPath();
       ctx.moveTo(cx - r * 0.2, cy + r * 0.1); ctx.lineTo(cx - r * 0.02, cy + r * 0.1);
       ctx.moveTo(cx + r * 0.04, cy - r * 0.02); ctx.lineTo(cx + r * 0.2, cy - r * 0.02);
       ctx.moveTo(cx - r * 0.16, cy + r * 0.32); ctx.lineTo(cx + r * 0.02, cy + r * 0.32);
       ctx.stroke();
-      // 깃발
+      // Flag
       ctx.strokeStyle = ink(0.85);
       ctx.beginPath();
       ctx.moveTo(cx + r * 0.27, cy - r * 0.6);
@@ -527,20 +528,21 @@ export const STICKERS: StickerDef[] = [
     },
   },
 
-  // ── 지도 꾸밈 ────────────────────────────────────────
-  // (리본 배너는 텍스트를 쓸 수 있는 '리본 문구' 텍스트 요소로 승격되어 제거됨)
+  // ── Map decoration ───────────────────────────────────
+  // (The ribbon banner was promoted to the text-capable 'ribbon banner' element and removed here)
 ];
 
-// ── 확장 세트 ──────────────────────────────────────────
+// ── Extended set ────────────────────────────────────────
 STICKERS.push(
   {
     id: "wind", label: "바람", cat: "sky", box: [1.15, 0.8],
     draw(ctx, cx, cy, r, ink) {
-      // 얼굴 없는 돌풍 문양 — 나선 근원에서 뻗어나가 끝이 말리는 바람 줄기 (절제된 기상 기호)
+      // Faceless gust motif — wind streams stretching from a spiral source with curling
+      // ends (a restrained weather symbol)
       ctx.strokeStyle = ink(0.75);
       ctx.lineCap = "round";
       const lw = ctx.lineWidth;
-      // 근원 나선 (왼쪽)
+      // Source spiral (left)
       const sx = cx - r * 0.7, sy = cy - r * 0.05;
       ctx.beginPath();
       let first = true;
@@ -550,7 +552,7 @@ STICKERS.push(
         if (first) { ctx.moveTo(x, y); first = false; } else ctx.lineTo(x, y);
       }
       ctx.stroke();
-      // 바람 줄기 3가닥 — 오른쪽으로 뻗다가 끝이 말림 (굵기 차등)
+      // Three wind streams — stretching right, curling at the ends (varied widths)
       const gust = (y0: number, len: number, curlR: number, wide: number) => {
         ctx.lineWidth = wide;
         ctx.beginPath();
@@ -568,7 +570,7 @@ STICKERS.push(
   {
     id: "storm", label: "폭풍 구름", cat: "sky", box: [1.0, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
-      // 구름
+      // Cloud
       const p = new Path2D();
       const oy = cy - r * 0.35;
       p.moveTo(cx - r * 0.72, oy + r * 0.16);
@@ -584,7 +586,7 @@ STICKERS.push(
       ctx.fill(p);
       ctx.strokeStyle = ink(0.85);
       ctx.stroke(p);
-      // 번개
+      // Lightning bolt
       const bolt = new Path2D();
       bolt.moveTo(cx - r * 0.05, cy - r * 0.02);
       bolt.lineTo(cx - r * 0.24, cy + r * 0.34);
@@ -596,7 +598,7 @@ STICKERS.push(
       bolt.closePath();
       ctx.fillStyle = ink(0.85);
       ctx.fill(bolt);
-      // 빗줄기
+      // Rain streaks
       ctx.strokeStyle = ink(0.45);
       ctx.beginPath();
       for (const [ox2, oy2] of [[0.32, 0.1], [0.48, 0.2], [0.38, 0.42]] as const) {
@@ -609,7 +611,7 @@ STICKERS.push(
   {
     id: "lighthouse", label: "등대", cat: "sea", box: [1.05, 1.1],
     draw(ctx, cx, cy, r, ink, paper) {
-      // 불빛
+      // Light beams
       ctx.fillStyle = ink(0.18);
       for (const dir of [-1, 1]) {
         ctx.beginPath();
@@ -621,7 +623,7 @@ STICKERS.push(
       }
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
-      // 몸통 (테이퍼)
+      // Body (tapered)
       const body = new Path2D();
       body.moveTo(cx - r * 0.3, cy + r * 0.5);
       body.lineTo(cx - r * 0.16, cy - r * 0.55);
@@ -629,7 +631,7 @@ STICKERS.push(
       body.lineTo(cx + r * 0.3, cy + r * 0.5);
       body.closePath();
       ctx.fill(body); ctx.stroke(body);
-      // 줄무늬 2개
+      // Two stripes
       ctx.fillStyle = ink(0.35);
       const stripe = (t0: number, t1: number) => {
         const lx = (t: number) => cx - r * (0.3 - 0.14 * t);
@@ -645,7 +647,7 @@ STICKERS.push(
       };
       stripe(0.18, 0.36);
       stripe(0.55, 0.73);
-      // 등롱 + 지붕
+      // Lantern room + roof
       ctx.fillStyle = paper;
       const lantern = new Path2D();
       lantern.rect(cx - r * 0.18, cy - r * 0.78, r * 0.36, r * 0.23);
@@ -661,7 +663,7 @@ STICKERS.push(
       roof.closePath();
       ctx.fillStyle = paper;
       ctx.fill(roof); ctx.stroke(roof);
-      // 바위 + 물결
+      // Rock + waves
       ctx.fillStyle = paper;
       const rock = new Path2D();
       rock.moveTo(cx - r * 0.6, cy + r * 0.72);
@@ -681,32 +683,32 @@ STICKERS.push(
   {
     id: "kraken", label: "크라켄", cat: "sea", box: [1.1, 0.95],
     draw(ctx, cx, cy, r, ink, paper) {
-      const wl = cy + r * 0.52; // 수면선
+      const wl = cy + r * 0.52; // waterline
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
-      // 촉수: 중심선을 따라 강하게 테이퍼 + 끝이 갈고리처럼 안으로 말림
+      // Tentacles: strongly tapered along the centreline, tips curling inwards like hooks
       const tentacle = (bx: number, h: number, dir: number, w0: number) => {
         const tipY = wl - r * h;
         const p = new Path2D();
         p.moveTo(bx - r * w0, wl);
-        // 바깥면: 완만히 상승
+        // Outer face: gentle rise
         p.quadraticCurveTo(bx - r * (w0 + 0.06 * dir), wl - r * h * 0.55, bx - r * 0.02 * dir, tipY + r * 0.3);
-        // 갈고리 바깥
+        // Outside of the hook
         p.quadraticCurveTo(bx + r * 0.02 * dir, tipY + r * 0.02, bx + r * 0.24 * dir, tipY + r * 0.02);
-        p.quadraticCurveTo(bx + r * 0.34 * dir, tipY + r * 0.04, bx + r * 0.33 * dir, tipY + r * 0.14); // 뾰족 끝
-        // 갈고리 안쪽 (파임)
+        p.quadraticCurveTo(bx + r * 0.34 * dir, tipY + r * 0.04, bx + r * 0.33 * dir, tipY + r * 0.14); // pointed tip
+        // Inside of the hook (notch)
         p.quadraticCurveTo(bx + r * 0.24 * dir, tipY + r * 0.12, bx + r * 0.18 * dir, tipY + r * 0.2);
         p.quadraticCurveTo(bx + r * 0.12 * dir, tipY + r * 0.4, bx + r * w0 * 0.7, wl - r * h * 0.4);
-        // 안쪽면: 하강
+        // Inner face: descent
         p.quadraticCurveTo(bx + r * w0, wl - r * h * 0.2, bx + r * w0, wl);
         p.closePath();
         ctx.fill(p);
         ctx.stroke(p);
       };
-      tentacle(cx - r * 0.62, 0.78, -1, 0.15);  // 왼쪽 (왼쪽으로 말림)
-      tentacle(cx + r * 0.02, 1.28, 1, 0.19);   // 중앙 큰 것
-      tentacle(cx + r * 0.66, 0.62, 1, 0.13);   // 오른쪽
-      // 빨판 (안쪽면 따라)
+      tentacle(cx - r * 0.62, 0.78, -1, 0.15);  // left (curling leftwards)
+      tentacle(cx + r * 0.02, 1.28, 1, 0.19);   // large central one
+      tentacle(cx + r * 0.66, 0.62, 1, 0.13);   // right
+      // Suckers (along the inner faces)
       ctx.fillStyle = ink(0.55);
       for (const [sx2, sy2, s] of [
         [-0.5, 0.18, 0.035], [-0.53, 0.0, 0.03],
@@ -717,7 +719,7 @@ STICKERS.push(
         ctx.arc(cx + r * sx2, cy + r * sy2, r * s, 0, Math.PI * 2);
         ctx.fill();
       }
-      // 수면 파문 + 물보라
+      // Surface ripples + spray
       ctx.strokeStyle = ink(0.45);
       ctx.beginPath();
       for (const [ox2, len] of [[-1.0, 0.42], [-0.32, 0.5], [0.4, 0.48]] as const) {
@@ -732,11 +734,11 @@ STICKERS.push(
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
-      // 성벽
+      // Curtain wall
       const wall = new Path2D();
       wall.moveTo(cx - r * 0.55, cy + r * 0.55);
       wall.lineTo(cx - r * 0.55, cy - r * 0.05);
-      // 총안
+      // Crenellation
       let wx = -0.55;
       const step = 0.22;
       let up = true;
@@ -750,26 +752,26 @@ STICKERS.push(
       wall.lineTo(cx + r * 0.55, cy + r * 0.55);
       wall.closePath();
       ctx.fill(wall); ctx.stroke(wall);
-      // 좌우 탑
+      // Left and right towers
       for (const dir of [-1, 1]) {
         const tx = cx + dir * r * 0.68;
         const tower = new Path2D();
         tower.rect(tx - r * 0.17, cy - r * 0.5, r * 0.34, r * 1.05);
         ctx.fill(tower); ctx.stroke(tower);
-        // 뾰족 지붕
+        // Pointed roof
         const roof = new Path2D();
         roof.moveTo(tx - r * 0.22, cy - r * 0.5);
         roof.lineTo(tx, cy - r * 0.88);
         roof.lineTo(tx + r * 0.22, cy - r * 0.5);
         roof.closePath();
         ctx.fill(roof); ctx.stroke(roof);
-        // 창
+        // Window
         ctx.fillStyle = ink(0.7);
         ctx.beginPath();
         ctx.rect(tx - r * 0.03, cy - r * 0.28, r * 0.06, r * 0.16);
         ctx.fill();
         ctx.fillStyle = paper;
-        // 깃발
+        // Flag
         ctx.beginPath();
         ctx.moveTo(tx, cy - r * 0.88);
         ctx.lineTo(tx, cy - r * 1.05);
@@ -783,7 +785,7 @@ STICKERS.push(
         ctx.fill();
         ctx.fillStyle = paper;
       }
-      // 성문
+      // Gate
       const gate = new Path2D();
       gate.moveTo(cx - r * 0.14, cy + r * 0.55);
       gate.lineTo(cx - r * 0.14, cy + r * 0.22);
@@ -791,7 +793,7 @@ STICKERS.push(
       gate.lineTo(cx + r * 0.14, cy + r * 0.55);
       ctx.fillStyle = ink(0.72);
       ctx.fill(gate);
-      // 지면선
+      // Ground line
       ctx.strokeStyle = ink(0.5);
       ctx.beginPath();
       ctx.moveTo(cx - r * 1.0, cy + r * 0.56);
@@ -804,7 +806,7 @@ STICKERS.push(
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
-      // 아치 2개가 뚫린 석교 몸체
+      // Stone bridge body pierced by two arches
       const body = new Path2D();
       body.moveTo(cx - r * 0.95, cy - r * 0.08);
       body.lineTo(cx + r * 0.95, cy - r * 0.08);
@@ -816,7 +818,7 @@ STICKERS.push(
       body.lineTo(cx - r * 0.95, cy + r * 0.32);
       body.closePath();
       ctx.fill(body); ctx.stroke(body);
-      // 난간
+      // Parapet
       ctx.beginPath();
       ctx.moveTo(cx - r * 0.95, cy - r * 0.2);
       ctx.lineTo(cx + r * 0.95, cy - r * 0.2);
@@ -827,11 +829,11 @@ STICKERS.push(
         ctx.moveTo(cx + k * r * 0.21, cy - r * 0.2);
         ctx.lineTo(cx + k * r * 0.21, cy - r * 0.08);
       }
-      // 석재 틈
+      // Masonry joints
       ctx.moveTo(cx - r * 0.75, cy + r * 0.05); ctx.lineTo(cx - r * 0.55, cy + r * 0.05);
       ctx.moveTo(cx + r * 0.5, cy + r * 0.08); ctx.lineTo(cx + r * 0.7, cy + r * 0.08);
       ctx.stroke();
-      // 아치 아래 물결
+      // Waves beneath the arches
       ctx.strokeStyle = ink(0.45);
       ctx.beginPath();
       ctx.moveTo(cx - r * 0.5, cy + r * 0.42);
@@ -847,7 +849,7 @@ STICKERS.push(
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
       const hubY = cy - r * 0.3;
-      // 몸통
+      // Body
       const body = new Path2D();
       body.moveTo(cx - r * 0.3, cy + r * 0.6);
       body.lineTo(cx - r * 0.16, hubY + r * 0.1);
@@ -855,13 +857,13 @@ STICKERS.push(
       body.lineTo(cx + r * 0.3, cy + r * 0.6);
       body.closePath();
       ctx.fill(body); ctx.stroke(body);
-      // 지붕 돔
+      // Domed cap
       const roof = new Path2D();
       roof.moveTo(cx - r * 0.2, hubY + r * 0.1);
       roof.quadraticCurveTo(cx, hubY - r * 0.18, cx + r * 0.2, hubY + r * 0.1);
       roof.closePath();
       ctx.fill(roof); ctx.stroke(roof);
-      // 날개 4개 (X자, 격자 무늬)
+      // Four sails (X shape, lattice pattern)
       for (let k = 0; k < 4; k++) {
         const a = Math.PI / 4 + (k * Math.PI) / 2;
         const dx = Math.cos(a), dy = Math.sin(a);
@@ -873,7 +875,7 @@ STICKERS.push(
         blade.lineTo(cx + dx * L - px2 * Wd, hubY + dy * L - py2 * Wd);
         blade.closePath();
         ctx.fill(blade); ctx.stroke(blade);
-        // 격자선
+        // Lattice lines
         ctx.strokeStyle = ink(0.4);
         ctx.beginPath();
         for (const t of [0.35, 0.6, 0.85]) {
@@ -883,12 +885,12 @@ STICKERS.push(
         ctx.stroke();
         ctx.strokeStyle = ink(0.85);
       }
-      // 축
+      // Hub
       ctx.fillStyle = ink(0.85);
       ctx.beginPath();
       ctx.arc(cx, hubY, r * 0.055, 0, Math.PI * 2);
       ctx.fill();
-      // 문 + 지면
+      // Door + ground
       ctx.beginPath();
       ctx.rect(cx - r * 0.07, cy + r * 0.38, r * 0.14, r * 0.22);
       ctx.fill();
@@ -903,7 +905,7 @@ STICKERS.push(
     id: "inkblot", label: "잉크 얼룩", cat: "map", box: [1.0, 0.9],
     draw(ctx, cx, cy, r, ink) {
       ctx.fillStyle = ink(0.82);
-      // 본체: 각진 폴리곤이 아니라 중점 보간 곡선으로 매끈한 유기 블롭
+      // Body: not an angular polygon but a smooth organic blob via midpoint interpolation
       const n = 12;
       const bp: [number, number][] = [];
       for (let k = 0; k < n; k++) {
@@ -921,7 +923,7 @@ STICKERS.push(
       for (let k = 1; k <= n; k++) blob.quadraticCurveTo(bp[k % n][0], bp[k % n][1], mid(k)[0], mid(k)[1]);
       blob.closePath();
       ctx.fill(blob);
-      // 방향성 스파이크 (튄 잉크): 블롭 가장자리에서 뾰족하게
+      // Directional spikes (splattered ink): pointed, from the blob's edge
       for (const [a0, len, wd] of [[-0.5, 0.55, 0.09], [2.4, 0.45, 0.08], [1.1, 0.38, 0.06]] as const) {
         const bx = cx + Math.cos(a0) * r * 0.42, by = cy + Math.sin(a0) * r * 0.38;
         const tx = cx + Math.cos(a0) * r * (0.42 + len), ty = cy + Math.sin(a0) * r * (0.38 + len) * 0.85;
@@ -933,7 +935,7 @@ STICKERS.push(
         ctx.closePath();
         ctx.fill();
       }
-      // 스프레이: 스파이크 방향으로 점점 작아지는 방울
+      // Spray: droplets shrinking along the spike directions
       for (const [dx, dy, s] of [
         [0.72, -0.5, 0.055], [0.88, -0.62, 0.035], [1.0, -0.7, 0.02],
         [-0.72, 0.5, 0.045], [-0.88, 0.58, 0.026],
@@ -951,7 +953,7 @@ STICKERS.push(
       const lw = ctx.lineWidth;
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
-      // 본지: 양끝이 롤러 뒤로 들어가고, 위아래가 살짝 처지는 낱장
+      // Sheet: both ends disappear behind the rollers; top and bottom sag slightly
       const sheet = new Path2D();
       sheet.moveTo(cx - r * 0.78, cy - r * 0.3);
       sheet.quadraticCurveTo(cx, cy - r * 0.38, cx + r * 0.78, cy - r * 0.3);
@@ -959,7 +961,7 @@ STICKERS.push(
       sheet.quadraticCurveTo(cx, cy + r * 0.36, cx - r * 0.78, cy + r * 0.28);
       sheet.closePath();
       ctx.fill(sheet); ctx.stroke(sheet);
-      // 롤러 밑 말림 음영 (종이가 감기는 부분의 세로 해칭)
+      // Curl shading beneath the rollers (vertical hatching where the paper winds on)
       ctx.strokeStyle = ink(0.3);
       ctx.lineWidth = lw * 0.7;
       ctx.beginPath();
@@ -971,7 +973,7 @@ STICKERS.push(
       }
       ctx.stroke();
       ctx.lineWidth = lw;
-      // 글줄
+      // Text lines
       ctx.strokeStyle = ink(0.4);
       ctx.lineWidth = lw * 0.75;
       ctx.beginPath();
@@ -981,7 +983,7 @@ STICKERS.push(
       }
       ctx.stroke();
       ctx.lineWidth = lw;
-      // 롤러: 본지보다 위아래로 튀어나온 세로 원통 (스타디움 형태) + 단면 나선
+      // Rollers: vertical cylinders protruding above and below the sheet (stadium shape) + end spirals
       for (const dir of [-1, 1]) {
         const ex = cx + dir * r * 0.88;
         const rw = r * 0.15, rh = r * 0.46;
@@ -995,7 +997,7 @@ STICKERS.push(
         ctx.fill(roll);
         ctx.strokeStyle = ink(0.85);
         ctx.stroke(roll);
-        // 원통 하이라이트 선
+        // Cylinder highlight line
         ctx.strokeStyle = ink(0.3);
         ctx.lineWidth = lw * 0.7;
         ctx.beginPath();
@@ -1003,7 +1005,7 @@ STICKERS.push(
         ctx.lineTo(ex - rw * 0.35, cy + rh - rw * 0.8);
         ctx.stroke();
         ctx.lineWidth = lw;
-        // 위쪽 단면의 말린 나선
+        // Rolled spiral on the top end face
         ctx.strokeStyle = ink(0.6);
         ctx.beginPath();
         let first = true;
@@ -1019,7 +1021,8 @@ STICKERS.push(
   {
     id: "flourish", label: "모서리 장식", cat: "map", box: [1.1, 1.1],
     draw(ctx, cx, cy, r, ink) {
-      // 좌상단 모서리용 — 이중 L 프레임 + 캘리그래피 테이퍼 컬 (펜 눌림이 살아있는 굵기 변화)
+      // For the top-left corner — a double L frame + calligraphic tapered curls
+      // (width variation that keeps the pen pressure alive)
       const lw = ctx.lineWidth;
       ctx.strokeStyle = ink(0.75);
       ctx.beginPath();
@@ -1037,11 +1040,11 @@ STICKERS.push(
       ctx.lineTo(cx - r * 0.78, cy + r * 1.02);
       ctx.stroke();
       ctx.lineWidth = lw;
-      // 중심 컬: 안으로 감기는 나선 (굵기 r*0.09 → 0 테이퍼)
+      // Central curl: an inward-winding spiral (width tapering r*0.09 → 0)
       ctx.fillStyle = ink(0.85);
       const curl = spiralPts(cx - r * 0.34, cy - r * 0.34, r * 0.32, 1.9, Math.PI * 0.72, 1);
       ctx.fill(ribbonPath(curl, (t) => r * 0.09 * (1 - t * 0.92)));
-      // 두 갈래 S-줄기: 각 변을 따라 뻗다 끝이 살짝 들림
+      // Two S-stems: running along each side, tips lifting slightly
       const armH = sampleQuad(
         [cx - r * 0.18, cy - r * 0.5], [cx + r * 0.3, cy - r * 0.72], [cx + r * 0.78, cy - r * 0.58],
       );
@@ -1050,12 +1053,12 @@ STICKERS.push(
         [cx - r * 0.5, cy - r * 0.18], [cx - r * 0.72, cy + r * 0.3], [cx - r * 0.58, cy + r * 0.78],
       );
       ctx.fill(ribbonPath(armV, (t) => r * 0.07 * (1 - t * 0.9)));
-      // 줄기 끝 작은 컬 + 점
+      // Small curls + dots at the stem tips
       const tipH = spiralPts(cx + r * 0.84, cy - r * 0.64, r * 0.12, 1.4, Math.PI * 1.1, -1);
       ctx.fill(ribbonPath(tipH, (t) => r * 0.045 * (1 - t * 0.9)));
       const tipV = spiralPts(cx - r * 0.64, cy + r * 0.84, r * 0.12, 1.4, Math.PI * 0.4, 1);
       ctx.fill(ribbonPath(tipV, (t) => r * 0.045 * (1 - t * 0.9)));
-      // 잎사귀 (채운 물방울) — 줄기 옆에 쌍으로
+      // Leaves (filled teardrops) — in pairs beside the stems
       ctx.fillStyle = ink(0.6);
       for (const [ang, lx, ly] of [
         [-0.35, 0.22, -0.72], [0.25, 0.5, -0.52],
@@ -1072,7 +1075,7 @@ STICKERS.push(
         ctx.fill();
         ctx.restore();
       }
-      // 점 터미널
+      // Dot terminals
       ctx.fillStyle = ink(0.7);
       for (const [dx, dy] of [[0.95, -0.68], [-0.68, 0.95]] as const) {
         ctx.beginPath();

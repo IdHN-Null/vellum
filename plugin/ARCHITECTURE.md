@@ -1,100 +1,100 @@
-# Vellum — 구조와 동작 원리
+# Vellum — Architecture and How It Works
 
-이 문서는 플러그인의 전체 구조, 각 모듈의 책임, 그리고 사용자의 조작이 어떤 경로를 거쳐 화면(과 PNG)에 그려지는지를 설명합니다.
+This document explains the plugin's overall structure, each module's responsibilities, and the path a user's action takes on its way to the screen (and to PNG).
 
 ---
 
-## 1. 큰 그림 — Obsidian은 이 플러그인을 어떻게 실행하는가
+## 1. The big picture — how Obsidian runs this plugin
 
-Obsidian 플러그인은 **Obsidian 앱 안에서 실행되는 JavaScript 모듈**입니다. 소스는 여러 `.ts` 파일이지만 빌드하면 `main.js` 하나로 번들됩니다. Obsidian은 볼트의 `.obsidian/plugins/vellum/` 폴더에서 3개 파일만 봅니다.
+An Obsidian plugin is **a JavaScript module that runs inside the Obsidian app**. The source is many `.ts` files, but the build bundles them into a single `main.js`. Obsidian looks at only three files in the vault's `.obsidian/plugins/vellum/` folder.
 
-| 파일 | 역할 |
+| File | Role |
 |---|---|
-| `manifest.json` | 플러그인 이름·ID·버전 |
-| `main.js` | 모든 TypeScript가 번들된 실행 코드 (Web Worker 소스도 문자열로 인라인됨) |
-| `styles.css` | UI 스타일 + base64로 임베드된 폰트 (`FMS Serif`=Cinzel, `FMS Hand`=Gaegu) |
+| `manifest.json` | Plugin name, ID and version |
+| `main.js` | All the TypeScript bundled into executable code (the Web Worker source is inlined as a string too) |
+| `styles.css` | UI styles + fonts embedded as base64 (`FMS Serif` = Cinzel, `FMS Hand` = Gaegu) |
 
-`main.ts`의 `onload()`는 뷰 타입·확장자(`.fmap`)·명령어·리본 아이콘을 **등록**만 하고, 실제 화면은 사용자가 `.fmap` 파일을 열 때 `FantasyMapView`가 만들어지며 시작됩니다.
+`onload()` in `main.ts` only **registers** the view type, the `.fmap` extension, commands and the ribbon icon; the actual screen begins when a user opens an `.fmap` file and the map view is created.
 
 ---
 
-## 2. 파일 지도 — 모듈별 책임
+## 2. File map — responsibilities by module
 
 ```
 src/
-├─ main.ts        ← 플러그인 진입점. Obsidian과의 "계약" (뷰·명령·샘플팩 등록)
-├─ view.ts        ← 심장. 캔버스 뷰 + 도구/상호작용 + 렌더 오케스트레이션 + 우측 패널 UI
-├─ types.ts       ← 데이터 모델(.fmap JSON 스키마) + RLE 직렬화 + 구버전 마이그레이션
-├─ noise.ts       ← 시드 기반 노이즈 (mulberry32 · Noise2D · fbm)
-├─ terrain.ts     ← 노이즈 → 하이트맵(침식) → 수문(강·호수) → 바이옴 분류
-├─ worker.ts      ← generateBase+composeTerrain을 Web Worker에서 실행 (비동기 생성)
-├─ contours.ts    ← 하이트맵 → 벡터 등고선 (마칭 스퀘어 + 단순화 + Chaikin)
-├─ render2d.ts    ← 픽셀 레이어(수채 워시·해안 동심 잔선) + 글리프 스탬프(나무·언덕·산)
-├─ rough.ts       ← 손그림 선 유틸 (시드 흔들림 · roughLine/roughRing/sketchToPath)
-├─ ink.ts         ← 잉크 질감 (가변폭 붓 리본 · 번짐 다중패스 · 붓 화살표)
-├─ decor.ts       ← 장식 (나침반·제목 카르투슈·라벨·메모·범선·괴물·좌표격자·액자·비네트)
-├─ icons.ts       ← 벡터 마커 배지 18종 (SVG 패스 공유)
-├─ annotations.ts ← 자유 그리기 주석 스트로크 + 히트테스트
-├─ fonts.ts       ← 번들 폰트 패밀리 상수 + 로드 보장
-├─ modals.ts      ← 마커/지역/텍스트 편집 모달
-└─ sample.ts      ← 온보딩 샘플팩 생성
+├─ main.ts        ← plugin entry point; the "contract" with Obsidian (view, commands, sample pack)
+├─ view.ts        ← the heart: canvas view + tools/interaction + render orchestration + right panel UI
+├─ types.ts       ← data model (.fmap JSON schema) + RLE serialisation + legacy migration
+├─ noise.ts       ← seeded noise (mulberry32 · Noise2D · fbm)
+├─ terrain.ts     ← noise → heightmap (erosion) → hydrology (rivers, lakes) → biome classification
+├─ worker.ts      ← runs generateBase + composeTerrain in a Web Worker (async generation)
+├─ contours.ts    ← heightmap → vector contours (marching squares + simplification + Chaikin)
+├─ render2d.ts    ← pixel layers (watercolour wash, coastal concentric rings) + glyph stamps (trees, hills, mountains)
+├─ rough.ts       ← hand-drawn line utilities (seeded jitter · roughLine/roughRing/sketchToPath)
+├─ ink.ts         ← ink texture (variable-width brush ribbons · multi-pass bleed · brush arrows)
+├─ decor.ts       ← decorations (compass, title cartouche, labels, notes, ship, monster, grid, frame, vignette)
+├─ icons.ts       ← 18 vector marker badges (shared SVG paths)
+├─ annotations.ts ← freehand annotation strokes + hit testing
+├─ fonts.ts       ← bundled font-family constants + load guarantee
+├─ modals.ts      ← marker/region/text editing modals
+└─ sample.ts      ← onboarding sample-pack generation
 ```
 
-역할 분리 원칙: `terrain.ts`는 **데이터만** 만들고, `render2d.ts`/`view.ts`는 그 데이터를 **픽셀로만** 바꿉니다. 3D 뷰는 v0.10에서 코어에서 제거되었고 추후 별도 애드온 플러그인으로 분리됩니다.
+Separation principle: `terrain.ts` produces **data only**, and `render2d.ts`/`view.ts` turn that data into **pixels only**. The 3D view was removed from the core in v0.10 and will be split into a separate add-on plugin.
 
 ---
 
-## 3. 데이터 모델 — .fmap 파일 (types.ts)
+## 3. Data model — the .fmap file (types.ts)
 
-`.fmap`은 JSON 텍스트 파일입니다. 핵심 설계:
+`.fmap` is a JSON text file. The key design points:
 
-- **레시피 저장**: 지형 자체가 아니라 생성 파라미터(`gen`: 시드·해수면·대륙 수·침식 강도…)를 저장 → 파일이 작고, 같은 파일이면 항상 같은 지형이 재현됩니다.
-- **델타 저장**: 브러시 편집은 `editsB64`(Int8 고도 델타), 바이옴 페인트는 `paintB64`(Uint8 오버라이드)로 저장. RLE 압축(`"R:"` 접두사) + dense 폴백으로 실제 편집량에 비례하는 크기.
-- **정규화 좌표(0~1)**: 마커·지역·주석·배치 요소는 "지도 폭의 36%" 식으로 저장 → 해상도·확대율과 무관하게 항상 올바른 위치.
-- **마이그레이션**: `parseMapData()`가 구버전 파일(고정 나침반/제목, dense 인코딩, 이모지 아이콘)을 현재 스키마로 승격합니다.
+- **Store the recipe**: not the terrain itself but the generation parameters (`gen`: seed, sea level, continent count, erosion strength…) → files stay tiny, and the same file always reproduces the same terrain.
+- **Store deltas**: brush edits are stored as `editsB64` (Int8 elevation deltas), biome paint as `paintB64` (Uint8 overrides). RLE compression (`"R:"` prefix) with a dense fallback keeps size proportional to how much was actually edited.
+- **Normalised coordinates (0–1)**: markers, regions, annotations and placed elements are stored as "36% of the map's width" → always correct regardless of resolution or zoom.
+- **Migration**: `parseMapData()` promotes legacy files (fixed compass/title, dense encoding, emoji icons) to the current schema.
 
 ---
 
-## 4. 지형 파이프라인 (terrain.ts + worker.ts)
+## 4. Terrain pipeline (terrain.ts + worker.ts)
 
 ```
-gen 파라미터
-  → generateBase()   블롭 배치(대륙·섬) + 도메인 워핑 + 산맥(등뼈 스파인 ∪ 능선 노이즈)
-                     + 물방울 수리 침식        ← 비싸므로 결과 캐시 (브러시 성능 무관)
-  → composeTerrain() 편집 델타 합성 → 수문(priority-flood 호수, 유량 누적 강) → 바이옴 분류
+gen parameters
+  → generateBase()   blob placement (continents, islands) + domain warping + mountains (spine ∪ ridged noise)
+                     + droplet hydraulic erosion       ← expensive, so the result is cached (brushes unaffected)
+  → composeTerrain() apply edit deltas → hydrology (priority-flood lakes, flow-accumulation rivers) → biome classification
 ```
 
-- **산맥 등뼈(spine)**: 각 대륙 블롭에 내부를 관통하는 능선 세그먼트를 1줄기 보장 — "산맥 없는 대륙"이 나오지 않게 (v0.11). 추가 산맥은 ridged 노이즈 × 저주파 게이트.
-- **평야 우선**: 대륙 내부는 plateau falloff로 평평하게 유지 (도시·왕국 배치 적합). 절대 스케일 클램프 — min-max 정규화 금지 (산봉우리가 평원 rel을 왜곡).
-- **비동기**: 뷰는 `worker.ts`(esbuild가 iife 번들 → `__WORKER_CODE__`로 인라인 → Blob URL Worker)로 생성을 별도 스레드에서 수행, 실패 시 동기 폴백.
+- **Mountain spine**: each continent blob is guaranteed one ridge segment running through its interior — so a "continent without mountains" cannot happen (v0.11). Extra ranges come from ridged noise × a low-frequency gate.
+- **Plains first**: continent interiors stay flat via a plateau falloff (good for placing cities and kingdoms). Absolute-scale clamping — no min-max normalisation (peaks would distort the plains' relative elevation).
+- **Async**: the view runs generation on a separate thread via `worker.ts` (esbuild bundles it as an IIFE → inlined as `__WORKER_CODE__` → Blob URL Worker), with a synchronous fallback on failure.
 
 ---
 
-## 5. 렌더 파이프라인 (render2d.ts + view.ts)
+## 5. Render pipeline (render2d.ts + view.ts)
 
-겹층 구조 — 아래에서 위로:
+Layered structure, bottom to top:
 
-1. **base 레이어** (셀 해상도 픽셀): 수채 워시 바탕 — 바이옴 색 bilinear 블렌드, 물 깊이 그라데이션, 해안 밝은 띠, **해안 동심 잔선**(`oceanExtraShade`), 수면 결, 육지 식생 워시(`landWash`), 힐셰이딩, 종이 얼룩.
-2. **stamps 레이어** (초과표본 ss배): 글리프 — 그림자·수관 음영 있는 나무, 언덕 둔덕 아크, 좌명/우암 면과 해칭이 있는 산, 해안 파도.
-3. **벡터 잉크선** (`drawVectorLines`, 화면 해상도): 등심선·등고선(번짐 밑칠+본선)·해안선(이중 패스+해칭)·강(물색 워시+얇은 잉크선).
-4. **풍배선·지도 효과·좌표격자** (decor).
-5. **지역 → 주석 → 마커 → 배치 요소** (최상단, `reorderById`로 순서 제어).
-6. **종이결 오버레이** (`paperGrainTile`, 화면 해상도 repeat — 배율 무관 질감).
+1. **base layer** (cell-resolution pixels): the watercolour wash — bilinear biome-colour blending, water-depth gradient, bright coastal band, **coastal concentric rings** (`oceanExtraShade`), water-surface grain, land vegetation wash (`landWash`), hillshading, paper mottling.
+2. **stamps layer** (supersampled ×ss): glyphs — trees with shadows and canopy shading, hill mound arcs, mountains with lit/shaded faces and hatching, coastal waves.
+3. **vector ink lines** (`drawVectorLines`, screen resolution): bathymetry, contours (bleed undercoat + main stroke), coastline (double pass + hatching), rivers (water-colour wash + thin ink line).
+4. **Rhumb lines, map effects, coordinate grid** (decor).
+5. **Regions → annotations → markers → placed elements** (topmost; order controlled via `reorderById`).
+6. **Paper-grain overlay** (`paperGrainTile`, screen-resolution repeat — texture independent of zoom).
 
-핵심 성능 장치 (view.ts):
+Key performance machinery (view.ts):
 
-- **프로그레시브 타일 렌더**: 192셀 타일을 뷰포트 중심 가까운 순으로 rAF 프레임당 ~10ms씩 — 큰 지도도 안 얼어붙음 (`renderToken`으로 취소).
-- **3x 상세 캐시** (`renderDetail`): 지형 확정 후 전체 맵을 셀당 3px로 재렌더(높이 쌍선형 + 바이옴 가우시안 + 스탬프·벡터선 bake). pan/zoom은 이 캐시 크롭만 그려서 깜빡임 없음. **base 픽셀 규칙과 반드시 동일하게 유지할 것** (동심 잔선·워시 등).
-- **dirty-rect 브러시**: 스트로크 중엔 브러시 영역만 재계산(~수 ms), 붓 떼면 `scheduleFinalize()`가 수문·등고선 포함 전체 재생성.
-- **fastRender 토글**: 캐시·LOD 우회, base 업스케일만 (저사양용).
+- **Progressive tile render**: 192-cell tiles, nearest the viewport centre first, ~10ms per rAF frame — large maps never freeze (cancelled via `renderToken`).
+- **3× detail cache** (`renderDetail`): once terrain settles, the whole map is re-rendered at 3px per cell (bilinear height + Gaussian biome + stamps & vector lines baked in). Pan/zoom just crops this cache — no flicker. **Must stay pixel-identical to the base render rules** (concentric rings, wash, etc.).
+- **Dirty-rect brushes**: mid-stroke only the brushed area is recomputed (~a few ms); on release, `scheduleFinalize()` regenerates everything including hydrology and contours.
+- **fastRender toggle**: bypasses the cache and LOD, upscaling the base only (for low-end machines).
 
-**PNG 내보내기**는 상세 캐시가 유효하면 그것을 사용 — 편집기 화면과 동일한 품질 (WYSIWYG).
+**PNG export** uses the detail cache when valid — the same quality as the editor view (WYSIWYG).
 
 ---
 
-## 6. 검증
+## 6. Verification
 
-- `npm test` — 순수 로직 단위 테스트 (RLE 왕복, 마이그레이션, 등고선, 지형 분포 가드: 산맥 존재·평야 우세·호수=물).
-- `node test/server.mjs` → http://localhost:8137 — 시각 하네스 (합성 렌더, 스타일별, LOD 비교, 워커 동일성 `__workerOK`, 타일 동일성 `__tileMatch`).
+- `npm test` — pure-logic unit tests (RLE round trips, migration, contours, terrain-distribution guards: mountains exist, plains dominate, lakes = water).
+- `node test/server.mjs` → http://localhost:8137 — the visual harness (composite render, per-style, LOD comparison, worker equality `__workerOK`, tile equality `__tileMatch`).
 
-렌더 픽셀 규칙을 바꿀 때는 **render2d.paintBaseRect와 view.renderDetail 두 곳을 함께** 바꿔야 합니다 (셀 렌더와 LOD 렌더의 시각 일관성).
+When changing render pixel rules, **update render2d.paintBaseRect and view.renderDetail together** (visual consistency between the cell render and the LOD render).

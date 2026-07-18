@@ -1,10 +1,10 @@
 /**
- * Vellum 랜딩 페이지용 쇼케이스 렌더.
+ * Showcase render for the Vellum landing page.
  *   npx esbuild test/render-hero.ts --bundle --platform=node --external:skia-canvas --outfile=test/render-hero.js
  *   node test/render-hero.js
- * 출력:
- *   ../../docs/map/hero.jpg                (16:9 와이드 — 두루마리 쇼케이스)
- *   ../../docs/assets/style-{parchment,color,ink}.jpg  (같은 지도, 3가지 스타일)
+ * Output:
+ *   ../../docs/map/hero.jpg                (16:9 wide — the scroll showcase)
+ *   ../../docs/assets/style-{parchment,color,ink}.jpg  (same map, three styles)
  *   ../../docs/assets/{feat-terrain,feat-craft,feat-world,detail}.jpg
  *   ../../docs/assets/stickers.png
  */
@@ -23,7 +23,7 @@ import * as path from "path";
 try {
   FontLibrary.use("FMS Serif", [path.join(__dirname, "../fonts/Cinzel*.woff2")]);
   FontLibrary.use("FMS Hand", [path.join(__dirname, "../fonts/Gaegu*.woff2")]);
-} catch { /* 폴백 */ }
+} catch { /* fallback */ }
 
 /* eslint-disable import/first */
 import { Ornament, StyleId, defaultDecor, defaultMapData } from "../src/types";
@@ -42,7 +42,7 @@ fs.mkdirSync(MAP_OUT, { recursive: true });
 
 type Ctx = CanvasRenderingContext2D;
 
-// ── 지도 정의: 16:9 와이드 ────────────────────────────────
+// ── Map definition: 16:9 wide ────────────────────────────
 const MAP_W = 768, MAP_H = 432, SCALE = 3;
 const SEED = 151186;
 
@@ -56,7 +56,7 @@ const terrain = composeTerrain(map, generateBase(map), null, null);
 const contours = extractContours(terrain.height, terrain.w, terrain.h, terrain.seaLevel, map.gen.precision);
 const W = terrain.w, H = terrain.h;
 
-// ── 지형 인식 배치 (마커는 실제 육지, 장식은 실제 바다) ────
+// ── Terrain-aware placement (markers on real land, decorations on real sea) ──
 const land = (x: number, y: number) => terrain.biome[y * W + x] >= B.BEACH;
 const near = (x: number, y: number, want: boolean, rad: number) => {
   for (const [dx, dy] of [[rad, 0], [-rad, 0], [0, rad], [0, -rad], [rad, rad], [-rad, -rad], [rad, -rad], [-rad, rad]] as const) {
@@ -104,7 +104,7 @@ const ornaments: Ornament[] = [
   { id: "l", type: "label", x: seaS.x, y: seaS.y, sizeF: 0.04, text: "남 해" },
 ];
 
-/** 지도 합성 (편집기 draw()와 동일 파이프라인) — 스타일별로 팔레트가 바뀐다 */
+/** Map compositing (same pipeline as the editor's draw()) — the palette changes per style */
 function composite(ctx: Ctx, layers: ReturnType<typeof renderLayers>, style: StyleId): void {
   const pal = getPalette(style);
   const cl = pal.coastline;
@@ -115,7 +115,7 @@ function composite(ctx: Ctx, layers: ReturnType<typeof renderLayers>, style: Sty
   ctx.drawImage(layers.base as unknown as CanvasImageSource, 0, 0);
   ctx.drawImage(layers.stamps as unknown as CanvasImageSource, 0, 0, W, H);
 
-  // 등고선
+  // Contours
   const minor = new (SkPath2D as unknown as typeof Path2D)();
   const major = new (SkPath2D as unknown as typeof Path2D)();
   const bathy = new (SkPath2D as unknown as typeof Path2D)();
@@ -145,7 +145,7 @@ function composite(ctx: Ctx, layers: ReturnType<typeof renderLayers>, style: Sty
   ctx.strokeStyle = `rgba(${cl[0]},${cl[1]},${cl[2]},0.07)`; ctx.lineWidth = 2.6; ctx.stroke(major);
   ctx.strokeStyle = `rgba(${cl[0]},${cl[1]},${cl[2]},0.26)`; ctx.lineWidth = 0.9; ctx.stroke(major);
 
-  // 해안 헤칭 (물 + 육지)
+  // Coastal hatching (water + land)
   const M = 19;
   const strokeRows = (dist: Uint8Array, isos: [number, number][], dash: [number, number], off: number) => {
     const field = new Float32Array(dist.length);
@@ -165,14 +165,14 @@ function composite(ctx: Ctx, layers: ReturnType<typeof renderLayers>, style: Sty
   strokeRows(layers.waterDist, [[2.1, 0.42], [4.3, 0.3], [7.0, 0.2], [10.6, 0.12]], [5.2, 3.0], 0);
   strokeRows(landDistance(terrain.biome, W, H, 10), [[1.7, 0.3], [3.4, 0.18], [5.6, 0.1]], [4.2, 2.6], 1.4);
 
-  // 해안선
+  // Coastline
   if (coast) {
     ctx.setLineDash([]); ctx.lineCap = "round"; ctx.lineJoin = "round";
     ctx.strokeStyle = `rgba(${cl[0]},${cl[1]},${cl[2]},0.12)`; ctx.lineWidth = 2.1; ctx.stroke(coast);
     ctx.strokeStyle = `rgba(${cl[0]},${cl[1]},${cl[2]},0.9)`; ctx.lineWidth = 0.95; ctx.stroke(coast);
   }
 
-  // 강
+  // Rivers
   {
     const oc = pal.ocean, ck = pal.coastline, dp = pal.deep;
     const isInk = style === "ink";
@@ -200,7 +200,7 @@ function composite(ctx: Ctx, layers: ReturnType<typeof renderLayers>, style: Sty
   }
 }
 
-/** 스타일 하나를 전체 렌더해 캔버스 반환 */
+/** Fully render one style and return the canvas */
 function renderStyle(style: StyleId): Canvas {
   const layers = renderLayers(terrain, style, { coastWidth: 3, waves: true });
   const c = new Canvas(W * SCALE, H * SCALE);
@@ -214,7 +214,7 @@ function renderStyle(style: StyleId): Canvas {
   drawOrnaments(ctx, ornaments, W, H, SCALE, pal.coastline, style);
   ctx.restore();
 
-  // 마커 + 이름표 (편집기 paintMarker와 동일 규칙)
+  // Markers + name tags (same rules as the editor's paintMarker)
   const halo = style === "color" ? "rgba(250,252,255,0.85)" : "rgba(244,236,214,0.85)";
   const size = 34;
   for (const m of markers) {
@@ -231,13 +231,13 @@ function renderStyle(style: StyleId): Canvas {
     ctx.fillText(m.name, mx, my + size * 0.18 + fs * 0.62);
     ctx.restore();
   }
-  // 종이 결
+  // Paper grain
   const pat = ctx.createPattern(paperGrainTile() as unknown as CanvasImageSource, "repeat");
   if (pat) { ctx.save(); ctx.globalCompositeOperation = "overlay"; ctx.globalAlpha = 0.5; ctx.fillStyle = pat; ctx.fillRect(0, 0, W * SCALE, H * SCALE); ctx.restore(); }
   return c;
 }
 
-/** 캔버스를 지정 폭으로 다운스케일해 JPG 저장 */
+/** Downscale a canvas to the given width and save as JPG */
 function saveScaled(c: Canvas, file: string, outW: number, quality = 0.9): void {
   const outH = Math.round(outW * (H / W));
   const s = new Canvas(outW, outH);
@@ -248,19 +248,19 @@ function saveScaled(c: Canvas, file: string, outW: number, quality = 0.9): void 
   s.toFileSync(file, { format: "jpeg", quality });
 }
 
-// ── 3가지 스타일 렌더 ─────────────────────────────────────
+// ── Render the three styles ──────────────────────────────
 const styles: StyleId[] = ["parchment", "color", "ink"];
 let parchmentCanvas: Canvas | null = null;
 for (const style of styles) {
   const c = renderStyle(style);
-  saveScaled(c, path.join(OUT, `style-${style}.jpg`), 1500, 0.84); // 호버 배경(은은하게 깔림)
+  saveScaled(c, path.join(OUT, `style-${style}.jpg`), 1500, 0.84); // hover background (laid on subtly)
   if (style === "parchment") {
     parchmentCanvas = c;
-    saveScaled(c, path.join(MAP_OUT, "hero.jpg"), 1600, 0.9);      // 두루마리 쇼케이스 (16:9)
+    saveScaled(c, path.join(MAP_OUT, "hero.jpg"), 1600, 0.9);      // scroll showcase (16:9)
   }
 }
 
-// ── 기능 섹션 크롭 (양피지 기준, 지형을 찾아 3:2로) ────────
+// ── Feature-section crops (from parchment, scanning the terrain, 3:2) ──
 {
   const c = parchmentCanvas!;
   const cropCells = (name: string, cx: number, cy: number, cw: number, outW = 1000) => {
@@ -275,7 +275,7 @@ for (const style of styles) {
     g.drawImage(c, x0 * SCALE, y0 * SCALE, cw * SCALE, ch * SCALE, 0, 0, outW, outH);
     cc.toFileSync(path.join(OUT, name), { format: "jpeg", quality: 0.9 });
   };
-  // 산맥이 가장 빽빽한 창 찾기
+  // Find the window densest with mountains
   const winW = 300, winH = 200;
   let best = { x: 0, y: 0, n: -1 };
   for (let y = 0; y <= H - winH; y += 6) {
@@ -287,12 +287,12 @@ for (const style of styles) {
       if (n > best.n) best = { x, y, n };
     }
   }
-  cropCells("feat-terrain.jpg", best.x + winW / 2, best.y + winH / 2, 300);       // 산맥·강
-  cropCells("feat-craft.jpg", harbor.x * W + 40, harbor.y * H, 280);             // 해안선·헤칭
-  cropCells("feat-world.jpg", (capital.x + harbor.x) / 2 * W, (capital.y + harbor.y) / 2 * H, 340); // 마커·라벨
+  cropCells("feat-terrain.jpg", best.x + winW / 2, best.y + winH / 2, 300);       // ranges & rivers
+  cropCells("feat-craft.jpg", harbor.x * W + 40, harbor.y * H, 280);             // coastline & hatching
+  cropCells("feat-world.jpg", (capital.x + harbor.x) / 2 * W, (capital.y + harbor.y) / 2 * H, 340); // markers & labels
 }
 
-// ── 스티커 시트 (투명 배경) ───────────────────────────────
+// ── Sticker sheet (transparent background) ───────────────
 {
   const { STICKERS } = require("../src/stickers") as typeof import("../src/stickers");
   const list = STICKERS.slice(0, 12);

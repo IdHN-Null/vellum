@@ -2,14 +2,14 @@ import { DecorOpts, Ornament, StyleId } from "./types";
 import { FONT_HAND, FONT_SERIF } from "./fonts";
 import { getSticker } from "./stickers";
 
-/** 사용자 스티커 이미지 (경로 → 로드된 이미지) */
+/** User sticker images (path → loaded image) */
 export type StickerImages = Map<string, HTMLImageElement>;
 
 type RGB = [number, number, number];
 
-export interface OrnBox { x: number; y: number; w: number; h: number; } // 세계 좌표
+export interface OrnBox { x: number; y: number; w: number; h: number; } // world coordinates
 
-/** 스타일별 요소 팔레트 (카드 바탕·접힘·잉크) */
+/** Per-style element palette (card ground, fold, ink) */
 interface OrnTheme { card: string; fold: string; ink: string; title: string; titleInk: string; }
 function ornTheme(style: StyleId): OrnTheme {
   switch (style) {
@@ -23,8 +23,8 @@ function ornTheme(style: StyleId): OrnTheme {
 }
 
 /**
- * 지도 전체 효과: 비네트 + 테두리 액자.
- * (나침반·제목은 자유 배치 요소 — drawOrnaments 참조)
+ * Whole-map effects: vignette + border frame.
+ * (Compass and title are free-placed elements — see drawOrnaments.)
  */
 export function drawMapEffects(
   ctx: CanvasRenderingContext2D,
@@ -54,8 +54,9 @@ export function drawMapEffects(
 }
 
 /**
- * 자유 배치 요소 렌더링. 세계 좌표에 그려 지도와 함께 확대/축소되며,
- * 각 요소의 바운딩 박스(세계 좌표)를 돌려줘 뷰가 히트 테스트·핸들에 쓴다.
+ * Renders the free-placed elements. Drawn in world space so they scale with the map,
+ * and returns each element's bounding box (world coordinates) for the view's hit
+ * testing and handles.
  */
 export function drawOrnaments(
   ctx: CanvasRenderingContext2D,
@@ -78,7 +79,7 @@ export function drawOrnaments(
       case "sticker": {
         const r = size;
         if (orn.sticker === "custom" && orn.imagePath) {
-          // 사용자 이미지 스티커: 세로 2r 기준, 종횡비 유지
+          // User image sticker: height 2r, aspect ratio preserved
           const img = images?.get(orn.imagePath);
           if (img && img.naturalWidth > 0) {
             const ar = img.naturalWidth / img.naturalHeight;
@@ -86,7 +87,7 @@ export function drawOrnaments(
             ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
             boxes.set(orn.id, { x: cx - dw / 2, y: cy - dh / 2, w: dw, h: dh });
           } else {
-            // 로딩 중/실패 자리표시
+            // Placeholder whilst loading / on failure
             ctx.save();
             ctx.strokeStyle = ink(0.4);
             ctx.setLineDash([r * 0.16, r * 0.12]);
@@ -100,7 +101,7 @@ export function drawOrnaments(
             ctx.save();
             ctx.lineJoin = "round";
             ctx.lineCap = "round";
-            // 선폭은 스티커 크기에 비례 — 작게 줄여도 디테일이 뭉개지지 않는다
+            // Line width scales with sticker size — detail survives even when shrunk
             ctx.lineWidth = Math.max(size * 0.032, 0.55 / s);
             def.draw(ctx, cx, cy, size, ink, style === "color" ? "rgba(250,250,246,0.92)" : "rgba(242,232,206,0.9)");
             ctx.restore();
@@ -129,7 +130,7 @@ export function drawOrnaments(
         const rx = cx - tw / 2 - padX, ry = cy - fs / 2 - padY;
         const rw = tw + padX * 2, rh = fs + padY * 2;
         ctx.save();
-        // 바탕 (은은한 드롭섀도로 지도에서 살짝 떠 보이게)
+        // Ground (a subtle drop shadow lifts it slightly off the map)
         ctx.shadowColor = "rgba(30,22,10,0.25)";
         ctx.shadowBlur = fs * 0.45;
         ctx.shadowOffsetY = fs * 0.1;
@@ -138,7 +139,7 @@ export function drawOrnaments(
         ctx.shadowColor = "transparent";
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
-        // 이중 테두리
+        // Double border
         ctx.strokeStyle = ink(0.85);
         ctx.lineWidth = Math.max(0.8, 1.4 / s);
         ctx.strokeRect(rx, ry, rw, rh);
@@ -146,7 +147,7 @@ export function drawOrnaments(
         const inX = rx + fs * 0.22, inY = ry + fs * 0.22;
         const inW = rw - fs * 0.44, inH = rh - fs * 0.44;
         ctx.strokeRect(inX, inY, inW, inH);
-        // 안쪽 테두리 네 모서리 다이아몬드 장식
+        // Diamond ornaments at the inner border's four corners
         const dm = fs * 0.13;
         ctx.fillStyle = ink(0.8);
         for (const [dx2, dy2] of [[inX, inY], [inX + inW, inY], [inX, inY + inH], [inX + inW, inY + inH]] as const) {
@@ -158,7 +159,7 @@ export function drawOrnaments(
           ctx.closePath();
           ctx.fill();
         }
-        // 텍스트 양옆 짧은 플러리시 (가로선 + 점)
+        // Short flourishes either side of the text (horizontal line + dot)
         const fl = padX * 0.42, fy = cy + fs * 0.05;
         ctx.strokeStyle = ink(0.6);
         ctx.lineWidth = Math.max(0.5, 0.8 / s);
@@ -183,18 +184,18 @@ export function drawOrnaments(
         break;
       }
       case "banner": {
-        // 리본 문구: 텍스트 폭에 맞춰 늘어나는 갈래 끝 리본 텍스트박스
+        // Ribbon banner: a swallow-tailed ribbon text box that stretches to fit the text
         const fs = size;
         const text = orn.text || "리본 문구";
         ctx.save();
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
         const tw = ctx.measureText(text).width;
-        const hw = tw / 2 + fs * 0.9;   // 본체 절반 폭
-        const hh = fs * 0.75;           // 본체 절반 높이
+        const hw = tw / 2 + fs * 0.9;   // half-width of the body
+        const hh = fs * 0.75;           // half-height of the body
         ctx.lineJoin = "round";
         ctx.strokeStyle = ink(0.85);
-        ctx.lineWidth = Math.max(fs * 0.05, 0.5 / s); // 크기 비례 (축소 시 뭉개짐 방지)
-        // 끝단 접힘 (뒤층, 어둡게)
+        ctx.lineWidth = Math.max(fs * 0.05, 0.5 / s); // scales with size (avoids mushing when shrunk)
+        // End folds (back layer, darker)
         ctx.fillStyle = ink(0.32);
         for (const dir of [-1, 1]) {
           ctx.beginPath();
@@ -204,20 +205,20 @@ export function drawOrnaments(
           ctx.closePath();
           ctx.fill();
         }
-        // 갈래 끝 리본
+        // Swallow-tailed ends
         ctx.fillStyle = th.title;
         for (const dir of [-1, 1]) {
           ctx.beginPath();
           ctx.moveTo(cx + dir * hw, cy - hh * 0.62);
           ctx.lineTo(cx + dir * (hw + fs * 1.15), cy - hh * 0.38);
-          ctx.lineTo(cx + dir * (hw + fs * 0.72), cy + hh * 0.18);  // 파임
+          ctx.lineTo(cx + dir * (hw + fs * 0.72), cy + hh * 0.18);  // notch
           ctx.lineTo(cx + dir * (hw + fs * 1.1), cy + hh * 0.82);
           ctx.lineTo(cx + dir * hw, cy + hh * 0.95);
           ctx.closePath();
           ctx.fill();
           ctx.stroke();
         }
-        // 본체 (살짝 위로 아치)
+        // Body (arched slightly upwards)
         ctx.beginPath();
         ctx.moveTo(cx - hw, cy - hh);
         ctx.quadraticCurveTo(cx, cy - hh - fs * 0.22, cx + hw, cy - hh);
@@ -226,7 +227,7 @@ export function drawOrnaments(
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-        // 텍스트 (아치 중앙에 맞춰 살짝 위로)
+        // Text (nudged up slightly to sit on the arch's centre)
         ctx.fillStyle = th.titleInk;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -239,12 +240,12 @@ export function drawOrnaments(
         break;
       }
       case "label": {
-        // 지명 라벨: 세리프 + 자간 + 옅은 후광 (바다·산맥 이름용)
+        // Place-name label: serif + letter spacing + faint halo (for sea and range names)
         const fs = size;
         const text = orn.text || "텍스트";
         ctx.save();
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
-        try { (ctx as unknown as { letterSpacing: string }).letterSpacing = `${fs * 0.22}px`; } catch { /* 미지원 무시 */ }
+        try { (ctx as unknown as { letterSpacing: string }).letterSpacing = `${fs * 0.22}px`; } catch { /* ignore if unsupported */ }
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         const tw = ctx.measureText(text).width;
@@ -259,7 +260,7 @@ export function drawOrnaments(
         break;
       }
       case "note": {
-        // 메모 카드: 접힌 모서리 쪽지 (손글씨체)
+        // Note card: a slip of paper with a folded corner (handwriting face)
         const fs = size;
         const lines = (orn.text || "메모").split("\n");
         ctx.font = `600 ${fs}px ${FONT_HAND}`;
@@ -271,7 +272,7 @@ export function drawOrnaments(
         const rx = cx - rw / 2, ry = cy - rh / 2;
         const fold = Math.min(fs * 0.9, rw * 0.3);
         ctx.save();
-        // 본체 (우상단 접힘) — 부드러운 드롭섀도
+        // Body (fold at the top right) — soft drop shadow
         ctx.beginPath();
         ctx.moveTo(rx, ry);
         ctx.lineTo(rx + rw - fold, ry);
@@ -292,7 +293,7 @@ export function drawOrnaments(
         ctx.strokeStyle = ink(0.7);
         ctx.lineWidth = Math.max(0.6, 1 / s);
         ctx.stroke();
-        // 접힌 귀
+        // Folded ear
         ctx.beginPath();
         ctx.moveTo(rx + rw - fold, ry);
         ctx.lineTo(rx + rw - fold, ry + fold);
@@ -301,7 +302,7 @@ export function drawOrnaments(
         ctx.fillStyle = th.fold;
         ctx.fill();
         ctx.stroke();
-        // 텍스트
+        // Text
         ctx.fillStyle = th.ink;
         ctx.textAlign = "left";
         ctx.textBaseline = "top";
@@ -313,9 +314,10 @@ export function drawOrnaments(
         break;
       }
       case "ship": {
-        // 캐러벨 측면 — 선체(널판 라인)·이물기움대·돛대 2본·부푼 가로돛·삼각 지브·페넌트·물결
+        // Caravel in profile — hull (plank lines), bowsprit, two masts, billowing square sail,
+        // triangular jib, pennant, bow waves
         const r = size;
-        const lw = Math.max(r * 0.03, 0.55 / s); // 크기 비례 선폭 (축소 시 뭉개짐 방지)
+        const lw = Math.max(r * 0.03, 0.55 / s); // line width scales with size (avoids mushing when shrunk)
         const sail = style === "color" ? "#fbf8f0" : "rgba(253,251,244,0.92)";
         ctx.save();
         ctx.lineJoin = "round";
@@ -323,19 +325,19 @@ export function drawOrnaments(
         ctx.strokeStyle = ink(0.88);
         ctx.lineWidth = lw;
 
-        // 선체
+        // Hull
         const hull = new Path2D();
-        hull.moveTo(cx - r * 0.95, cy + r * 0.12);                                  // 선미 난간 (높음)
+        hull.moveTo(cx - r * 0.95, cy + r * 0.12);                                  // stern rail (high)
         hull.quadraticCurveTo(cx - r * 1.02, cy + r * 0.42, cx - r * 0.78, cy + r * 0.58);
-        hull.quadraticCurveTo(cx - r * 0.1, cy + r * 0.82, cx + r * 0.72, cy + r * 0.56); // 배 배(belly)
-        hull.lineTo(cx + r * 1.02, cy + r * 0.16);                                  // 이물이 솟음
+        hull.quadraticCurveTo(cx - r * 0.1, cy + r * 0.82, cx + r * 0.72, cy + r * 0.56); // ship's belly
+        hull.lineTo(cx + r * 1.02, cy + r * 0.16);                                  // rising bow
         hull.lineTo(cx + r * 0.78, cy + r * 0.3);
         hull.quadraticCurveTo(cx, cy + r * 0.46, cx - r * 0.68, cy + r * 0.3);
         hull.closePath();
         ctx.fillStyle = style === "color" ? th.card : "rgba(240,230,204,0.9)";
         ctx.fill(hull);
         ctx.stroke(hull);
-        // 널판 라인 2줄
+        // Two plank lines
         ctx.strokeStyle = ink(0.4);
         ctx.lineWidth = lw * 0.7;
         ctx.beginPath();
@@ -345,19 +347,19 @@ export function drawOrnaments(
         ctx.quadraticCurveTo(cx, cy + r * 0.7, cx + r * 0.66, cy + r * 0.5);
         ctx.stroke();
 
-        // 이물기움대(bowsprit) + 돛대 (주돛대·뒷돛대)
+        // Bowsprit + masts (main and mizzen)
         ctx.strokeStyle = ink(0.85);
         ctx.lineWidth = lw;
         ctx.beginPath();
         ctx.moveTo(cx + r * 0.88, cy + r * 0.22);
-        ctx.lineTo(cx + r * 1.32, cy - r * 0.12);   // 이물기움대
+        ctx.lineTo(cx + r * 1.32, cy - r * 0.12);   // bowsprit
         ctx.moveTo(cx + r * 0.02, cy + r * 0.4);
-        ctx.lineTo(cx + r * 0.02, cy - r * 1.02);   // 주돛대
+        ctx.lineTo(cx + r * 0.02, cy - r * 1.02);   // main mast
         ctx.moveTo(cx - r * 0.6, cy + r * 0.28);
-        ctx.lineTo(cx - r * 0.6, cy - r * 0.62);    // 뒷돛대
+        ctx.lineTo(cx - r * 0.6, cy - r * 0.62);    // mizzen mast
         ctx.stroke();
 
-        // 주돛: 바람에 왼쪽으로 부푼 가로돛 (위 활대 좁고 아래 활대 넓음)
+        // Main sail: a square sail billowing to the left (narrow top yard, wide bottom yard)
         const mainSail = new Path2D();
         mainSail.moveTo(cx - r * 0.34, cy - r * 0.92);
         mainSail.quadraticCurveTo(cx - r * 0.62, cy - r * 0.5, cx - r * 0.42, cy - r * 0.1);
@@ -367,13 +369,13 @@ export function drawOrnaments(
         ctx.fillStyle = sail;
         ctx.fill(mainSail);
         ctx.stroke(mainSail);
-        // 활대
+        // Yards
         ctx.beginPath();
         ctx.moveTo(cx - r * 0.34, cy - r * 0.92); ctx.lineTo(cx + r * 0.38, cy - r * 0.92);
         ctx.moveTo(cx - r * 0.42, cy - r * 0.1); ctx.lineTo(cx + r * 0.44, cy - r * 0.1);
         ctx.stroke();
 
-        // 지브(삼각돛): 이물기움대 ↔ 주돛대
+        // Jib (triangular sail): bowsprit ↔ main mast
         const jib = new Path2D();
         jib.moveTo(cx + r * 1.22, cy - r * 0.06);
         jib.lineTo(cx + r * 0.5, cy - r * 0.72);
@@ -382,7 +384,7 @@ export function drawOrnaments(
         ctx.fill(jib);
         ctx.stroke(jib);
 
-        // 뒷돛(라틴 세일)
+        // Mizzen (lateen sail)
         const mizzen = new Path2D();
         mizzen.moveTo(cx - r * 0.6, cy - r * 0.58);
         mizzen.lineTo(cx - r * 0.6, cy + r * 0.05);
@@ -391,7 +393,7 @@ export function drawOrnaments(
         ctx.fill(mizzen);
         ctx.stroke(mizzen);
 
-        // 리깅 (가는 밧줄)
+        // Rigging (thin ropes)
         ctx.strokeStyle = ink(0.35);
         ctx.lineWidth = lw * 0.55;
         ctx.beginPath();
@@ -399,7 +401,7 @@ export function drawOrnaments(
         ctx.moveTo(cx + r * 0.02, cy - r * 1.0); ctx.lineTo(cx - r * 0.88, cy + r * 0.14);
         ctx.stroke();
 
-        // 페넌트 깃발 (주돛대 꼭대기, 바람 방향)
+        // Pennant flag (masthead, downwind)
         ctx.beginPath();
         ctx.moveTo(cx + r * 0.02, cy - r * 1.02);
         ctx.lineTo(cx - r * 0.3, cy - r * 0.94);
@@ -408,7 +410,7 @@ export function drawOrnaments(
         ctx.fillStyle = style === "color" ? "#a83c3c" : ink(0.7);
         ctx.fill();
 
-        // 뱃머리 물결
+        // Bow waves
         ctx.strokeStyle = ink(0.4);
         ctx.lineWidth = lw * 0.7;
         ctx.beginPath();
@@ -423,10 +425,11 @@ export function drawOrnaments(
         break;
       }
       case "monster": {
-        // 바다 괴물(sea serpent) — 목 아치+머리(벌린 턱·눈·뿔), 등지느러미 달린 몸통 혹 2개, 꼬리 지느러미, 물보라
+        // Sea serpent — arched neck + head (open jaws, eye, horn), two finned body humps,
+        // tail fluke, spray
         const r = size;
-        const lw = Math.max(r * 0.03, 0.55 / s); // 크기 비례 선폭 (축소 시 뭉개짐 방지)
-        const wl = cy + r * 0.32; // 수면선
+        const lw = Math.max(r * 0.03, 0.55 / s); // line width scales with size (avoids mushing when shrunk)
+        const wl = cy + r * 0.32; // waterline
         const body = style === "color" ? "rgba(210,222,214,0.85)" : "rgba(228,216,186,0.8)";
         ctx.save();
         ctx.lineJoin = "round";
@@ -434,22 +437,22 @@ export function drawOrnaments(
         ctx.strokeStyle = ink(0.88);
         ctx.lineWidth = lw;
 
-        // 목+머리: 물에서 솟은 S자 목
+        // Neck + head: an S-shaped neck rising from the water
         const neck = new Path2D();
         neck.moveTo(cx - r * 0.42, wl);
         neck.quadraticCurveTo(cx - r * 0.52, cy - r * 0.3, cx - r * 0.82, cy - r * 0.52);
-        // 머리 위쪽 → 벌린 윗턱
+        // Top of the head → open upper jaw
         neck.quadraticCurveTo(cx - r * 0.98, cy - r * 0.62, cx - r * 1.18, cy - r * 0.56);
-        neck.lineTo(cx - r * 1.02, cy - r * 0.46);      // 윗턱 안쪽
-        neck.lineTo(cx - r * 1.14, cy - r * 0.34);      // 아랫턱 끝
+        neck.lineTo(cx - r * 1.02, cy - r * 0.46);      // inside the upper jaw
+        neck.lineTo(cx - r * 1.14, cy - r * 0.34);      // tip of the lower jaw
         neck.quadraticCurveTo(cx - r * 0.92, cy - r * 0.3, cx - r * 0.78, cy - r * 0.36);
-        // 목 앞면으로 내려와 수면까지
+        // Down the front of the neck to the waterline
         neck.quadraticCurveTo(cx - r * 0.6, cy - r * 0.12, cx - r * 0.72, wl);
         neck.closePath();
         ctx.fillStyle = body;
         ctx.fill(neck);
         ctx.stroke(neck);
-        // 뿔·눈
+        // Horn and eye
         ctx.beginPath();
         ctx.moveTo(cx - r * 0.86, cy - r * 0.56);
         ctx.lineTo(cx - r * 0.8, cy - r * 0.74);
@@ -459,7 +462,7 @@ export function drawOrnaments(
         ctx.arc(cx - r * 0.9, cy - r * 0.5, Math.max(1.2, r * 0.045), 0, Math.PI * 2);
         ctx.fill();
 
-        // 몸통 혹 2개 (수면 위 반원) + 등날 톱니
+        // Two body humps (semicircles above the waterline) + dorsal spikes
         const humps: [number, number][] = [[cx + r * 0.02, 0.34], [cx + r * 0.62, 0.22]];
         for (const [hx, hr0] of humps) {
           const hr = r * hr0;
@@ -469,7 +472,7 @@ export function drawOrnaments(
           ctx.fillStyle = body;
           ctx.fill(hump);
           ctx.stroke(hump);
-          // 등날 톱니 3~4개
+          // 3–4 dorsal spikes
           ctx.fillStyle = ink(0.55);
           const nSp = hr0 > 0.3 ? 4 : 3;
           for (let k2 = 0; k2 < nSp; k2++) {
@@ -486,19 +489,19 @@ export function drawOrnaments(
           }
         }
 
-        // 꼬리: 물 밖으로 치켜든 갈래 지느러미
+        // Tail: a forked fluke raised out of the water
         const tail = new Path2D();
         tail.moveTo(cx + r * 1.0, wl);
         tail.quadraticCurveTo(cx + r * 1.12, cy - r * 0.02, cx + r * 1.05, cy - r * 0.22);
-        tail.quadraticCurveTo(cx + r * 1.28, cy - r * 0.18, cx + r * 1.34, cy - r * 0.34); // 바깥 갈래
-        tail.quadraticCurveTo(cx + r * 1.18, cy - r * 0.44, cx + r * 1.02, cy - r * 0.38); // 안쪽 갈래
+        tail.quadraticCurveTo(cx + r * 1.28, cy - r * 0.18, cx + r * 1.34, cy - r * 0.34); // outer fluke
+        tail.quadraticCurveTo(cx + r * 1.18, cy - r * 0.44, cx + r * 1.02, cy - r * 0.38); // inner fluke
         tail.quadraticCurveTo(cx + r * 0.92, cy - r * 0.1, cx + r * 0.84, wl);
         tail.closePath();
         ctx.fillStyle = body;
         ctx.fill(tail);
         ctx.stroke(tail);
 
-        // 수면 파문 (목·혹·꼬리 밑)
+        // Ripples on the water (beneath neck, humps and tail)
         ctx.strokeStyle = ink(0.38);
         ctx.lineWidth = lw * 0.65;
         ctx.beginPath();
@@ -518,15 +521,15 @@ export function drawOrnaments(
 }
 
 /**
- * 좌표 격자 테두리 — 열은 A·B·C…, 행은 1·2·3… (해상도 지도 관례).
- * 세계 좌표에 그려 확대/축소·내보내기에 함께 반영된다.
+ * Coordinate grid border — columns are A·B·C…, rows 1·2·3… (naval chart convention).
+ * Drawn in world space so it follows zooming and exports.
  */
 export function drawCoordinateGrid(
   ctx: CanvasRenderingContext2D,
   W: number, H: number, s: number, inkRGB: RGB,
 ): void {
   const m = Math.min(W, H);
-  const cell = m / 8;                       // 한 칸 목표 크기
+  const cell = m / 8;                       // target cell size
   const cols = Math.max(2, Math.round(W / cell));
   const rows = Math.max(2, Math.round(H / cell));
   const cw = W / cols, ch = H / rows;
@@ -541,7 +544,7 @@ export function drawCoordinateGrid(
   for (let r = 1; r < rows; r++) { ctx.moveTo(0, r * ch); ctx.lineTo(W, r * ch); }
   ctx.stroke();
 
-  // 테두리 눈금 라벨 배경 띠
+  // Background bands for the border tick labels
   ctx.fillStyle = "rgba(242,234,214,0.72)";
   ctx.fillRect(0, 0, W, margin);
   ctx.fillRect(0, H - margin, W, margin);
@@ -585,7 +588,7 @@ function drawCompass(
   ctx.arc(cx, cy, r * 0.78, 0, Math.PI * 2);
   ctx.lineWidth = Math.max(0.4, 0.6 / s);
   ctx.stroke();
-  // 바깥 링 눈금 (32방위 틱)
+  // Outer ring ticks (32 compass points)
   ctx.strokeStyle = ink(0.5);
   ctx.lineWidth = Math.max(0.35, 0.5 / s);
   ctx.beginPath();

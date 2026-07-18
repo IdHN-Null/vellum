@@ -1,87 +1,91 @@
-# Vellum (Obsidian 플러그인)
+# Vellum (Obsidian plugin)
 
-**상상을 지도로.** 당신만의 판타지 세계를 창조하고 다듬는 지도 생성·편집기입니다.
-외부 라이브러리 없이 순수 캔버스로 동작하며, 렌더 결과가 그대로 완성된 고지도 이미지가 되는 것을 목표로 합니다.
+🌐 **English (US)** · [English (UK)](README.en-GB.md) · [Español](README.es.md) · [中文](README.zh.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 
-## 기능 요약
+**From imagination to map.** A fantasy map generator & editor for creating and refining your own worlds.
+It runs on pure canvas with no external libraries, aiming for renders that stand on their own as finished antique maps.
 
-**지형 생성**
-- **완전 랜덤 생성** — 기본은 버튼 한 번으로 대륙·섬·해수면·기후를 알아서 정합니다 (시드로 재현 가능). 세부 조정은 **고급 설정**(접힘)에서
-- **절차 생성 + 수리 침식** — 시드 기반 생성에 물방울 침식 시뮬레이션을 더해 진짜 계곡·퇴적평야가 새겨집니다
-- **대륙마다 산맥 등뼈 보장** — 능선 체인이 Tolkien풍 산줄기로 그려집니다
-- **고급 수문** — 유량 누적 기반 나뭇가지형 강(하류로 갈수록 굵어짐), priority-flood 자연 호수, 해저 등심선
-- **비동기 생성** — Web Worker에서 지형을 계산해 큰 지도도 UI가 멈추지 않습니다
+## Feature summary
 
-**잉크 & 워시 렌더 (고지도 스타일)**
-- 수채 워시 바탕 + 선명한 펜 잉크 벡터 디테일(해안선·등고선·강), 확대 시 LOD 상세 재렌더
-- **해안 동심 잔선** — 고지도 특유의 등거리 잔물결 링 + 수면 결 스트릭
-- **해안 헤칭 / 육지 헤칭** — 해안을 따라 물 쪽·육지 쪽에 겹겹이 새겨지는 동판화풍 점선 잔선 (개별 토글)
-- **글리프 스탬프** — 숲은 그림자 있는 나무 군락, 언덕은 둔덕 아크, 산은 명암 면과 해칭이 있는 판화풍 봉우리
-- 종이결·명암·얼룩·아이콘 크기 **질감 슬라이더**, 양피지/컬러/잉크 3종 스타일, 바이옴 색 커스터마이즈
-- 좌표 격자(A·B·C / 1·2·3), 나침반 풍배선, 테두리 액자·파도·비네트 토글
+**Terrain generation**
+- **Fully random generation** — by default, one click chooses continents, islands, sea level and climate for you (reproducible via seed). Fine-tuning lives in the collapsed **advanced settings**
+- **Procedural generation + hydraulic erosion** — seeded generation plus a droplet-erosion simulation carves real valleys and alluvial plains
+- **A guaranteed mountain spine per continent** — ridge chains drawn as Tolkien-style ranges
+- **Advanced hydrology** — flow-accumulation branching rivers (thickening downstream), priority-flood natural lakes, bathymetric lines
+- **Async generation** — terrain is computed in a Web Worker, so even large maps never freeze the UI
 
-**편집 도구**
-- **지형 브러시** — 올리기/내리기 (`[` `]` 브러시 크기)
-- **바이옴 페인트** — Water/Grassland/Forest/Desert/Snow 브러시 (1~5, E 지우개). 물/육지 칠하면 고도도 함께 보정
-- **자유 그리기 주석** — 경로·직선·화살표(점선 지원), 색/굵기 설정 — 보물지도 표시에
-- **마커 18종** — 지도풍 벡터 배지(성·마을·항구·산·숲·탑·신전·전장·보물상자·해골·깃발·X 표시 등) + 크기 조절
-- **지역(영역) 폴리곤** — 클릭으로 국경 그리기, 이름표·색상
-- **텍스트 요소** — 제목 카르투슈·지명 라벨·**리본 문구(리본 위에 글씨)**·메모 카드. 드래그 이동·크기 조절·더블클릭 편집
-- **꾸미기 스티커 25종** — 아이콘+이름 썸네일 그리드에서 클릭 한 번으로 추가. 하늘(구름·태양·초승달·새 떼·바람·폭풍 구름) / 바다(범선·바다 괴물·고래·물고기·소용돌이·파도·등대·크라켄) / 땅(드래곤·야영지·고대 유적·탑·성·다리·풍차) / 지도(나침반·잉크 얼룩·두루마리·모서리 장식). **볼트의 PNG 이미지를 내 스티커로 추가**할 수도 있습니다
-- **잉크 스타일 마커 배지** — 손그림 링 + 잉크 글리프 + 뮤트된 강조색으로 고지도 분위기에 어울리는 마커
-- 우클릭 메뉴로 레이어 맨앞/맨뒤 순서 제어
+**Ink & wash rendering (antique-map style)**
+- Watercolor wash base + crisp pen-ink vector detail (coastlines, contours, rivers), with LOD re-rendering when zoomed
+- **Coastal concentric rings** — the equidistant ripple rings of antique charts, plus water-surface streaks
+- **Coastal / land hatching** — copperplate-style dashed lines engraved in layers on both sides of the coast (individually toggleable)
+- **Glyph stamps** — forests as shaded tree clusters, hills as mound arcs, mountains as woodcut peaks with shaded faces and hatching
+- **Texture sliders** for grain, shading, mottle and icon size; three styles (parchment/color/ink); customizable biome colors
+- Coordinate grid (A·B·C / 1·2·3), compass rhumb lines, frame/waves/vignette toggles
 
-**볼트 연동**
-- 마커 ↔ 노트 양방향 링크 (마커 클릭 → 노트 열기, `현재 노트를 지도에서 보기` 명령)
-- `[[지도.fmap#마커이름]]` 서브패스 링크로 특정 마커 포커스
-- `.fmap`은 JSON이라 버전 관리·동기화가 그대로 됩니다
-- **PNG 내보내기** — 편집기 화면과 동일한 고품질(3x 상세 캐시)로 볼트에 저장
-- **이미지 지도 모드** — 직접 그린 지도 이미지 위에 마커/지역 배치
-- **샘플팩** — 명령어 `샘플팩 설치 (온보딩)`으로 예제 지도 + 연결 노트 자동 생성
+**Editing tools**
+- **Terrain brushes** — raise/lower (`[` `]` for brush size)
+- **Biome paint** — Water/Grassland/Forest/Desert/Snow brushes (1–5, E to erase). Painting water/land also corrects the elevation
+- **Freehand annotations** — paths, lines and arrows (dashed supported) with color/width options — great for treasure maps
+- **18 marker icons** — map-style vector badges (castle, town, harbor, mountain, forest, tower, temple, battlefield, chest, skull, flag, X and more) with size control
+- **Region polygons** — click out borders, with name labels and colors
+- **Text elements** — title cartouche, place-name labels, **ribbon banners (text on a ribbon)**, note cards. Drag to move, resize, double-click to edit
+- **25 decorative stickers** — one click from a thumbnail grid. Sky (cloud, sun, crescent, birds, wind, storm) / Sea (ship, sea serpent, whale, fish, whirlpool, waves, lighthouse, kraken) / Land (dragon, camp, ruins, tower, castle, bridge, windmill) / Map (compass, ink blot, scroll, corner flourish). **You can also add your own vault PNGs as stickers**
+- **Ink-style marker badges** — hand-drawn rings + ink glyphs + muted accent colors that suit an antique map
+- Layer ordering (front/back) via the context menu
 
-> 3D 뷰는 코어에서 분리되었습니다. 추후 별도 애드온 플러그인(three.js)으로 제공 예정입니다.
+**Vault integration**
+- Two-way marker ↔ note links (click a marker → open its note; `현재 노트를 지도에서 보기` command to jump the other way)
+- `[[map.fmap#markerName]]` subpath links focus a specific marker
+- `.fmap` is JSON, so version control and sync just work
+- **PNG export** — saved into the vault at the same high quality (3× detail cache) as the editor view
+- **Image map mode** — place markers and regions over your own hand-drawn map image
+- **Sample pack** — the `샘플팩 설치 (온보딩)` command generates an example map with linked notes
 
-## 설치
+> The 3D view was split out of the core. It will return later as a separate add-on plugin (three.js).
 
-### 방법 1 — 스크립트
+## Installation
+
+### Option 1 — script
 ```powershell
 cd vellum
 .\install.ps1 "C:\path\to\YourVault"
 ```
 
-### 방법 2 — 수동
-1. 볼트의 `.obsidian/plugins/vellum/` 폴더를 만든다.
-2. `main.js`, `manifest.json`, `styles.css` 세 파일을 복사한다.
-3. Obsidian 설정 → 커뮤니티 플러그인에서 **Vellum** 활성화.
+### Option 2 — manual
+1. Create the `.obsidian/plugins/vellum/` folder in your vault.
+2. Copy the three files: `main.js`, `manifest.json`, `styles.css`.
+3. Enable **Vellum** under Obsidian Settings → Community plugins.
 
-> 파일을 교체한 뒤에는 플러그인을 껐다 켜거나 Obsidian을 재시작해야 반영됩니다. 우측 패널 하단의 버전 표시로 확인하세요.
-> 현재 데스크톱 전용입니다 (모바일 미검증 — 번들 폰트·대형 캔버스).
+> After replacing the files, toggle the plugin off/on or restart Obsidian. Check the version shown at the bottom of the right panel.
+> Currently desktop-only (mobile untested — bundled fonts, large canvases).
 
-## 시작하기
-1. 명령 팔레트(Ctrl+P) → **샘플팩 설치 (온보딩)** 실행 → `판타지 지도 샘플/시작하기.md` 참고.
-2. 새 지도는 리본의 지도 아이콘 또는 **새 판타지 지도 만들기** 명령으로 생성 (`.fmap` 파일).
+## Getting started
+1. Command palette (Ctrl+P) → run **샘플팩 설치 (온보딩)** (install sample pack) → see `판타지 지도 샘플/시작하기.md`.
+2. Create new maps via the ribbon map icon or the **새 판타지 지도 만들기** (new fantasy map) command (`.fmap` file).
 
-## 도구 (왼쪽 툴바)
-| 도구 | 동작 |
+> Note: the plugin UI is currently in Korean.
+
+## Tools (left toolbar)
+| Tool | Action |
 |---|---|
-| 선택 | 드래그: 지도 이동 / 마커·요소·그림 드래그: 이동 / 마커 클릭: 노트 열기 / 우클릭: 메뉴 |
-| 마커 | 클릭한 위치에 마커 추가 (이름·아이콘·노트 연결) |
-| 지역 | 클릭으로 꼭짓점 추가, 더블클릭/Enter 완성, Esc 취소 |
-| 그리기/화살표 | 드래그로 자유 곡선·화살표 (하단 바에서 색·굵기·점선) |
-| 올리기/내리기 | 드래그로 지형 편집 (생성 지형 전용) |
-| 페인트 | 바이옴 칠하기 — 하단 바에서 종류·크기 선택 (1~5, E) |
+| Select | Drag: pan the map / drag markers, elements, drawings: move / click a marker: open its note / right-click: menu |
+| Marker | Add a marker where you click (name, icon, note link) |
+| Region | Click to add vertices; double-click/Enter to finish, Esc to cancel |
+| Draw/Arrow | Drag for free curves and arrows (color, width and dashes in the bottom bar) |
+| Raise/Lower | Drag to edit terrain (generated maps only) |
+| Paint | Paint biomes — pick type and size in the bottom bar (1–5, E) |
 
-우측 패널은 **지형 / 꾸미기 / 요소 / 파일** 4탭으로 구성됩니다.
+The right panel has four tabs: **Terrain / Style / Elements / File**.
 
-## 개발
+## Development
 ```powershell
 npm install
-npm run dev    # 감시 빌드
-npm run build  # 타입체크 + 프로덕션 번들
-npm test       # 순수 로직 단위 테스트 (RLE·마이그레이션·등고선·지형 분포)
+npm run dev    # watch build
+npm run build  # type check + production bundle
+npm test       # pure-logic unit tests (RLE, migrations, contours, terrain distribution)
 ```
-렌더링 파이프라인 시각 테스트: `node test/server.mjs` 후 http://localhost:8137
-(`npx esbuild test/preview.ts --bundle --outfile=test/preview.js` 로 번들 갱신)
+Rendering-pipeline visual tests: `node test/server.mjs`, then open http://localhost:8137
+(refresh the bundle with `npx esbuild test/preview.ts --bundle --outfile=test/preview.js`)
 
-## 라이선스
+## License
 MIT

@@ -1,33 +1,33 @@
-# 히어로 지도 이미지 (교체용)
+# Hero Map Image (replaceable)
 
-이 폴더의 **`hero.jpg`** 가 랜딩 페이지 첫 화면(히어로)에 크게 걸리는 지도입니다.
-**이 파일만 당신의 지도로 바꾸면** 사이트 첫인상이 바뀝니다. (다른 파일은 건드릴 필요 없음)
+**`hero.jpg`** in this folder is the map displayed large on the landing page's first screen (the hero).
+**Swap just this file for your own map** and the site's first impression changes. (No other file needs touching.)
 
-## 규격
+## Specs
 
-| 항목 | 권장 |
+| Item | Recommended |
 |---|---|
-| 파일명 | `hero.jpg` (같은 이름으로 덮어쓰기) |
-| 비율 | **16 : 9** (가로가 긴 와이드) |
-| 크기 | **1600 × 900 px** 권장 · 최소 1200 × 675 px |
-| 형식 | JPG(권장, 가벼움) 또는 PNG |
-| 용량 | 500KB 이하 권장 (로딩 속도) |
+| Filename | `hero.jpg` (overwrite with the same name) |
+| Ratio | **16 : 9** (wide) |
+| Size | **1600 × 900 px** recommended · minimum 1200 × 675 px |
+| Format | JPG (recommended, light) or PNG |
+| Weight | under 500KB recommended (loading speed) |
 
-> 두루마리 종이 위에 `object-fit: contain`으로 얹히므로 **찌그러지거나 잘리지 않습니다.**
-> 비율이 조금 달라도 안전하지만, 16:9에 가까울수록 종이의 여백이 균형 있게 맞습니다.
+> It sits on the scroll paper with `object-fit: contain`, so it **never squashes or crops**.
+> A slightly different ratio is safe, but the closer to 16:9, the better the paper margins balance.
 
-## Vellum에서 지도 내보내는 법
+## Exporting a map from Vellum
 
-1. Vellum에서 지도를 연다 → 우측 패널 **파일 탭 → PNG 이미지로 내보내기**.
-2. 생성된 PNG를 `hero.jpg`로 저장(또는 JPG로 변환)해 이 폴더에 덮어씁니다.
-   - 와이드 지도를 원하면 지형 탭 **고급 설정 → 지도 크기**를 `768 × 432`(16:9)로 맞춰 만드세요.
-     2× 내보내면 1536×864 → 권장 규격과 거의 같습니다.
+1. Open your map in Vellum → right panel **File tab → export as PNG**.
+2. Save the generated PNG as `hero.jpg` (or convert to JPG) and overwrite it in this folder.
+   - For a wide map, set Terrain tab **advanced settings → map size** to `768 × 432` (16:9).
+     A 2× export gives 1536×864 — almost exactly the recommended spec.
 
-## 기본 이미지 다시 만들기 (개발용)
+## Regenerating the default image (development)
 
-플러그인 저장소의 렌더 하네스로 예시 지도를 재생성합니다:
+Rebuild the example map with the plugin repository's render harness:
 
 ```powershell
-cd ../../fantasy-map-studio
-node test/render-hero.js   # → ../vellum-site/map/hero.jpg 갱신
+cd ../../plugin
+node test/render-hero.js   # → refreshes docs/map/hero.jpg
 ```

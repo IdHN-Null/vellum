@@ -729,8 +729,9 @@ var MinHeap = class {
 // src/render2d.ts
 var PALETTES = {
   parchment: {
-    // 고전 판타지 지도 문법: 땅은 거의 평평한 크림 톤, 지형은 글리프·잉크선이 표현
-    // (언덕/산 색 단차를 좁게 — 넓은 갈색 테라스 밴딩 방지)
+    // Classic fantasy-map grammar: land is a nearly flat cream tone; terrain is expressed
+    // by glyphs and ink lines
+    // (narrow hill/mountain colour steps — avoids wide brown terrace banding)
     deep: [118, 150, 142],
     ocean: [154, 182, 166],
     beach: [228, 204, 150],
@@ -1693,7 +1694,7 @@ var STICKER_CATS = [
   { id: "map", label: "\uC9C0\uB3C4" }
 ];
 var STICKERS = [
-  // ── 하늘 ─────────────────────────────────────────────
+  // ── Sky ──────────────────────────────────────────────
   {
     id: "cloud",
     label: "\uAD6C\uB984",
@@ -1826,7 +1827,7 @@ var STICKERS = [
       gull(cx - r * 0.25, cy + r * 0.38, r * 0.16);
     }
   },
-  // ── 바다 ─────────────────────────────────────────────
+  // ── Sea ──────────────────────────────────────────────
   {
     id: "whale",
     label: "\uACE0\uB798",
@@ -1980,7 +1981,7 @@ var STICKERS = [
       }
     }
   },
-  // ── 땅 ───────────────────────────────────────────────
+  // ── Land ─────────────────────────────────────────────
   {
     id: "dragon",
     label: "\uB4DC\uB798\uACE4",
@@ -2186,8 +2187,8 @@ var STICKERS = [
       ctx.fill();
     }
   }
-  // ── 지도 꾸밈 ────────────────────────────────────────
-  // (리본 배너는 텍스트를 쓸 수 있는 '리본 문구' 텍스트 요소로 승격되어 제거됨)
+  // ── Map decoration ───────────────────────────────────
+  // (The ribbon banner was promoted to the text-capable 'ribbon banner' element and removed here)
 ];
 STICKERS.push(
   {
@@ -3546,7 +3547,7 @@ var MarkerModal = class extends import_obsidian.Modal {
       })
     );
   }
-  /** 노트 연결 변경 후 UI 리프레시 */
+  /** Refresh the UI after the note link changes */
   onOpen2() {
     this.contentEl.empty();
     this.onOpen();
@@ -3684,7 +3685,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.paintBiome = B.GRASS;
     this.paintErase = false;
     this.paintBarEl = null;
-    // 지형 파이프라인 캐시
+    // Terrain pipeline caches
     this.baseHeight = null;
     this.baseKey = "";
     this.classifier = null;
@@ -3694,10 +3695,10 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.contourMinor = null;
     this.contourMajor = null;
     this.bathyPath = null;
-    // 해저 등심선
+    // bathymetric lines
     this.coastPath = null;
     this.riverLines = [];
-    // 붓 리본용 강줄기
+    // rivers for the brush ribbons
     this.baseImage = null;
     this.imageUrl = null;
     this.toolBtns = /* @__PURE__ */ new Map();
@@ -3715,7 +3716,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.selectedOrnId = null;
     this.selectedAnnoId = null;
     this.ornBoxes = /* @__PURE__ */ new Map();
-    // 세계 좌표 bbox
+    // world-space bounding boxes
     this.dragMode = "none";
     this.dragAnnoId = null;
     this.dragAnnoOrig = null;
@@ -3734,31 +3735,31 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.finalizeTimer = null;
     this.regenTimer = null;
     this.renderToken = 0;
-    // 프로그레시브 렌더 취소 토큰
+    // cancellation token for the progressive render
     this.renderRAF = 0;
-    // 진행 중 rAF 핸들
+    // in-flight rAF handle
     this.fullDetailCanvas = null;
-    // 전체 맵 픽셀 캐시 (CACHE_SCALE 배율)
+    // full-map pixel cache (at CACHE_SCALE)
     this.cacheValid = false;
-    // true = 지형 변경 없음, draw()에서 크롭 드로우 사용
+    // true = terrain unchanged; draw() uses a cropped blit
     this.detailTimer = null;
     this.worker = null;
     this.workerUrl = null;
     this.workerReqId = 0;
     this.workerReqs = /* @__PURE__ */ new Map();
     this.genToken = 0;
-    // 비동기 생성 취소 토큰
+    // cancellation token for async generation
     this.resizeObs = null;
     this.ready = false;
     this.pendingFocusName = null;
     this.grainPattern = null;
-    // ── 해안 헤칭 (동판화풍 등距離 잔선) ─────────────────
+    // ── Coastal hatching (copperplate equidistant lines) ─
     this.hatchRows = null;
     this.landHatchRows = null;
-    // ── 사용자 스티커 이미지 캐시 ────────────────────────
+    // ── User sticker image cache ─────────────────────────
     this.stickerImages = /* @__PURE__ */ new Map();
     this.stickerLoading = /* @__PURE__ */ new Set();
-    // ── 설정 패널 ─────────────────────────────────────────
+    // ── Settings panel ───────────────────────────────────
     this.markerListEl = null;
     this.ornListEl = null;
     this.activePanelTab = "terrain";
@@ -3797,7 +3798,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.baseHeight = null;
     this.baseKey = "";
   }
-  /** [[지도.fmap#마커이름]] 서브패스 링크 → 해당 마커 강조 */
+  /** [[map.fmap#markerName]] subpath link → highlight that marker */
   setEphemeralState(state) {
     const sub = state?.subpath;
     if (typeof sub === "string" && sub.length > 1) {
@@ -3844,7 +3845,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     this.workerReqs.clear();
   }
-  // ── 빌드/재생성 ───────────────────────────────────────
+  // ── Build / regeneration ─────────────────────────────
   rebuild() {
     this.buildPanel();
     if (this.map.mode === "image" && this.map.baseImagePath) {
@@ -3863,8 +3864,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
       mottle: this.map.texture.mottle
     };
   }
-  /** 전체 파이프라인 재생성. 노이즈 베이스는 파라미터가 바뀔 때만 다시 계산한다. */
-  /** 워커 준비 (인라인 소스 → Blob URL). 실패 시 null로 두고 동기 폴백. */
+  /** Regenerate the whole pipeline. The noise base is recomputed only when parameters change. */
+  /** Prepare the worker (inlined source → Blob URL). On failure, stay null and fall back to sync. */
   ensureWorker() {
     if (this.worker || typeof Worker === "undefined") return;
     try {
@@ -3897,7 +3898,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       this.worker.postMessage({ id, map: genMap, edits: editsBuf, paint: paintBuf, base: baseBuf });
     });
   }
-  /** 지형 재생성 — 무거운 생성(침식·수문)은 워커에서 비동기 실행해 UI가 얼지 않는다. */
+  /** Terrain regeneration — the heavy work (erosion, hydrology) runs async in the worker so the UI never freezes. */
   async regenerate() {
     const key = JSON.stringify([this.map.gen, this.map.width, this.map.height]);
     const needBase = !this.baseHeight || this.baseKey !== key;
@@ -3924,7 +3925,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     this.finishRegen();
   }
-  /** 동기 폴백 (워커 미지원 환경) */
+  /** Synchronous fallback (environments without Worker support) */
   regenSync(key, needBase) {
     if (needBase) {
       this.baseHeight = generateBase(this.map);
@@ -3933,7 +3934,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.terrain = composeTerrain(this.map, this.baseHeight, this.edits, this.paint);
     this.finishRegen();
   }
-  /** 지형 계산 후 공통 파이프라인 (분류·등고선·벡터·렌더) */
+  /** Shared pipeline after terrain computation (classification, contours, vectors, render) */
   finishRegen() {
     if (!this.terrain) return;
     this.classifier = new Classifier(this.map.gen, this.map.width, this.map.height);
@@ -3957,9 +3958,9 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
   }
   /**
-   * 타일 단위 프로그레시브 레이어 렌더.
-   * 화면 중앙(현재 뷰포트)에 가까운 타일부터 그려 넣어, 큰 지도도
-   * 한 번에 얼지 않고 순차적으로 채워진다.
+   * Tile-based progressive layer render.
+   * Tiles nearest the viewport centre are drawn first, so even a large map fills in
+   * gradually instead of freezing in one go.
    */
   startProgressiveRender() {
     if (!this.terrain) return;
@@ -4009,7 +4010,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       this.regenerate();
     }, delay);
   }
-  /** 벡터 라인 캐시: 손그림(rough) 등심선·주/보조 등고선·해안선·테이퍼 강줄기 */
+  /** Vector line cache: hand-drawn (rough) bathymetry, major/minor contours, coastline, tapered rivers */
   buildVectorPaths() {
     const cs = this.contours;
     this.contourMinor = null;
@@ -4092,8 +4093,9 @@ var VellumView = class extends import_obsidian2.TextFileView {
     for (const l of smoothed) if (l) this.riverLines.push(l);
   }
   /**
-   * 벡터 잉크선 렌더 (draw·export 공용). unit=셀당 화면 픽셀(draw: cam.scale, export: scale).
-   * 등고선·해안선은 번짐 밑칠+본선으로, 강은 가변폭 붓 리본으로 그린다.
+   * Vector ink-line render (shared by draw & export). unit = screen pixels per cell
+   * (draw: cam.scale, export: scale). Contours and coastline use a bleed undercoat +
+   * main stroke; rivers are variable-width brush ribbons.
    */
   drawVectorLines(ctx, pal, unit) {
     const px = (target) => target / unit;
@@ -4192,7 +4194,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       }
     }
   }
-  /** 풍배선 (나침반 중심 방사선) — draw()·exportPNG 공용. 세계 좌표 컨텍스트에서 호출 */
+  /** Rhumb lines (radiating from the compass) — shared by draw() and exportPNG. Call within a world-space context */
   drawRhumbLines(ctx, W, H, s, pal) {
     if (!this.map.showRhumbLines) return;
     const compasses = this.map.ornaments.filter((orn) => orn.type === "compass");
@@ -4226,8 +4228,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     ctx.restore();
   }
-  // ── 전체 맵 픽셀 캐시 ─────────────────────────────────
-  /** 지형 데이터 변경 시 전체 맵 재렌더 예약. pan/zoom에서는 절대 호출하지 않는다. */
+  // ── Full-map pixel cache ─────────────────────────────
+  /** Schedule a full-map re-render when terrain data changes. Never called for pan/zoom. */
   scheduleDetail() {
     this.cacheValid = false;
     if (this.detailTimer) window.clearTimeout(this.detailTimer);
@@ -4238,8 +4240,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }, 180);
   }
   /**
-   * 전체 맵을 CACHE_SCALE 배율로 한 번 렌더하여 fullDetailCanvas에 저장한다.
-   * 이후 pan/zoom/scroll 에서는 draw()가 이 캔버스를 크롭하여 재사용 — 깜빡임 없음.
+   * Render the entire map once at CACHE_SCALE and store it in fullDetailCanvas.
+   * From then on, pan/zoom/scroll just crop this canvas in draw() — no flicker.
    */
   renderDetail() {
     const t = this.terrain, cls = this.classifier;
@@ -4369,8 +4371,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.cacheValid = true;
     this.draw();
   }
-  // ── 즉석 브러시 (증분 갱신) ───────────────────────────
-  /** 브러시 영역만 지형·픽셀 다시 계산 — 스트로크 중 수 ms로 즉석 반영 */
+  // ── Instant brush (incremental updates) ──────────────
+  /** Recompute terrain & pixels for the brushed area only — a few ms mid-stroke for instant feedback */
   patchRect(r) {
     if (!this.terrain || !this.baseHeight || !this.classifier || !this.layers) return;
     updateTerrainRect(
@@ -4390,7 +4392,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.draw();
     this.scheduleFinalize();
   }
-  /** 붓을 뗀 뒤 강·등고선까지 포함한 전체 재계산 */
+  /** Full recomputation, including rivers and contours, after the brush lifts */
   scheduleFinalize() {
     if (this.finalizeTimer) window.clearTimeout(this.finalizeTimer);
     this.finalizeTimer = window.setTimeout(() => {
@@ -4428,7 +4430,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     this.patchRect(rect);
   }
-  /** 바이옴 페인트 — 물↔육지가 바뀌면 고도 델타도 함께 보정 */
+  /** Biome paint — when water↔land flips, the elevation delta is corrected as well */
   applyPaintBrush(sx, sy) {
     if (!this.terrain) return;
     const rect = this.brushRect(sx, sy);
@@ -4460,7 +4462,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     this.patchRect(rect);
   }
-  // ── 이미지 모드 ───────────────────────────────────────
+  // ── Image mode ───────────────────────────────────────
   async loadBaseImage(path) {
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof import_obsidian2.TFile)) {
@@ -4512,7 +4514,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.fitCameraOnce();
     this.draw();
   }
-  // ── 그리기 ────────────────────────────────────────────
+  // ── Drawing ──────────────────────────────────────────
   draw() {
     const dpr = window.devicePixelRatio || 1;
     const { w: vw, h: vh } = this.viewSize();
@@ -4582,7 +4584,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.drawOverlays(ctx, W, H, s, ox, oy);
     this.refreshOrnListActive();
   }
-  /** 종이 결을 화면 공간에 얹되, 팬 오프셋만큼 이동해 종이가 지도에 붙은 듯 보이게 */
+  /** Lay the paper grain in screen space, offset by the pan so the paper appears stuck to the map */
   applyPaperGrain(ctx, ox, oy, vw, vh) {
     if (this.map.mode !== "generated") return;
     if (!this.grainPattern) {
@@ -4601,7 +4603,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     ctx.fillRect(0, 0, vw + GRAIN_TILE * 2, vh + GRAIN_TILE * 2);
     ctx.restore();
   }
-  /** 선택된 배치 요소의 점선 박스 + 크기 조절 핸들 (화면 좌표) */
+  /** Dashed box + resize handle for the selected placed element (screen coordinates) */
   drawOrnSelection(ctx, W, H, s, ox, oy) {
     if (!this.selectedOrnId) return;
     const box = this.ornBoxes.get(this.selectedOrnId);
@@ -4700,15 +4702,15 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
   }
   /**
-   * 마커 배지 지름(px). 지도 비례(WYSIWYG) — unit=셀당 화면px.
-   * 편집기(unit=cam.scale)와 내보내기(unit=export scale)가 같은 공식을 쓴다.
+   * Marker badge diameter (px). Proportional to the map (WYSIWYG) — unit = screen px per cell.
+   * The editor (unit = cam.scale) and export (unit = export scale) share the same formula.
    */
   markerSizePx(m, unit) {
     const { w: W, h: H } = this.worldSize();
     const base = Math.min(W, H) * 0.03 * (this.map.texture.markerScale ?? 1) * (m.size ?? 1);
     return base * unit;
   }
-  /** 마커 하나를 픽셀 좌표에 그린다 (편집기·내보내기 공용) */
+  /** Draw one marker in pixel space (shared by editor & export) */
   paintMarker(ctx, m, sx, sy, size, bold) {
     drawMarkerIcon(ctx, m.icon, sx, sy, size, m.color, this.map.style);
     if (m.name) {
@@ -4780,7 +4782,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       ctx.stroke();
     }
   }
-  // ── 좌표/히트 테스트 ─────────────────────────────────
+  // ── Coordinates / hit testing ────────────────────────
   toWorld(sx, sy) {
     const { w: W, h: H } = this.worldSize();
     return {
@@ -4805,7 +4807,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     return null;
   }
-  /** 지우개: 커서 아래 주석 삭제 */
+  /** Eraser: delete the annotation under the cursor */
   eraseAnnoAt(sx, sy) {
     const a = this.hitAnnotation(sx, sy);
     if (a) {
@@ -4814,7 +4816,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       this.persist();
     }
   }
-  /** 주석(그림) 히트 (화면 좌표) */
+  /** Annotation (drawing) hit test (screen coordinates) */
   hitAnnotation(sx, sy) {
     const { w: W, h: H } = this.worldSize();
     const s = this.cam.scale;
@@ -4825,7 +4827,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     return null;
   }
-  /** 배치 요소 히트 (화면 좌표 → 세계 bbox) */
+  /** Placed-element hit test (screen coordinates → world bbox) */
   hitOrnament(sx, sy) {
     const { w: W, h: H } = this.worldSize();
     const wx = (sx - this.cam.x) / this.cam.scale;
@@ -4838,7 +4840,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     return null;
   }
-  /** 선택된 요소의 크기 조절 핸들 히트 (화면 좌표) */
+  /** Hit test for the selected element's resize handle (screen coordinates) */
   hitOrnHandle(sx, sy) {
     if (!this.selectedOrnId) return null;
     const orn = this.map.ornaments.find((o) => o.id === this.selectedOrnId);
@@ -4848,7 +4850,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     const hy = (box.y + box.h) * this.cam.scale + this.cam.y;
     return Math.hypot(sx - hx - 4, sy - hy - 4) < 10 ? orn : null;
   }
-  /** 선택된 지역의 꼭짓점 히트 (화면 좌표) */
+  /** Hit test for the selected region's vertices (screen coordinates) */
   hitRegionVertex(sx, sy) {
     if (!this.selectedRegionId) return null;
     const rg = this.map.regions.find((r) => r.id === this.selectedRegionId);
@@ -4861,7 +4863,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     return null;
   }
-  // ── 이벤트 ────────────────────────────────────────────
+  // ── Events ───────────────────────────────────────────
   bindEvents() {
     const el = this.canvasEl;
     this.registerDomEvent(el, "wheel", (e) => {
@@ -5274,7 +5276,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       }
     });
   }
-  // ── 마커/지역 조작 ────────────────────────────────────
+  // ── Marker / region manipulation ─────────────────────
   addMarkerAt(x, y) {
     const marker = { id: newId(), x, y, name: "", icon: "pin", color: "#c0392b" };
     new MarkerModal(this.app, marker, (m) => {
@@ -5325,7 +5327,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }));
     menu.showAtMouseEvent(e);
   }
-  /** 거리 필드 등치선 → 정돈된 판화 잔선 Path2D 행 배열 */
+  /** Distance-field iso-lines → an array of tidy engraved-line Path2D rows */
   hatchRowsFrom(dist, w, h, isos, seedBase) {
     const field = new Float32Array(dist.length);
     const M = COAST_RING_MAX + 2;
@@ -5344,8 +5346,9 @@ var VellumView = class extends import_obsidian2.TextFileView {
     return rows;
   }
   /**
-   * 해안을 따라 겹겹이 새겨지는 점선 잔선(water-lining)을 만든다.
-   * 물 쪽(waterDist)과 육지 쪽(landDistance) 각각 — 멀어질수록 간격이 벌어지고 옅어진다.
+   * Builds the layered dashed water-lining engraved along the coast.
+   * Water side (waterDist) and land side (landDistance) separately — spacing widens
+   * and lines fade with distance.
    */
   buildCoastHatch() {
     if (!this.layers || !this.terrain) {
@@ -5369,7 +5372,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       this.map.gen.seed * 5 + 137
     );
   }
-  /** 같은 종류 배열 안에서 앞(맨 위)/뒤(맨 아래)로 순서 변경 */
+  /** Reorder within an array of the same kind: to the front (top) or back (bottom) */
   reorderById(arr, id, toFront) {
     const idx = arr.findIndex((x) => x.id === id);
     if (idx < 0) return;
@@ -5377,7 +5380,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     if (toFront) arr.push(item);
     else arr.unshift(item);
   }
-  /** 한 칸 앞으로(+1)/뒤로(-1) — 배열에서 뒤쪽일수록 위에 그려진다 */
+  /** One step forwards (+1) / backwards (-1) — later in the array draws on top */
   reorderStep(arr, id, dir) {
     const idx = arr.findIndex((x) => x.id === id);
     const to = idx + dir;
@@ -5436,7 +5439,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       }
     ).open();
   }
-  // ── 배치 요소 조작 ────────────────────────────────────
+  // ── Placed-element manipulation ──────────────────────
   editOrnText(orn) {
     const heading = orn.type === "title" ? "\uC81C\uBAA9 \uD3B8\uC9D1" : orn.type === "note" ? "\uBA54\uBAA8 \uD3B8\uC9D1 (Ctrl+Enter \uC800\uC7A5)" : orn.type === "banner" ? "\uB9AC\uBCF8 \uBB38\uAD6C \uD3B8\uC9D1" : "\uD14D\uC2A4\uD2B8 \uD3B8\uC9D1";
     new TextEditModal(this.app, heading, orn.text ?? "", orn.type === "note", (v) => {
@@ -5511,7 +5514,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.persist();
     if (isText) this.editOrnText(orn);
   }
-  /** 배치된 커스텀 스티커의 이미지를 지연 로드 (완료 시 재드로우) */
+  /** Lazily load images for placed custom stickers (redraws on completion) */
   ensureStickerImages() {
     for (const orn of this.map.ornaments) {
       const p = orn.imagePath;
@@ -5548,7 +5551,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }).open();
     this.draw();
   }
-  // ── 페인트 도구 세부 설정 바 ─────────────────────────
+  // ── Paint tool settings bar ──────────────────────────
   buildPaintBar() {
     const bar = this.rootEl.createDiv({ cls: "fms-paintbar is-hidden" });
     this.paintBarEl = bar;
@@ -5607,7 +5610,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       b.toggleClass("is-active", !!active);
     });
   }
-  // ── 저장/리샘플 ───────────────────────────────────────
+  // ── Persistence / resampling ─────────────────────────
   syncLayersToMap() {
     if (this.edits && this.edits.some((v) => v !== 0)) {
       this.map.editsB64 = bytesToB64(this.edits);
@@ -5642,7 +5645,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.buildPanelOrnList();
     this.draw();
   }
-  // ── PNG 내보내기 ──────────────────────────────────────
+  // ── PNG export ───────────────────────────────────────
   async exportPNG() {
     const { w: W, h: H } = this.worldSize();
     const scale = this.map.mode === "image" ? 1 : 2;
@@ -5736,7 +5739,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     await this.app.vault.createBinary(path, buf);
     new import_obsidian2.Notice(`\uC9C0\uB3C4\uB97C \uB0B4\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4: ${path}`);
   }
-  // ── 외부 연동 ─────────────────────────────────────────
+  // ── External integration ─────────────────────────────
   focusMarkerByNote(notePath) {
     const m = this.map.markers.find((mm) => mm.notePath === notePath);
     if (!m) return false;
@@ -5760,7 +5763,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.flash = { x: m.x, y: m.y, t0: performance.now() };
     this.draw();
   }
-  // ── 툴바 ──────────────────────────────────────────────
+  // ── Toolbar ──────────────────────────────────────────
   buildToolbar() {
     const bar = this.rootEl.createDiv({ cls: "fms-toolbar" });
     for (const def of TOOL_DEFS) {
@@ -5795,7 +5798,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     this.hintEl.setText(text);
     this.hintEl.toggleClass("is-visible", !!text);
   }
-  /** 패널 상단 탭 바 + 4개 탭 컨테이너 생성 */
+  /** Build the panel's top tab bar plus its four tab containers */
   makePanelTabs(root) {
     const bar = root.createDiv({ cls: "fms-tabs" });
     const bodies = root.createDiv({ cls: "fms-tab-bodies" });
@@ -6231,7 +6234,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
         return getSticker(o.sticker ?? "")?.label ?? "\uC2A4\uD2F0\uCEE4";
     }
   }
-  /** 배치 요소 레이어 목록 — 위쪽 = 지도에서 앞(나중에 그려짐) */
+  /** Placed-element layer list — top of the list = front of the map (drawn later) */
   buildPanelOrnList() {
     const list = this.ornListEl;
     if (!list) return;
@@ -6292,7 +6295,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       };
     }
   }
-  /** 선택 변경 시 목록 하이라이트만 갱신 (재구성 없이) */
+  /** Refresh only the list highlight on selection change (no rebuild) */
   refreshOrnListActive() {
     const list = this.ornListEl;
     if (!list) return;
@@ -6323,7 +6326,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       };
     }
   }
-  // ── 그리기 도구 설정 바 ───────────────────────────────
+  // ── Drawing tool settings bar ────────────────────────
   buildDrawBar() {
     const bar = this.rootEl.createDiv({ cls: "fms-paintbar fms-drawbar is-hidden" });
     this.drawBarEl = bar;
@@ -6373,8 +6376,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
     if (eb) eb.toggleClass("is-active", this.drawErase);
     this.canvasEl.style.cursor = this.drawErase ? "cell" : "crosshair";
   }
-  /** 스타일드 커스텀 드롭다운 (HTML select 대체) */
-  /** 지도 테마에 맞춘 커스텀 드롭다운 (네이티브 select 미사용) */
+  /** Styled custom dropdown (replaces the HTML select) */
+  /** A custom dropdown matched to the map theme (no native select) */
   customSelect(parent, options, value, onChange) {
     const wrap = parent.createDiv({ cls: "fms-dd" });
     const btn = wrap.createEl("button", { cls: "fms-dd-btn" });
@@ -6658,7 +6661,7 @@ var VellumPlugin = class extends import_obsidian4.Plugin {
     const root = this.app.vault.getRoot();
     return root instanceof import_obsidian4.TFolder ? root.path : "/";
   }
-  /** 볼트의 모든 .fmap에서 이 노트를 참조하는 마커를 찾아 지도를 연다 */
+  /** Search every .fmap in the vault for a marker referencing this note, and open that map */
   async locateNoteOnMap(note) {
     const maps = this.app.vault.getFiles().filter((f) => f.extension === "fmap");
     for (const mapFile of maps) {

@@ -1,11 +1,12 @@
 /**
- * 번들된 지도 폰트 (styles.css에 base64로 내장, 오프라인 동작).
- * 라틴은 Cinzel(장식 로마체), 한글은 Gaegu(손글씨). 스택 순서로 자동 분담된다.
+ * Bundled map fonts (embedded in styles.css as base64, so they work offline).
+ * Latin uses Cinzel (decorative roman); Hangul uses Gaegu (handwriting).
+ * The font stack order shares the work between them automatically.
  */
-export const FONT_SERIF = '"FMS Serif", "FMS Hand", Georgia, serif'; // 라틴→Cinzel, 한글→Gaegu
-export const FONT_HAND = '"FMS Hand", "Segoe Script", cursive';      // 손글씨 (한글+라틴)
+export const FONT_SERIF = '"FMS Serif", "FMS Hand", Georgia, serif'; // Latin → Cinzel, Hangul → Gaegu
+export const FONT_HAND = '"FMS Hand", "Segoe Script", cursive';      // handwriting (Hangul + Latin)
 
-/** 캔버스가 폰트를 쓰기 전에 로드를 보장 (로드 후 콜백으로 재렌더) */
+/** Ensure the fonts are loaded before the canvas uses them (re-render via callback afterwards) */
 export function ensureFontsLoaded(cb: () => void): void {
   const fd = (document as unknown as { fonts?: FontFaceSet }).fonts;
   if (!fd) { cb(); return; }
