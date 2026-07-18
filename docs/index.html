@@ -30,7 +30,14 @@
         <a href="#start" data-i18n="nav.start">Get started</a>
         <a href="#download" data-i18n="nav.download">Download</a>
         <a class="nav-cta" href="#download" data-i18n="nav.install">Install</a>
-        <select class="lang-select" id="langSelect" aria-label="Language"></select>
+        <div class="lang-dd" id="langDd">
+          <button class="lang-btn" id="langBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"/></svg>
+            <span id="langCur">English (US)</span>
+            <svg class="lang-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+          <ul class="lang-menu" id="langMenu" role="listbox" aria-label="Language"></ul>
+        </div>
       </div>
     </div>
   </nav>
