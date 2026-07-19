@@ -34,9 +34,9 @@ function mulberry32(seed) {
   return () => {
     a |= 0;
     a = a + 1831565813 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    let t2 = Math.imul(a ^ a >>> 15, 1 | a);
+    t2 = t2 + Math.imul(t2 ^ t2 >>> 7, 61 | t2) ^ t2;
+    return ((t2 ^ t2 >>> 14) >>> 0) / 4294967296;
   };
 }
 var GRAD = [
@@ -56,9 +56,9 @@ var Noise2D = class {
     for (let i = 0; i < 256; i++) p[i] = i;
     for (let i = 255; i > 0; i--) {
       const j = Math.floor(rng() * (i + 1));
-      const t = p[i];
+      const t2 = p[i];
       p[i] = p[j];
-      p[j] = t;
+      p[j] = t2;
     }
     this.perm = new Uint8Array(512);
     for (let i = 0; i < 512; i++) this.perm[i] = p[i & 255];
@@ -170,7 +170,7 @@ function defaultMapData(name, seed) {
 }
 function parseMapData(raw) {
   const d = JSON.parse(raw);
-  const base = defaultMapData(d.name ?? "\uC9C0\uB3C4");
+  const base = defaultMapData(d.name ?? "Map");
   let ornaments;
   if (Array.isArray(d.ornaments)) {
     ornaments = d.ornaments;
@@ -181,7 +181,7 @@ function parseMapData(raw) {
       ornaments.push({ id: newId(), type: "compass", x: 0.89, y: 0.14, sizeF: 0.062 });
     }
     if (oldDecor.title !== false) {
-      ornaments.push({ id: newId(), type: "title", x: 0.5, y: 0.075, sizeF: 0.052, text: d.name ?? "\uC9C0\uB3C4" });
+      ornaments.push({ id: newId(), type: "title", x: 0.5, y: 0.075, sizeF: 0.052, text: d.name ?? "Map" });
     }
   }
   return {
@@ -269,8 +269,8 @@ function b64ToBytes(b64, expectedLen) {
 
 // src/terrain.ts
 function smoothstep(a, b, x) {
-  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
-  return t * t * (3 - 2 * t);
+  const t2 = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t2 * t2 * (3 - 2 * t2);
 }
 var B = {
   DEEP: 0,
@@ -341,9 +341,9 @@ function generateBase(map) {
         let land = 0;
         for (const b of blobs) {
           const dx = wx - b.cx, dy = (wy - b.cy) * aspect;
-          const t = Math.hypot(dx, dy) / b.r;
-          if (t < 1.2) {
-            const fall = t < 0.68 ? 1 : Math.max(0, 1 - (t - 0.68) / 0.32);
+          const t2 = Math.hypot(dx, dy) / b.r;
+          if (t2 < 1.2) {
+            const fall = t2 < 0.68 ? 1 : Math.max(0, 1 - (t2 - 0.68) / 0.32);
             land = Math.max(land, fall * b.s);
           }
         }
@@ -524,20 +524,20 @@ function composeTerrain(map, base, edits, paint) {
   }
   return { w, h, height, biome, river, lake, rivers, seaLevel: sea };
 }
-function updateTerrainRect(t, map, base, edits, paint, cls, x0, y0, x1, y1) {
-  const w = t.w;
+function updateTerrainRect(t2, map, base, edits, paint, cls, x0, y0, x1, y1) {
+  const w = t2.w;
   const sea = map.gen.seaLevel;
   for (let y = y0; y <= y1; y++) {
     for (let x = x0; x <= x1; x++) {
       const i = y * w + x;
       const el = composeHeight(base[i], edits ? edits[i] : 0);
-      t.height[i] = el;
-      let b = t.lake[i] && el >= sea ? B.OCEAN : cls.biomeAt(x, y, el);
+      t2.height[i] = el;
+      let b = t2.lake[i] && el >= sea ? B.OCEAN : cls.biomeAt(x, y, el);
       if (paint) b = applyPaintAt(b, paint[i], el, sea);
-      t.biome[i] = b;
+      t2.biome[i] = b;
       if (el < sea) {
-        t.river[i] = 0;
-        t.lake[i] = 0;
+        t2.river[i] = 0;
+        t2.lake[i] = 0;
       }
     }
   }
@@ -852,8 +852,8 @@ function oceanExtraShade(x, y, d) {
   let v = (smoothVal(x + 533, y * 3.1 + 97, 9) - 0.5) * 6.5;
   if (d >= 1 && d <= COAST_RING_MAX) {
     for (let k = 0; k < COAST_RINGS.length; k++) {
-      const t = (d - COAST_RINGS[k][0]) / 0.7;
-      v -= Math.exp(-t * t) * COAST_RINGS[k][1];
+      const t2 = (d - COAST_RINGS[k][0]) / 0.7;
+      v -= Math.exp(-t2 * t2) * COAST_RINGS[k][1];
     }
   }
   return v;
@@ -931,35 +931,35 @@ function distanceField(biome, w, h, maxD, targetWater) {
   }
   return dist;
 }
-function allocLayers(t, opts = {}) {
+function allocLayers(t2, opts = {}) {
   const base = document.createElement("canvas");
-  base.width = t.w;
-  base.height = t.h;
-  const ss = t.w <= 640 ? 3 : t.w <= 900 ? 2.5 : t.w <= 1600 ? 2 : 1.5;
+  base.width = t2.w;
+  base.height = t2.h;
+  const ss = t2.w <= 640 ? 3 : t2.w <= 900 ? 2.5 : t2.w <= 1600 ? 2 : 1.5;
   const stamps = document.createElement("canvas");
-  stamps.width = Math.round(t.w * ss);
-  stamps.height = Math.round(t.h * ss);
+  stamps.width = Math.round(t2.w * ss);
+  stamps.height = Math.round(t2.h * ss);
   return {
     base,
     stamps,
     ss,
-    waterDist: waterDistance(t.biome, t.w, t.h, Math.max(WAVE_DIST, COAST_RING_MAX, Math.round(opts.coastWidth ?? 0) * 3))
+    waterDist: waterDistance(t2.biome, t2.w, t2.h, Math.max(WAVE_DIST, COAST_RING_MAX, Math.round(opts.coastWidth ?? 0) * 3))
   };
 }
-function renderTile(layers, t, style, opts, x0, y0, x1, y1) {
-  paintBaseRect(layers, t, style, opts, x0, y0, x1, y1);
-  stampRect(layers, t, style, opts, x0, y0, x1, y1);
+function renderTile(layers, t2, style, opts, x0, y0, x1, y1) {
+  paintBaseRect(layers, t2, style, opts, x0, y0, x1, y1);
+  stampRect(layers, t2, style, opts, x0, y0, x1, y1);
 }
-function updateLayersRect(layers, t, style, opts, x0, y0, x1, y1) {
-  layers.waterDist = waterDistance(t.biome, t.w, t.h, Math.max(WAVE_DIST, COAST_RING_MAX, Math.round(opts.coastWidth ?? 0) * 3));
+function updateLayersRect(layers, t2, style, opts, x0, y0, x1, y1) {
+  layers.waterDist = waterDistance(t2.biome, t2.w, t2.h, Math.max(WAVE_DIST, COAST_RING_MAX, Math.round(opts.coastWidth ?? 0) * 3));
   const pad = Math.max(WAVE_DIST, COAST_RING_MAX, Math.round(opts.coastWidth ?? 0) * 3) + 8;
   const rx0 = Math.max(0, x0 - pad), ry0 = Math.max(0, y0 - pad);
-  const rx1 = Math.min(t.w - 1, x1 + pad), ry1 = Math.min(t.h - 1, y1 + pad);
-  paintBaseRect(layers, t, style, opts, rx0, ry0, rx1, ry1);
-  stampRect(layers, t, style, opts, rx0, ry0, rx1, ry1);
+  const rx1 = Math.min(t2.w - 1, x1 + pad), ry1 = Math.min(t2.h - 1, y1 + pad);
+  paintBaseRect(layers, t2, style, opts, rx0, ry0, rx1, ry1);
+  stampRect(layers, t2, style, opts, rx0, ry0, rx1, ry1);
 }
-function paintBaseRect(layers, t, style, opts, x0, y0, x1, y1) {
-  const { w, h, height, biome, seaLevel } = t;
+function paintBaseRect(layers, t2, style, opts, x0, y0, x1, y1) {
+  const { w, h, height, biome, seaLevel } = t2;
   const pal = getPalette(style, opts.colors);
   const coastW = Math.max(0, Math.min(12, Math.round(opts.coastWidth ?? 0)));
   const coastRGB = opts.coastColor && hexToRGB(opts.coastColor) || [Math.min(255, pal.ocean[0] * 1.16), Math.min(255, pal.ocean[1] * 1.14), Math.min(255, pal.ocean[2] * 1.1)];
@@ -975,12 +975,12 @@ function paintBaseRect(layers, t, style, opts, x0, y0, x1, y1) {
       const el = height[i];
       if (isWaterBiome(b)) {
         const rawDepth = Math.min(1, Math.max(0, (seaLevel - el) / 0.25));
-        const depth = t.lake[i] ? 0.4 : 0.22 + 0.78 * Math.pow(rawDepth, 0.7);
+        const depth = t2.lake[i] ? 0.4 : 0.22 + 0.78 * Math.pow(rawDepth, 0.7);
         const dp = pal.deep, oc = pal.ocean;
         r = oc[0] + (dp[0] - oc[0]) * depth;
         g = oc[1] + (dp[1] - oc[1]) * depth;
         bl = oc[2] + (dp[2] - oc[2]) * depth;
-        if (coastW > 0 && !t.lake[i]) {
+        if (coastW > 0 && !t2.lake[i]) {
           const d = layers.waterDist[i];
           if (d <= coastW * 3) {
             const f = Math.exp(-(d - 1) / (coastW * 0.9)) * 0.38;
@@ -989,7 +989,7 @@ function paintBaseRect(layers, t, style, opts, x0, y0, x1, y1) {
             bl += (coastRGB[2] - bl) * f;
           }
         }
-        if (t.lake[i] && layers.waterDist[i] === 1) {
+        if (t2.lake[i] && layers.waterDist[i] === 1) {
           const ck = pal.coastline;
           r = r * 0.45 + ck[0] * 0.55;
           g = g * 0.45 + ck[1] * 0.55;
@@ -1046,8 +1046,8 @@ function paintBaseRect(layers, t, style, opts, x0, y0, x1, y1) {
   }
   ctx.putImageData(img, x0, y0);
 }
-function stampRect(layers, t, style, opts, x0, y0, x1, y1) {
-  const { w, h, biome, height, seaLevel } = t;
+function stampRect(layers, t2, style, opts, x0, y0, x1, y1) {
+  const { w, h, biome, height, seaLevel } = t2;
   const pal = getPalette(style, opts.colors);
   const ink = pal.coastline;
   const ss = layers.ss;
@@ -1137,9 +1137,9 @@ function stampRect(layers, t, style, opts, x0, y0, x1, y1) {
         ctx.beginPath();
         const hn = 1 + Math.round(hash2(jx + 3, jy) * 1.2);
         for (let h2 = 1; h2 <= hn; h2++) {
-          const t2 = h2 / (hn + 1);
-          const hx = peakX + t2 * (jx + s - peakX) * 0.8;
-          const hy = peakY + t2 * (baseY - peakY) * 0.85;
+          const t3 = h2 / (hn + 1);
+          const hx = peakX + t3 * (jx + s - peakX) * 0.8;
+          const hy = peakY + t3 * (baseY - peakY) * 0.85;
           ctx.moveTo(hx, hy);
           ctx.quadraticCurveTo(hx - s * 0.12, hy + s * 0.2, hx - s * 0.2, hy + s * 0.34);
         }
@@ -1220,10 +1220,10 @@ function stampRect(layers, t, style, opts, x0, y0, x1, y1) {
         ctx.beginPath();
         const hatchCount = 4 + Math.floor(rnd * 3);
         for (let h2 = 1; h2 <= hatchCount; h2++) {
-          const t2 = h2 / (hatchCount + 1);
-          const startX = peakX + t2 * (rbX - peakX);
-          const startY = peakY + t2 * (rbY - peakY);
-          const hatchLen = s * 0.45 * (1 - t2 * 0.4) * (0.8 + 0.4 * hash2(jx + h2, jy));
+          const t3 = h2 / (hatchCount + 1);
+          const startX = peakX + t3 * (rbX - peakX);
+          const startY = peakY + t3 * (rbY - peakY);
+          const hatchLen = s * 0.45 * (1 - t3 * 0.4) * (0.8 + 0.4 * hash2(jx + h2, jy));
           const endX = startX - hatchLen * 0.5;
           const endY = startY + hatchLen;
           const cpX = startX - hatchLen * 0.1;
@@ -1288,14 +1288,14 @@ function marchingSquares(f, w, h, iso) {
       if (c >= iso) idx |= 2;
       if (d >= iso) idx |= 1;
       if (idx === 0 || idx === 15) continue;
-      const t = (va, vb) => {
+      const t2 = (va, vb) => {
         const dv = vb - va;
         return dv === 0 ? 0.5 : (iso - va) / dv;
       };
-      const topX = x + t(a, b), topY = y;
-      const rightX = x + 1, rightY = y + t(b, c);
-      const botX = x + t(d, c), botY = y + 1;
-      const leftX = x, leftY = y + t(a, d);
+      const topX = x + t2(a, b), topY = y;
+      const rightX = x + 1, rightY = y + t2(b, c);
+      const botX = x + t2(d, c), botY = y + 1;
+      const leftX = x, leftY = y + t2(a, d);
       const put = (x1, y1, x2, y2) => segs.push(x1, y1, x2, y2);
       switch (idx) {
         case 1:
@@ -1555,10 +1555,10 @@ function resample(pts, subdiv = 3) {
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = p(i - 1), p1 = p(i), p2 = p(i + 1), p3 = p(i + 2);
     for (let s = 0; s < subdiv; s++) {
-      const t = s / subdiv, t2 = t * t, t3 = t2 * t;
+      const t2 = s / subdiv, t22 = t2 * t2, t3 = t22 * t2;
       out.push([
-        0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t2 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
-        0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t2 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
+        0.5 * (2 * p1[0] + (-p0[0] + p2[0]) * t2 + (2 * p0[0] - 5 * p1[0] + 4 * p2[0] - p3[0]) * t22 + (-p0[0] + 3 * p1[0] - 3 * p2[0] + p3[0]) * t3),
+        0.5 * (2 * p1[1] + (-p0[1] + p2[1]) * t2 + (2 * p0[1] - 5 * p1[1] + 4 * p2[1] - p3[1]) * t22 + (-p0[1] + 3 * p1[1] - 3 * p2[1] + p3[1]) * t3)
       ]);
     }
   }
@@ -1588,9 +1588,9 @@ function ribbonPath(pts, widthAt) {
   return path;
 }
 function taperedRibbon(pts, wStart, wEnd) {
-  return ribbonPath(pts, (t) => {
-    const w = wStart + (wEnd - wStart) * t;
-    const endTaper = Math.min(1, t / 0.08) * Math.min(1, (1 - t) / 0.06);
+  return ribbonPath(pts, (t2) => {
+    const w = wStart + (wEnd - wStart) * t2;
+    const endTaper = Math.min(1, t2 / 0.08) * Math.min(1, (1 - t2) / 0.06);
     return w * (0.55 + 0.45 * endTaper);
   });
 }
@@ -1670,10 +1670,10 @@ function brushArrow(ctx, pts, color, width, dashed) {
 function sampleQuad(p0, c, p1, n = 14) {
   const out = [];
   for (let k = 0; k <= n; k++) {
-    const t = k / n, u = 1 - t;
+    const t2 = k / n, u = 1 - t2;
     out.push([
-      u * u * p0[0] + 2 * u * t * c[0] + t * t * p1[0],
-      u * u * p0[1] + 2 * u * t * c[1] + t * t * p1[1]
+      u * u * p0[0] + 2 * u * t2 * c[0] + t2 * t2 * p1[0],
+      u * u * p0[1] + 2 * u * t2 * c[1] + t2 * t2 * p1[1]
     ]);
   }
   return out;
@@ -1681,23 +1681,23 @@ function sampleQuad(p0, c, p1, n = 14) {
 function spiralPts(cx, cy, r0, turns, phase, dir = 1) {
   const out = [];
   const total = turns * Math.PI * 2;
-  for (let t = 0; t <= total; t += 0.22) {
-    const rr = r0 * (1 - t / (total * 1.12));
-    out.push([cx + Math.cos(phase + t * dir) * rr, cy + Math.sin(phase + t * dir) * rr]);
+  for (let t2 = 0; t2 <= total; t2 += 0.22) {
+    const rr = r0 * (1 - t2 / (total * 1.12));
+    out.push([cx + Math.cos(phase + t2 * dir) * rr, cy + Math.sin(phase + t2 * dir) * rr]);
   }
   return out;
 }
 var STICKER_CATS = [
-  { id: "sky", label: "\uD558\uB298" },
-  { id: "sea", label: "\uBC14\uB2E4" },
-  { id: "land", label: "\uB545" },
-  { id: "map", label: "\uC9C0\uB3C4" }
+  { id: "sky", label: "Sky" },
+  { id: "sea", label: "Sea" },
+  { id: "land", label: "Land" },
+  { id: "map", label: "Map" }
 ];
 var STICKERS = [
   // ── Sky ──────────────────────────────────────────────
   {
     id: "cloud",
-    label: "\uAD6C\uB984",
+    label: "Cloud",
     cat: "sky",
     box: [1.2, 0.72],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -1728,7 +1728,7 @@ var STICKERS = [
   },
   {
     id: "sun",
-    label: "\uD0DC\uC591",
+    label: "Sun",
     cat: "sky",
     box: [1.05, 1.05],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -1770,7 +1770,7 @@ var STICKERS = [
   },
   {
     id: "moon",
-    label: "\uCD08\uC2B9\uB2EC",
+    label: "Crescent moon",
     cat: "sky",
     box: [0.95, 0.8],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -1808,7 +1808,7 @@ var STICKERS = [
   },
   {
     id: "birds",
-    label: "\uC0C8 \uB5BC",
+    label: "Flock of birds",
     cat: "sky",
     box: [0.95, 0.7],
     draw(ctx, cx, cy, r, ink) {
@@ -1830,7 +1830,7 @@ var STICKERS = [
   // ── Sea ──────────────────────────────────────────────
   {
     id: "whale",
-    label: "\uACE0\uB798",
+    label: "Whale",
     cat: "sea",
     box: [1.3, 1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -1892,7 +1892,7 @@ var STICKERS = [
   },
   {
     id: "fish",
-    label: "\uBB3C\uACE0\uAE30 \uB5BC",
+    label: "School of fish",
     cat: "sea",
     box: [1, 0.8],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -1934,7 +1934,7 @@ var STICKERS = [
   },
   {
     id: "whirlpool",
-    label: "\uC18C\uC6A9\uB3CC\uC774",
+    label: "Whirlpool",
     cat: "sea",
     box: [0.95, 0.95],
     draw(ctx, cx, cy, r, ink) {
@@ -1942,10 +1942,10 @@ var STICKERS = [
       ctx.lineCap = "round";
       ctx.beginPath();
       let first = true;
-      for (let t = 0; t <= 4.6 * Math.PI; t += 0.15) {
-        const rr = r * 0.05 + r * 0.85 * t / (4.6 * Math.PI);
-        const x = cx + Math.cos(t + 0.8) * rr;
-        const y = cy + Math.sin(t + 0.8) * rr * 0.82;
+      for (let t2 = 0; t2 <= 4.6 * Math.PI; t2 += 0.15) {
+        const rr = r * 0.05 + r * 0.85 * t2 / (4.6 * Math.PI);
+        const x = cx + Math.cos(t2 + 0.8) * rr;
+        const y = cy + Math.sin(t2 + 0.8) * rr * 0.82;
         if (first) {
           ctx.moveTo(x, y);
           first = false;
@@ -1963,7 +1963,7 @@ var STICKERS = [
   },
   {
     id: "waves",
-    label: "\uD30C\uB3C4",
+    label: "Waves",
     cat: "sea",
     box: [1.05, 0.7],
     draw(ctx, cx, cy, r, ink) {
@@ -1984,7 +1984,7 @@ var STICKERS = [
   // ── Land ─────────────────────────────────────────────
   {
     id: "dragon",
-    label: "\uB4DC\uB798\uACE4",
+    label: "Dragon",
     cat: "land",
     box: [1.25, 1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2024,7 +2024,7 @@ var STICKERS = [
   },
   {
     id: "tent",
-    label: "\uC57C\uC601\uC9C0",
+    label: "Camp",
     cat: "land",
     box: [1, 1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2064,7 +2064,7 @@ var STICKERS = [
   },
   {
     id: "ruins",
-    label: "\uACE0\uB300 \uC720\uC801",
+    label: "Ancient ruins",
     cat: "land",
     box: [1, 1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2124,7 +2124,7 @@ var STICKERS = [
   },
   {
     id: "tower",
-    label: "\uD0D1",
+    label: "Tower",
     cat: "land",
     box: [0.85, 1.1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2193,7 +2193,7 @@ var STICKERS = [
 STICKERS.push(
   {
     id: "wind",
-    label: "\uBC14\uB78C",
+    label: "Wind",
     cat: "sky",
     box: [1.15, 0.8],
     draw(ctx, cx, cy, r, ink) {
@@ -2203,9 +2203,9 @@ STICKERS.push(
       const sx = cx - r * 0.7, sy = cy - r * 0.05;
       ctx.beginPath();
       let first = true;
-      for (let t = 0; t <= 3.2 * Math.PI; t += 0.25) {
-        const rr = r * 0.24 * (1 - t / (3.6 * Math.PI));
-        const x = sx + Math.cos(t + Math.PI) * rr, y = sy + Math.sin(t + Math.PI) * rr;
+      for (let t2 = 0; t2 <= 3.2 * Math.PI; t2 += 0.25) {
+        const rr = r * 0.24 * (1 - t2 / (3.6 * Math.PI));
+        const x = sx + Math.cos(t2 + Math.PI) * rr, y = sy + Math.sin(t2 + Math.PI) * rr;
         if (first) {
           ctx.moveTo(x, y);
           first = false;
@@ -2228,7 +2228,7 @@ STICKERS.push(
   },
   {
     id: "storm",
-    label: "\uD3ED\uD48D \uAD6C\uB984",
+    label: "Storm cloud",
     cat: "sky",
     box: [1, 1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2269,7 +2269,7 @@ STICKERS.push(
   },
   {
     id: "lighthouse",
-    label: "\uB4F1\uB300",
+    label: "Lighthouse",
     cat: "sea",
     box: [1.05, 1.1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2294,9 +2294,9 @@ STICKERS.push(
       ctx.stroke(body);
       ctx.fillStyle = ink(0.35);
       const stripe = (t0, t1) => {
-        const lx = (t) => cx - r * (0.3 - 0.14 * t);
-        const rx = (t) => cx + r * (0.3 - 0.14 * t);
-        const yy = (t) => cy + r * (0.5 - 1.05 * t);
+        const lx = (t2) => cx - r * (0.3 - 0.14 * t2);
+        const rx = (t2) => cx + r * (0.3 - 0.14 * t2);
+        const yy = (t2) => cy + r * (0.5 - 1.05 * t2);
         const sp = new Path2D();
         sp.moveTo(lx(t0), yy(t0));
         sp.lineTo(rx(t0), yy(t0));
@@ -2343,7 +2343,7 @@ STICKERS.push(
   },
   {
     id: "kraken",
-    label: "\uD06C\uB77C\uCF04",
+    label: "Kraken",
     cat: "sea",
     box: [1.1, 0.95],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2392,7 +2392,7 @@ STICKERS.push(
   },
   {
     id: "castle",
-    label: "\uC131",
+    label: "Castle",
     cat: "land",
     box: [1.05, 1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2462,7 +2462,7 @@ STICKERS.push(
   },
   {
     id: "bridge",
-    label: "\uB2E4\uB9AC",
+    label: "Bridge",
     cat: "land",
     box: [1.05, 0.7],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2506,7 +2506,7 @@ STICKERS.push(
   },
   {
     id: "windmill",
-    label: "\uD48D\uCC28",
+    label: "Windmill",
     cat: "land",
     box: [1, 1.1],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2541,9 +2541,9 @@ STICKERS.push(
         ctx.stroke(blade);
         ctx.strokeStyle = ink(0.4);
         ctx.beginPath();
-        for (const t of [0.35, 0.6, 0.85]) {
-          ctx.moveTo(cx + dx * L * t + px2 * Wd * 0.9, hubY + dy * L * t + py2 * Wd * 0.9);
-          ctx.lineTo(cx + dx * L * t - px2 * Wd * 0.9, hubY + dy * L * t - py2 * Wd * 0.9);
+        for (const t2 of [0.35, 0.6, 0.85]) {
+          ctx.moveTo(cx + dx * L * t2 + px2 * Wd * 0.9, hubY + dy * L * t2 + py2 * Wd * 0.9);
+          ctx.lineTo(cx + dx * L * t2 - px2 * Wd * 0.9, hubY + dy * L * t2 - py2 * Wd * 0.9);
         }
         ctx.stroke();
         ctx.strokeStyle = ink(0.85);
@@ -2564,7 +2564,7 @@ STICKERS.push(
   },
   {
     id: "inkblot",
-    label: "\uC789\uD06C \uC5BC\uB8E9",
+    label: "Ink blot",
     cat: "map",
     box: [1, 0.9],
     draw(ctx, cx, cy, r, ink) {
@@ -2614,7 +2614,7 @@ STICKERS.push(
   },
   {
     id: "scroll",
-    label: "\uB450\uB8E8\uB9C8\uB9AC",
+    label: "Scroll",
     cat: "map",
     box: [1.2, 0.65],
     draw(ctx, cx, cy, r, ink, paper) {
@@ -2633,9 +2633,9 @@ STICKERS.push(
       ctx.lineWidth = lw * 0.7;
       ctx.beginPath();
       for (const dir of [-1, 1]) {
-        for (const t of [0.56, 0.63, 0.7]) {
-          ctx.moveTo(cx + dir * r * t, cy - r * 0.26);
-          ctx.quadraticCurveTo(cx + dir * r * (t + 0.02), cy, cx + dir * r * t, cy + r * 0.24);
+        for (const t2 of [0.56, 0.63, 0.7]) {
+          ctx.moveTo(cx + dir * r * t2, cy - r * 0.26);
+          ctx.quadraticCurveTo(cx + dir * r * (t2 + 0.02), cy, cx + dir * r * t2, cy + r * 0.24);
         }
       }
       ctx.stroke();
@@ -2643,9 +2643,9 @@ STICKERS.push(
       ctx.strokeStyle = ink(0.4);
       ctx.lineWidth = lw * 0.75;
       ctx.beginPath();
-      for (const t of [-0.15, -0.02, 0.11]) {
-        ctx.moveTo(cx - r * 0.42, cy + r * t);
-        ctx.lineTo(cx + r * 0.42, cy + r * (t + 0.015));
+      for (const t2 of [-0.15, -0.02, 0.11]) {
+        ctx.moveTo(cx - r * 0.42, cy + r * t2);
+        ctx.lineTo(cx + r * 0.42, cy + r * (t2 + 0.015));
       }
       ctx.stroke();
       ctx.lineWidth = lw;
@@ -2672,9 +2672,9 @@ STICKERS.push(
         ctx.strokeStyle = ink(0.6);
         ctx.beginPath();
         let first = true;
-        for (let t = 0; t <= 2.2 * Math.PI; t += 0.3) {
-          const rr = rw * 0.75 * (1 - t / (2.6 * Math.PI));
-          const x = ex + Math.cos(t + 1.2) * rr, y = cy - rh + rw + Math.sin(t + 1.2) * rr * 0.5;
+        for (let t2 = 0; t2 <= 2.2 * Math.PI; t2 += 0.3) {
+          const rr = rw * 0.75 * (1 - t2 / (2.6 * Math.PI));
+          const x = ex + Math.cos(t2 + 1.2) * rr, y = cy - rh + rw + Math.sin(t2 + 1.2) * rr * 0.5;
           if (first) {
             ctx.beginPath();
             ctx.moveTo(x, y);
@@ -2687,7 +2687,7 @@ STICKERS.push(
   },
   {
     id: "flourish",
-    label: "\uBAA8\uC11C\uB9AC \uC7A5\uC2DD",
+    label: "Corner flourish",
     cat: "map",
     box: [1.1, 1.1],
     draw(ctx, cx, cy, r, ink) {
@@ -2710,23 +2710,23 @@ STICKERS.push(
       ctx.lineWidth = lw;
       ctx.fillStyle = ink(0.85);
       const curl = spiralPts(cx - r * 0.34, cy - r * 0.34, r * 0.32, 1.9, Math.PI * 0.72, 1);
-      ctx.fill(ribbonPath(curl, (t) => r * 0.09 * (1 - t * 0.92)));
+      ctx.fill(ribbonPath(curl, (t2) => r * 0.09 * (1 - t2 * 0.92)));
       const armH = sampleQuad(
         [cx - r * 0.18, cy - r * 0.5],
         [cx + r * 0.3, cy - r * 0.72],
         [cx + r * 0.78, cy - r * 0.58]
       );
-      ctx.fill(ribbonPath(armH, (t) => r * 0.07 * (1 - t * 0.9)));
+      ctx.fill(ribbonPath(armH, (t2) => r * 0.07 * (1 - t2 * 0.9)));
       const armV = sampleQuad(
         [cx - r * 0.5, cy - r * 0.18],
         [cx - r * 0.72, cy + r * 0.3],
         [cx - r * 0.58, cy + r * 0.78]
       );
-      ctx.fill(ribbonPath(armV, (t) => r * 0.07 * (1 - t * 0.9)));
+      ctx.fill(ribbonPath(armV, (t2) => r * 0.07 * (1 - t2 * 0.9)));
       const tipH = spiralPts(cx + r * 0.84, cy - r * 0.64, r * 0.12, 1.4, Math.PI * 1.1, -1);
-      ctx.fill(ribbonPath(tipH, (t) => r * 0.045 * (1 - t * 0.9)));
+      ctx.fill(ribbonPath(tipH, (t2) => r * 0.045 * (1 - t2 * 0.9)));
       const tipV = spiralPts(cx - r * 0.64, cy + r * 0.84, r * 0.12, 1.4, Math.PI * 0.4, 1);
-      ctx.fill(ribbonPath(tipV, (t) => r * 0.045 * (1 - t * 0.9)));
+      ctx.fill(ribbonPath(tipV, (t2) => r * 0.045 * (1 - t2 * 0.9)));
       ctx.fillStyle = ink(0.6);
       for (const [ang, lx, ly] of [
         [-0.35, 0.22, -0.72],
@@ -2845,7 +2845,7 @@ function drawOrnaments(ctx, ornaments, W, H, s, inkRGB, style = "parchment", ima
       }
       case "title": {
         const fs = size;
-        const text = orn.text || "\uC81C\uBAA9";
+        const text = orn.text || "Title";
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
         const tw = ctx.measureText(text).width;
         const padX = fs * 1, padY = fs * 0.46;
@@ -2903,7 +2903,7 @@ function drawOrnaments(ctx, ornaments, W, H, s, inkRGB, style = "parchment", ima
       }
       case "banner": {
         const fs = size;
-        const text = orn.text || "\uB9AC\uBCF8 \uBB38\uAD6C";
+        const text = orn.text || "Banner";
         ctx.save();
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
         const tw = ctx.measureText(text).width;
@@ -2956,7 +2956,7 @@ function drawOrnaments(ctx, ornaments, W, H, s, inkRGB, style = "parchment", ima
       }
       case "label": {
         const fs = size;
-        const text = orn.text || "\uD14D\uC2A4\uD2B8";
+        const text = orn.text || "Label";
         ctx.save();
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
         try {
@@ -2978,7 +2978,7 @@ function drawOrnaments(ctx, ornaments, W, H, s, inkRGB, style = "parchment", ima
       }
       case "note": {
         const fs = size;
-        const lines = (orn.text || "\uBA54\uBAA8").split("\n");
+        const lines = (orn.text || "Note").split("\n");
         ctx.font = `600 ${fs}px ${FONT_HAND}`;
         let maxW = 0;
         for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln).width);
@@ -3294,23 +3294,23 @@ function drawCompass(ctx, cx, cy, r, s, ink) {
 
 // src/icons.ts
 var MARKER_ICONS = [
-  { id: "pin", label: "\uD540", d: "M12 21s-6.5-7.3-6.5-11.7a6.5 6.5 0 0 1 13 0C18.5 13.7 12 21 12 21zM12 6.8a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z" },
-  { id: "castle", label: "\uC131", d: "M6 21V8.5L5 8V4h2.5v2h2V4h5v2h2V4H19v4l-1 .5V21M6 21h12M10 21v-4.5a2 2 0 0 1 4 0V21M9 11h.01M15 11h.01" },
-  { id: "town", label: "\uB9C8\uC744", d: "M3 21v-7l4.5-3.5L12 14v7M12 21v-9l4.5-3.5L21 12v9M3 21h18M6.5 17h.01M16.5 15.5h.01" },
-  { id: "anchor", label: "\uD56D\uAD6C", d: "M12 8.5V21M12 8.5a2.7 2.7 0 1 0-.01 0zM4.5 13.5C4.5 18 8 21 12 21s7.5-3 7.5-7.5M4.5 13.5L2.5 15m2-1.5L6.5 15M19.5 13.5L17.5 15m2-1.5l2 1.5" },
-  { id: "mountain", label: "\uC0B0", d: "M2.5 20L9.5 6l4 7.5L16 9.5l5.5 10.5zM7.5 11.5l2-1.5 1.5 2" },
-  { id: "tree", label: "\uC232", d: "M12 21v-4M12 3l4.5 6h-2.5l3.5 5h-3l3 4H6.5l3-4h-3l3.5-5H7.5z" },
-  { id: "tower", label: "\uD0D1", d: "M8.5 21V8h7v13M8.5 8L7 3.5h2l1 2h4l1-2h2L15.5 8M10.5 21v-4h3v4M11 11h2" },
-  { id: "temple", label: "\uC2E0\uC804", d: "M4 8.5L12 3l8 5.5M5 8.5h14M6.5 11v6M10.2 11v6M13.8 11v6M17.5 11v6M4.5 17.5h15M3.5 21h17" },
-  { id: "swords", label: "\uC804\uC7A5", d: "M5 3.5l12.5 12.5M15 18.5l2.5-2.5M19 20l-2.5-2.5M19 3.5L6.5 16M9 18.5L6.5 16M5 20l2.5-2.5" },
-  { id: "gem", label: "\uBCF4\uBB3C", d: "M7.5 4h9L21 9.5 12 20.5 3 9.5zM3 9.5h18M12 20.5L8.5 9.5 12 4l3.5 5.5z" },
-  { id: "tent", label: "\uC57C\uC601\uC9C0", d: "M12 4.5L3 20h6.5l2.5-4.5L14.5 20H21zM10 8.5l2-2 2 2" },
-  { id: "star", label: "\uBA85\uC18C", d: "M12 3.5l2.5 5.4 5.9.7-4.4 4 1.2 5.8-5.2-2.9-5.2 2.9 1.2-5.8-4.4-4 5.9-.7z" },
-  { id: "x", label: "X \uD45C\uC2DC", d: "M6 6l12 12M18 6L6 18M4.5 4.5l1 1M18.5 4.5l1 1M4.5 19.5l1-1M18.5 19.5l1-1" },
-  { id: "skull", label: "\uC704\uD5D8", d: "M12 3a7 7 0 0 0-4 12.7V18l1.5 1.5h5L16 18v-2.3A7 7 0 0 0 12 3zM9 11h.01M15 11h.01M11 14.5l1-1.5 1 1.5M9.5 20.5v-1M14.5 20.5v-1" },
-  { id: "flag", label: "\uAE43\uBC1C", d: "M6 21V4M6 5h11l-2 3 2 3H6" },
-  { id: "chest", label: "\uBCF4\uBB3C\uC0C1\uC790", d: "M4 10h16v9H4zM4 10l2-4h12l2 4M4 13h16M11 10v3h2v-3M11 13a1 1 0 0 0 2 0" },
-  { id: "cross", label: "\uC131\uC18C", d: "M10 21V9H4V7h6V3h4v4h6v2h-6v12z" }
+  { id: "pin", label: "Pin", d: "M12 21s-6.5-7.3-6.5-11.7a6.5 6.5 0 0 1 13 0C18.5 13.7 12 21 12 21zM12 6.8a2.6 2.6 0 1 0 0 5.2 2.6 2.6 0 0 0 0-5.2z" },
+  { id: "castle", label: "Castle", d: "M6 21V8.5L5 8V4h2.5v2h2V4h5v2h2V4H19v4l-1 .5V21M6 21h12M10 21v-4.5a2 2 0 0 1 4 0V21M9 11h.01M15 11h.01" },
+  { id: "town", label: "Town", d: "M3 21v-7l4.5-3.5L12 14v7M12 21v-9l4.5-3.5L21 12v9M3 21h18M6.5 17h.01M16.5 15.5h.01" },
+  { id: "anchor", label: "Harbor", d: "M12 8.5V21M12 8.5a2.7 2.7 0 1 0-.01 0zM4.5 13.5C4.5 18 8 21 12 21s7.5-3 7.5-7.5M4.5 13.5L2.5 15m2-1.5L6.5 15M19.5 13.5L17.5 15m2-1.5l2 1.5" },
+  { id: "mountain", label: "Mountain", d: "M2.5 20L9.5 6l4 7.5L16 9.5l5.5 10.5zM7.5 11.5l2-1.5 1.5 2" },
+  { id: "tree", label: "Forest", d: "M12 21v-4M12 3l4.5 6h-2.5l3.5 5h-3l3 4H6.5l3-4h-3l3.5-5H7.5z" },
+  { id: "tower", label: "Tower", d: "M8.5 21V8h7v13M8.5 8L7 3.5h2l1 2h4l1-2h2L15.5 8M10.5 21v-4h3v4M11 11h2" },
+  { id: "temple", label: "Temple", d: "M4 8.5L12 3l8 5.5M5 8.5h14M6.5 11v6M10.2 11v6M13.8 11v6M17.5 11v6M4.5 17.5h15M3.5 21h17" },
+  { id: "swords", label: "Battlefield", d: "M5 3.5l12.5 12.5M15 18.5l2.5-2.5M19 20l-2.5-2.5M19 3.5L6.5 16M9 18.5L6.5 16M5 20l2.5-2.5" },
+  { id: "gem", label: "Treasure", d: "M7.5 4h9L21 9.5 12 20.5 3 9.5zM3 9.5h18M12 20.5L8.5 9.5 12 4l3.5 5.5z" },
+  { id: "tent", label: "Camp", d: "M12 4.5L3 20h6.5l2.5-4.5L14.5 20H21zM10 8.5l2-2 2 2" },
+  { id: "star", label: "Landmark", d: "M12 3.5l2.5 5.4 5.9.7-4.4 4 1.2 5.8-5.2-2.9-5.2 2.9 1.2-5.8-4.4-4 5.9-.7z" },
+  { id: "x", label: "X mark", d: "M6 6l12 12M18 6L6 18M4.5 4.5l1 1M18.5 4.5l1 1M4.5 19.5l1-1M18.5 19.5l1-1" },
+  { id: "skull", label: "Danger", d: "M12 3a7 7 0 0 0-4 12.7V18l1.5 1.5h5L16 18v-2.3A7 7 0 0 0 12 3zM9 11h.01M15 11h.01M11 14.5l1-1.5 1 1.5M9.5 20.5v-1M14.5 20.5v-1" },
+  { id: "flag", label: "Flag", d: "M6 21V4M6 5h11l-2 3 2 3H6" },
+  { id: "chest", label: "Treasure chest", d: "M4 10h16v9H4zM4 10l2-4h12l2 4M4 13h16M11 10v3h2v-3M11 13a1 1 0 0 0 2 0" },
+  { id: "cross", label: "Sanctuary", d: "M10 21V9H4V7h6V3h4v4h6v2h-6v12z" }
 ];
 var LEGACY = {
   "\u{1F4CD}": "pin",
@@ -3440,9 +3440,9 @@ function distToPolyline(px, py, ptsPx) {
     const [ax, ay] = ptsPx[i], [bx, by] = ptsPx[i + 1];
     const dx = bx - ax, dy = by - ay;
     const l2 = dx * dx + dy * dy || 1;
-    let t = ((px - ax) * dx + (py - ay) * dy) / l2;
-    t = t < 0 ? 0 : t > 1 ? 1 : t;
-    const cx = ax + t * dx, cy = ay + t * dy;
+    let t2 = ((px - ax) * dx + (py - ay) * dy) / l2;
+    t2 = t2 < 0 ? 0 : t2 > 1 ? 1 : t2;
+    const cx = ax + t2 * dx, cy = ay + t2 * dy;
     const d = Math.hypot(px - cx, py - cy);
     if (d < best) best = d;
   }
@@ -3494,18 +3494,18 @@ var MarkerModal = class extends import_obsidian.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.createEl("h3", { text: this.marker.name ? "\uB9C8\uCEE4 \uD3B8\uC9D1" : "\uC0C8 \uB9C8\uCEE4" });
-    new import_obsidian.Setting(contentEl).setName("\uC774\uB984").addText((t) => {
-      t.setValue(this.marker.name).onChange((v) => this.marker.name = v);
-      window.setTimeout(() => t.inputEl.focus(), 30);
+    new import_obsidian.Setting(contentEl).setName("\uC774\uB984").addText((t2) => {
+      t2.setValue(this.marker.name).onChange((v) => this.marker.name = v);
+      window.setTimeout(() => t2.inputEl.focus(), 30);
     });
     const iconSetting = new import_obsidian.Setting(contentEl).setName("\uC544\uC774\uCF58");
     const iconRow = iconSetting.controlEl.createDiv({ cls: "fms-icon-row" });
     const iconBtns = [];
-    const current = normalizeIcon(this.marker.icon);
+    const current2 = normalizeIcon(this.marker.icon);
     for (const ic of MARKER_ICONS) {
       const btn = iconRow.createEl("button", { cls: "fms-icon-btn", attr: { "aria-label": ic.label } });
       btn.innerHTML = iconSvg(ic.id);
-      if (ic.id === current) btn.addClass("is-active");
+      if (ic.id === current2) btn.addClass("is-active");
       btn.onclick = () => {
         this.marker.icon = ic.id;
         iconBtns.forEach((b) => b.removeClass("is-active"));
@@ -3606,9 +3606,9 @@ var RegionModal = class extends import_obsidian.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.createEl("h3", { text: this.region.name ? "\uC9C0\uC5ED \uD3B8\uC9D1" : "\uC0C8 \uC9C0\uC5ED" });
-    new import_obsidian.Setting(contentEl).setName("\uC774\uB984").addText((t) => {
-      t.setValue(this.region.name).onChange((v) => this.region.name = v);
-      window.setTimeout(() => t.inputEl.focus(), 30);
+    new import_obsidian.Setting(contentEl).setName("\uC774\uB984").addText((t2) => {
+      t2.setValue(this.region.name).onChange((v) => this.region.name = v);
+      window.setTimeout(() => t2.inputEl.focus(), 30);
     });
     const colorSetting = new import_obsidian.Setting(contentEl).setName("\uC0C9\uC0C1");
     const row = colorSetting.controlEl.createDiv({ cls: "fms-icon-row" });
@@ -3964,13 +3964,13 @@ var VellumView = class extends import_obsidian2.TextFileView {
    */
   startProgressiveRender() {
     if (!this.terrain) return;
-    const t = this.terrain;
+    const t2 = this.terrain;
     const token = ++this.renderToken;
     if (this.renderRAF) cancelAnimationFrame(this.renderRAF);
-    const layers = allocLayers(t, this.renderOpts());
+    const layers = allocLayers(t2, this.renderOpts());
     this.layers = layers;
     const TILE = 192;
-    const cols = Math.ceil(t.w / TILE), rows = Math.ceil(t.h / TILE);
+    const cols = Math.ceil(t2.w / TILE), rows = Math.ceil(t2.h / TILE);
     const { w: vw, h: vh } = this.viewSize();
     const c = this.toWorld(vw / 2, vh / 2);
     const ccx = c.x * cols, ccy = c.y * rows;
@@ -3984,13 +3984,13 @@ var VellumView = class extends import_obsidian2.TextFileView {
     let i = 0;
     const opts = this.renderOpts();
     const step = () => {
-      if (token !== this.renderToken || this.terrain !== t) return;
+      if (token !== this.renderToken || this.terrain !== t2) return;
       const budgetEnd = performance.now() + 10;
       while (i < tiles.length && performance.now() < budgetEnd) {
         const { tx, ty } = tiles[i++];
         const x0 = tx * TILE, y0 = ty * TILE;
-        const x1 = Math.min(t.w - 1, x0 + TILE - 1), y1 = Math.min(t.h - 1, y0 + TILE - 1);
-        renderTile(layers, t, this.map.style, opts, x0, y0, x1, y1);
+        const x1 = Math.min(t2.w - 1, x0 + TILE - 1), y1 = Math.min(t2.h - 1, y0 + TILE - 1);
+        renderTile(layers, t2, this.map.style, opts, x0, y0, x1, y1);
       }
       this.draw();
       if (i < tiles.length) {
@@ -4175,8 +4175,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
         if (rl.pts.length < 3) continue;
         const n = rl.pts.length;
         ctx.fillStyle = isInk ? `rgba(${ck[0]},${ck[1]},${ck[2]},0.06)` : `rgba(${wr},${wg},${wb},0.2)`;
-        ctx.fill(ribbonPath(rl.pts, (t) => {
-          const i = Math.round(t * (n - 1));
+        ctx.fill(ribbonPath(rl.pts, (t2) => {
+          const i = Math.round(t2 * (n - 1));
           return wAt(i, n, rl.widths) * 1.9 * unit + 0.25;
         }));
       }
@@ -4187,8 +4187,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
         if (rl.pts.length < 3) continue;
         const n = rl.pts.length;
         ctx.fillStyle = isInk ? `rgba(${ck[0]},${ck[1]},${ck[2]},0.34)` : `rgba(${dr},${dg},${db},0.5)`;
-        ctx.fill(ribbonPath(rl.pts, (t) => {
-          const i = Math.round(t * (n - 1));
+        ctx.fill(ribbonPath(rl.pts, (t2) => {
+          const i = Math.round(t2 * (n - 1));
           return wAt(i, n, rl.widths) * 0.8 * unit + 0.15;
         }));
       }
@@ -4244,13 +4244,13 @@ var VellumView = class extends import_obsidian2.TextFileView {
    * From then on, pan/zoom/scroll just crop this canvas in draw() — no flicker.
    */
   renderDetail() {
-    const t = this.terrain, cls = this.classifier;
-    if (!t || !cls || this.map.mode !== "generated") {
+    const t2 = this.terrain, cls = this.classifier;
+    if (!t2 || !cls || this.map.mode !== "generated") {
       this.cacheValid = false;
       return;
     }
     const SCALE = 3;
-    const CW = t.w * SCALE, CH = t.h * SCALE;
+    const CW = t2.w * SCALE, CH = t2.h * SCALE;
     if (!this.fullDetailCanvas) this.fullDetailCanvas = document.createElement("canvas");
     const dc = this.fullDetailCanvas;
     dc.width = CW;
@@ -4259,7 +4259,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
     const img = dctx.createImageData(CW, CH);
     const px = img.data;
     const pal = getPalette(this.map.style, this.map.styleColors);
-    const W = t.w, H = t.h, sea = t.seaLevel;
+    const W = t2.w, H = t2.h, sea = t2.seaLevel;
     const relief = this.map.texture.relief ?? 1;
     const mottleAmt = this.map.texture.mottle ?? 1;
     const grain = pal.paperGrain;
@@ -4267,7 +4267,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
       const x0 = Math.max(0, Math.min(W - 1, Math.floor(cx))), y0 = Math.max(0, Math.min(H - 1, Math.floor(cy)));
       const x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1);
       const tx = cx - x0, ty = cy - y0;
-      const a = t.height[y0 * W + x0], b = t.height[y0 * W + x1], c = t.height[y1 * W + x0], d = t.height[y1 * W + x1];
+      const a = t2.height[y0 * W + x0], b = t2.height[y0 * W + x1], c = t2.height[y1 * W + x0], d = t2.height[y1 * W + x1];
       return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
     };
     const coastW2 = Math.max(0, Math.min(12, Math.round(this.map.coastWidth ?? 0)));
@@ -4278,9 +4278,9 @@ var VellumView = class extends import_obsidian2.TextFileView {
       const x0 = Math.max(0, Math.min(W - 1, Math.floor(cx))), y0 = Math.max(0, Math.min(H - 1, Math.floor(cy)));
       const x1 = Math.min(W - 1, x0 + 1), y1 = Math.min(H - 1, y0 + 1);
       const tx = cx - x0, ty = cy - y0;
-      const M = Math.max(COAST_RING_MAX, coastW2 * 3) + 2;
-      const a = Math.min(M, wd[y0 * W + x0]), b = Math.min(M, wd[y0 * W + x1]);
-      const c = Math.min(M, wd[y1 * W + x0]), d = Math.min(M, wd[y1 * W + x1]);
+      const M2 = Math.max(COAST_RING_MAX, coastW2 * 3) + 2;
+      const a = Math.min(M2, wd[y0 * W + x0]), b = Math.min(M2, wd[y0 * W + x1]);
+      const c = Math.min(M2, wd[y1 * W + x0]), d = Math.min(M2, wd[y1 * W + x1]);
       return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty;
     };
     const biomeColorAt = (cx, cy) => {
@@ -4293,7 +4293,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
           const x = Math.max(0, Math.min(W - 1, xCenter + dx));
           const distX = cx - x;
           const weight = Math.exp(-(distX * distX + distY * distY) * 1.4);
-          const col = biomeColor(pal, t.biome[y * W + x]);
+          const col = biomeColor(pal, t2.biome[y * W + x]);
           rSum += col[0] * weight;
           gSum += col[1] * weight;
           bSum += col[2] * weight;
@@ -4311,14 +4311,14 @@ var VellumView = class extends import_obsidian2.TextFileView {
         const ci = Math.min(H - 1, Math.round(cyf)) * W + Math.min(W - 1, Math.round(cxf));
         const col = biomeColorAt(cxf, cyf);
         let r, g, bl;
-        if (el < sea || t.lake[ci]) {
+        if (el < sea || t2.lake[ci]) {
           const rawDepth = Math.min(1, Math.max(0, (sea - el) / 0.25));
-          const depth = t.lake[ci] ? 0.4 : 0.22 + 0.78 * Math.pow(rawDepth, 0.7);
+          const depth = t2.lake[ci] ? 0.4 : 0.22 + 0.78 * Math.pow(rawDepth, 0.7);
           r = col[0] + (pal.deep[0] - pal.ocean[0]) * depth;
           g = col[1] + (pal.deep[1] - pal.ocean[1]) * depth;
           bl = col[2] + (pal.deep[2] - pal.ocean[2]) * depth;
           const dHere = dAt(cxf, cyf);
-          if (coastW2 > 0 && !t.lake[ci] && dHere <= coastW2 * 3) {
+          if (coastW2 > 0 && !t2.lake[ci] && dHere <= coastW2 * 3) {
             const f = Math.exp(-(dHere - 1) / (coastW2 * 0.9)) * 0.38;
             r += (coastRGB2[0] - r) * f;
             g += (coastRGB2[1] - g) * f;
@@ -4335,14 +4335,14 @@ var VellumView = class extends import_obsidian2.TextFileView {
           r = col[0] * sc;
           g = col[1] * sc;
           bl = col[2] * sc;
-          if (t.biome[ci] !== B.SNOW) {
+          if (t2.biome[ci] !== B.SNOW) {
             const wash = landWash(cxf, cyf);
             r += wash[0];
             g += wash[1];
             bl += wash[2];
           }
         }
-        const isWater = el < sea || t.lake[ci];
+        const isWater = el < sea || t2.lake[ci];
         const mottleScale = isWater ? 0.45 : 1;
         const mottle = (smoothVal(cxf + 300, cyf + 300, 13) - 0.5) * 22 * mottleAmt * mottleScale;
         r += mottle;
@@ -5330,8 +5330,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
   /** Distance-field iso-lines → an array of tidy engraved-line Path2D rows */
   hatchRowsFrom(dist, w, h, isos, seedBase) {
     const field = new Float32Array(dist.length);
-    const M = COAST_RING_MAX + 2;
-    for (let i = 0; i < field.length; i++) field[i] = Math.min(M, dist[i]);
+    const M2 = COAST_RING_MAX + 2;
+    for (let i = 0; i < field.length; i++) field[i] = Math.min(M2, dist[i]);
     const rows = [];
     let sc = seedBase;
     for (const [iso, alpha] of isos) {
@@ -5356,18 +5356,18 @@ var VellumView = class extends import_obsidian2.TextFileView {
       this.landHatchRows = null;
       return;
     }
-    const t = this.terrain;
+    const t2 = this.terrain;
     this.hatchRows = this.hatchRowsFrom(
       this.layers.waterDist,
-      t.w,
-      t.h,
+      t2.w,
+      t2.h,
       [[2.1, 0.42], [4.3, 0.3], [7, 0.2], [10.6, 0.12]],
       this.map.gen.seed * 3 + 71
     );
     this.landHatchRows = this.hatchRowsFrom(
-      landDistance(t.biome, t.w, t.h, 10),
-      t.w,
-      t.h,
+      landDistance(t2.biome, t2.w, t2.h, 10),
+      t2.w,
+      t2.h,
       [[1.7, 0.3], [3.4, 0.18], [5.6, 0.1]],
       this.map.gen.seed * 5 + 137
     );
@@ -5454,8 +5454,8 @@ var VellumView = class extends import_obsidian2.TextFileView {
     }
     menu.addItem((it) => it.setTitle("\uC774\uB984 \uC9C0\uC815 (\uB808\uC774\uC5B4)").setIcon("tag").onClick(() => {
       new TextEditModal(this.app, "\uC694\uC18C \uC774\uB984 \uC9C0\uC815 (\uB808\uC774\uC5B4 \uC2DD\uBCC4\uC6A9)", orn.name ?? "", false, (v) => {
-        const t = v.trim();
-        if (t) orn.name = t;
+        const t2 = v.trim();
+        if (t2) orn.name = t2;
         else delete orn.name;
         this.persist();
       }).open();
@@ -5854,7 +5854,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
         lb.createSpan({ text: label });
       }
       const secGen = this.panelSection(tTerrain, "\uC0DD\uC131");
-      const randBtn = secGen.createEl("button", { text: "\u{1F3B2} \uC644\uC804 \uB79C\uB364 \uC0DD\uC131", cls: "fms-btn" });
+      const randBtn = secGen.createEl("button", { text: "\uC644\uC804 \uB79C\uB364 \uC0DD\uC131", cls: "fms-btn" });
       const seedRow = secGen.createDiv({ cls: "fms-row" });
       seedRow.createSpan({ cls: "fms-row-label", text: "\uC2DC\uB4DC" });
       const seedInput = seedRow.createEl("input", { cls: "fms-seed-input", type: "number" });
@@ -6169,7 +6169,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
         this.draw();
         if (!this.map.fastRender) this.scheduleDetail();
       };
-      fastLb.createSpan({ text: "\u26A1 \uBE60\uB978 \uB80C\uB354 (\uD488\uC9C8 \uC800\uD558)" });
+      fastLb.createSpan({ text: "\uBE60\uB978 \uB80C\uB354 (\uD488\uC9C8 \uC800\uD558)" });
     }
     const secBg = this.panelSection(tFile, "\uC9C0\uB3C4 \uBC30\uACBD");
     if (this.map.mode === "image") {
@@ -6213,7 +6213,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
   }
   ornDisplayName(o) {
     if (o.name && o.name.trim()) return o.name.trim();
-    const t = (s) => (s ?? "").split("\n")[0].slice(0, 14);
+    const t2 = (s) => (s ?? "").split("\n")[0].slice(0, 14);
     switch (o.type) {
       case "compass":
         return "\uB098\uCE68\uBC18";
@@ -6222,13 +6222,13 @@ var VellumView = class extends import_obsidian2.TextFileView {
       case "monster":
         return "\uBC14\uB2E4 \uAD34\uBB3C";
       case "title":
-        return `\uC81C\uBAA9 \xB7 ${t(o.text)}`;
+        return `\uC81C\uBAA9 \xB7 ${t2(o.text)}`;
       case "label":
-        return `\uC9C0\uBA85 \xB7 ${t(o.text)}`;
+        return `\uC9C0\uBA85 \xB7 ${t2(o.text)}`;
       case "banner":
-        return `\uB9AC\uBCF8 \xB7 ${t(o.text)}`;
+        return `\uB9AC\uBCF8 \xB7 ${t2(o.text)}`;
       case "note":
-        return `\uBA54\uBAA8 \xB7 ${t(o.text)}`;
+        return `\uBA54\uBAA8 \xB7 ${t2(o.text)}`;
       case "sticker":
         if (o.sticker === "custom") return `\uB0B4 \uC2A4\uD2F0\uCEE4 \xB7 ${(o.imagePath ?? "").split("/").pop() ?? ""}`;
         return getSticker(o.sticker ?? "")?.label ?? "\uC2A4\uD2F0\uCEE4";
@@ -6595,31 +6595,296 @@ ${n.body}
   return file;
 }
 
+// src/i18n.ts
+var LOCALE_LABELS = {
+  "en": "English (US)",
+  "en-GB": "English (UK)",
+  "es": "Espa\xF1ol",
+  "zh": "\u4E2D\u6587",
+  "ja": "\u65E5\u672C\u8A9E",
+  "ko": "\uD55C\uAD6D\uC5B4"
+};
+var current = "en";
+function setLocale(l) {
+  current = l;
+}
+var M = {
+  // ── Commands / notices ────────────────────────────────
+  "cmd.newMapRibbon": { en: "New fantasy map", ko: "\uC0C8 \uD310\uD0C0\uC9C0 \uC9C0\uB3C4" },
+  "cmd.newMap": { en: "Create new fantasy map", ko: "\uC0C8 \uD310\uD0C0\uC9C0 \uC9C0\uB3C4 \uB9CC\uB4E4\uAE30" },
+  "cmd.installSample": { en: "Install sample pack (onboarding)", ko: "\uC0D8\uD50C\uD329 \uC124\uCE58 (\uC628\uBCF4\uB529)" },
+  "cmd.exportPng": { en: "Export map as PNG image", ko: "\uC9C0\uB3C4\uB97C PNG \uC774\uBBF8\uC9C0\uB85C \uB0B4\uBCF4\uB0B4\uAE30" },
+  "cmd.locateNote": { en: "Show current note on the map", ko: "\uD604\uC7AC \uB178\uD2B8\uB97C \uC9C0\uB3C4\uC5D0\uC11C \uBCF4\uAE30" },
+  "notice.sampleInstalled": { en: "Sample pack installed \u2014 see 'Getting started.md'!", ko: "\uC0D8\uD50C\uD329\uC774 \uC124\uCE58\uB418\uC5C8\uC2B5\uB2C8\uB2E4. 'Getting started.md'\uB97C \uD655\uC778\uD558\uC138\uC694!" },
+  "notice.sampleExists": { en: "The sample map already exists \u2014 opening it.", ko: "\uC0D8\uD50C \uC9C0\uB3C4\uAC00 \uC774\uBBF8 \uC874\uC7AC\uD569\uB2C8\uB2E4. \uAE30\uC874 \uD30C\uC77C\uC744 \uC5FD\uB2C8\uB2E4." },
+  "notice.noMarkerMap": { en: "No map with a marker linked to this note was found.", ko: "\uC774 \uB178\uD2B8\uC640 \uC5F0\uACB0\uB41C \uB9C8\uCEE4\uAC00 \uC788\uB294 \uC9C0\uB3C4\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4." },
+  "notice.imageNoTerrainEdit": { en: "Terrain editing is not available on image maps.", ko: "\uC774\uBBF8\uC9C0 \uC9C0\uB3C4\uC5D0\uC11C\uB294 \uC9C0\uD615 \uD3B8\uC9D1\uC744 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4." },
+  "notice.regionMinVertices": { en: "A region needs at least 3 vertices.", ko: "\uC9C0\uC5ED\uC740 \uCD5C\uC18C 3\uAC1C\uC758 \uAF2D\uC9D3\uC810\uC774 \uD544\uC694\uD569\uB2C8\uB2E4." },
+  "notice.exported": { en: "Map exported: ", ko: "\uC9C0\uB3C4\uB97C \uB0B4\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4: " },
+  "notice.pngFailed": { en: "PNG encoding failed.", ko: "PNG \uC778\uCF54\uB529\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4." },
+  "notice.imageMissing": { en: "Image not found: ", ko: "\uC774\uBBF8\uC9C0\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4: " },
+  "view.displayText": { en: "Fantasy map", ko: "\uD310\uD0C0\uC9C0 \uC9C0\uB3C4" },
+  // ── Settings ──────────────────────────────────────────
+  "settings.language": { en: "Language", ko: "\uC5B8\uC5B4" },
+  "settings.languageDesc": {
+    en: "Plugin interface language. Open map views refresh immediately; command names apply after restarting Obsidian.",
+    ko: "\uD50C\uB7EC\uADF8\uC778 UI \uC5B8\uC5B4\uC785\uB2C8\uB2E4. \uC5F4\uB824 \uC788\uB294 \uC9C0\uB3C4 \uBDF0\uB294 \uC989\uC2DC \uAC31\uC2E0\uB418\uBA70, \uBA85\uB839\uC5B4 \uC774\uB984\uC740 Obsidian \uC7AC\uC2DC\uC791 \uD6C4 \uC801\uC6A9\uB429\uB2C8\uB2E4."
+  },
+  // ── Tools (toolbar labels double as hints) ────────────
+  "tool.select": { en: "Select/move \u2014 drag markers, regions or drawings to move; Delete removes", ko: "\uC120\uD0DD/\uC774\uB3D9 \u2014 \uB9C8\uCEE4\xB7\uC9C0\uC5ED\xB7\uADF8\uB9BC \uB4DC\uB798\uADF8\uB85C \uC774\uB3D9, Delete\uB85C \uC0AD\uC81C" },
+  "tool.marker": { en: "Place marker \u2014 click to add a marker", ko: "\uB9C8\uCEE4 \uBC30\uCE58 \u2014 \uD074\uB9AD\uD55C \uC704\uCE58\uC5D0 \uB9C8\uCEE4 \uCD94\uAC00" },
+  "tool.region": { en: "Draw region \u2014 click for vertices, double-click/Enter to finish", ko: "\uC9C0\uC5ED \uADF8\uB9AC\uAE30 \u2014 \uD074\uB9AD\uC73C\uB85C \uAF2D\uC9D3\uC810, \uB354\uBE14\uD074\uB9AD/Enter\uB85C \uC644\uC131" },
+  "tool.draw": { en: "Freehand \u2014 drag to draw paths and curves", ko: "\uC790\uC720 \uADF8\uB9AC\uAE30 \u2014 \uB4DC\uB798\uADF8\uB85C \uACBD\uB85C\xB7\uACE1\uC120 \uADF8\uB9AC\uAE30" },
+  "tool.arrow": { en: "Arrow \u2014 drag to point the way", ko: "\uD654\uC0B4\uD45C \u2014 \uB4DC\uB798\uADF8\uB85C \uBC29\uD5A5 \uD45C\uC2DC" },
+  "tool.raise": { en: "Raise terrain \u2014 drag to lift", ko: "\uC9C0\uD615 \uC62C\uB9AC\uAE30 \u2014 \uB4DC\uB798\uADF8\uB85C \uC735\uAE30" },
+  "tool.lower": { en: "Lower terrain \u2014 drag to sink", ko: "\uC9C0\uD615 \uB0B4\uB9AC\uAE30 \u2014 \uB4DC\uB798\uADF8\uB85C \uCE68\uAC15" },
+  "tool.paint": { en: "Paint biomes \u2014 1\u20135 to choose, E erases", ko: "\uBC14\uC774\uC634 \uCE60\uD558\uAE30 \u2014 1~5\uB85C \uC885\uB958 \uC120\uD0DD, E \uC9C0\uC6B0\uAC1C" },
+  "aria.exportPng": { en: "Export as PNG", ko: "PNG\uB85C \uB0B4\uBCF4\uB0B4\uAE30" },
+  "aria.togglePanel": { en: "Collapse/expand the settings panel", ko: "\uC124\uC815 \uD328\uB110 \uC811\uAE30/\uD3BC\uCE58\uAE30" },
+  // ── Hints ─────────────────────────────────────────────
+  "hint.ornSelected": { en: "Drag: move \xB7 corner handle: resize \xB7 double-click: edit text \xB7 Delete: remove", ko: "\uB4DC\uB798\uADF8: \uC774\uB3D9 \xB7 \uBAA8\uC11C\uB9AC \uD578\uB4E4: \uD06C\uAE30 \xB7 \uB354\uBE14\uD074\uB9AD: \uD14D\uC2A4\uD2B8 \uD3B8\uC9D1 \xB7 Delete: \uC0AD\uC81C" },
+  "hint.ornSelectedNoText": { en: "Drag: move \xB7 corner handle: resize \xB7 Delete: remove", ko: "\uB4DC\uB798\uADF8: \uC774\uB3D9 \xB7 \uBAA8\uC11C\uB9AC \uD578\uB4E4: \uD06C\uAE30 \xB7 Delete: \uC0AD\uC81C" },
+  "hint.regionSelected": { en: "Drag region: move \xB7 drag vertex: reshape \xB7 right-click: menu", ko: "\uC9C0\uC5ED \uB4DC\uB798\uADF8: \uC774\uB3D9 \xB7 \uAF2D\uC9D3\uC810 \uB4DC\uB798\uADF8: \uBAA8\uC591 \uC218\uC815 \xB7 \uC6B0\uD074\uB9AD: \uBA54\uB274" },
+  "hint.annoSelected": { en: "Drag: move \xB7 Delete: remove", ko: "\uB4DC\uB798\uADF8: \uC774\uB3D9 \xB7 Delete: \uC0AD\uC81C" },
+  "hint.regionVertices": { en: "{n} vertices \u2014 double-click/Enter to finish, Esc to cancel", ko: "\uAF2D\uC9D3\uC810 {n}\uAC1C \u2014 \uB354\uBE14\uD074\uB9AD/Enter\uB85C \uC644\uC131, Esc\uB85C \uCDE8\uC18C" },
+  "hint.generating": { en: "Generating terrain\u2026", ko: "\uC9C0\uD615 \uC0DD\uC131 \uC911\u2026" },
+  "hint.rendering": { en: "Rendering map\u2026 ({n} tiles)", ko: "\uC9C0\uB3C4 \uB80C\uB354\uB9C1 \uC911\u2026 ({n} \uD0C0\uC77C)" },
+  // ── Panel tabs & sections ─────────────────────────────
+  "tab.terrain": { en: "Terrain", ko: "\uC9C0\uD615" },
+  "tab.style": { en: "Style", ko: "\uAFB8\uBBF8\uAE30" },
+  "tab.elements": { en: "Elements", ko: "\uC694\uC18C" },
+  "tab.file": { en: "File", ko: "\uD30C\uC77C" },
+  "sec.genOptions": { en: "Terrain generation options", ko: "\uC9C0\uD615 \uC0DD\uC131 \uC635\uC158" },
+  "gen.rivers": { en: "Rivers", ko: "\uAC15" },
+  "gen.snow": { en: "Snow", ko: "\uB208" },
+  "gen.desert": { en: "Desert", ko: "\uC0AC\uB9C9" },
+  "gen.forest": { en: "Forest", ko: "\uC232" },
+  "sec.generate": { en: "Generate", ko: "\uC0DD\uC131" },
+  "btn.fullRandom": { en: "Fully random", ko: "\uC644\uC804 \uB79C\uB364 \uC0DD\uC131" },
+  "lbl.seed": { en: "Seed", ko: "\uC2DC\uB4DC" },
+  "aria.seedOnly": { en: "Randomize the seed only (keep settings)", ko: "\uC2DC\uB4DC\uB9CC \uBB34\uC791\uC704 (\uC124\uC815 \uC720\uC9C0)" },
+  "note.generate": { en: "Continents, islands and sea level are chosen for you. Fine-tune in the advanced sections.", ko: "\uB300\uB959\xB7\uC12C\xB7\uD574\uC218\uBA74 \uB4F1\uC744 \uC54C\uC544\uC11C \uC815\uD569\uB2C8\uB2E4. \uC138\uBD80 \uC870\uC815\uC740 \uACE0\uAE09 \uC124\uC815\uC5D0\uC11C." },
+  "sec.advLand": { en: "Advanced \xB7 land & sea", ko: "\uACE0\uAE09 \xB7 \uB300\uB959\uACFC \uBC14\uB2E4" },
+  "sl.seaLevel": { en: "Sea level", ko: "\uD574\uC218\uBA74 \uB192\uC774" },
+  "sl.continentCount": { en: "Continents", ko: "\uB300\uB959 \uC218" },
+  "sl.islandCount": { en: "Islands", ko: "\uC12C \uC218" },
+  "sl.landAmount": { en: "Continent size", ko: "\uB300\uB959 \uD06C\uAE30" },
+  "sl.continents": { en: "Continent spread", ko: "\uB300\uB959 \uBD84\uD3EC" },
+  "sl.roughness": { en: "Roughness", ko: "\uAC70\uCE60\uAE30" },
+  "sec.advClimate": { en: "Advanced \xB7 climate & detail", ko: "\uACE0\uAE09 \xB7 \uAE30\uD6C4\uC640 \uB514\uD14C\uC77C" },
+  "sl.climate": { en: "Climate", ko: "\uAE30\uD6C4 \uBD84\uD3EC" },
+  "sl.detail": { en: "Detail", ko: "\uB514\uD14C\uC77C" },
+  "sl.precision": { en: "Precision", ko: "\uC815\uBC00\uB3C4" },
+  "sl.polarNorth": { en: "North polar snow", ko: "\uBD81\uADF9 \uC124\uC6D0" },
+  "sl.polarSouth": { en: "South polar snow", ko: "\uB0A8\uADF9 \uC124\uC6D0" },
+  "sec.advWater": { en: "Advanced \xB7 water & erosion", ko: "\uACE0\uAE09 \xB7 \uBB3C\uACFC \uCE68\uC2DD" },
+  "sl.erosion": { en: "Erosion", ko: "\uCE68\uC2DD" },
+  "sl.riverDensity": { en: "River density", ko: "\uAC15 \uBC00\uB3C4" },
+  "sec.resetEdits": { en: "Reset edits", ko: "\uD3B8\uC9D1 \uCD08\uAE30\uD654" },
+  "btn.clearEdits": { en: "Reset terrain edits", ko: "\uC9C0\uD615 \uD3B8\uC9D1 \uCD08\uAE30\uD654" },
+  "btn.clearPaint": { en: "Reset biome paint", ko: "\uBC14\uC774\uC634 \uD398\uC778\uD2B8 \uCD08\uAE30\uD654" },
+  "sec.mapSize": { en: "Map size", ko: "\uC9C0\uB3C4 \uD06C\uAE30" },
+  "btn.applySize": { en: "Apply size", ko: "\uD06C\uAE30 \uC801\uC6A9" },
+  "note.mapSize": {
+    en: "128\u20133072 cells. Large maps render progressively in tiles; bigger maps generate more slowly. Brush edits are interpolated and kept.",
+    ko: "128~3072 \uC140. \uD070 \uC9C0\uB3C4\uB294 \uD0C0\uC77C \uB2E8\uC704\uB85C \uC21C\uCC28 \uB80C\uB354\uB429\uB2C8\uB2E4(\uCCAD\uD06C). \uD074\uC218\uB85D \uC0DD\uC131\uC774 \uB290\uB824\uC9C0\uB2C8 \uC8FC\uC758. \uBE0C\uB7EC\uC2DC \uD3B8\uC9D1\uC740 \uBCF4\uAC04\uB418\uC5B4 \uC720\uC9C0\uB429\uB2C8\uB2E4."
+  },
+  "sec.terrainColors": { en: "Terrain colors", ko: "\uC9C0\uD615 \uC0C9\uC0C1" },
+  "btn.resetColors": { en: "Restore default colors", ko: "\uAE30\uBCF8 \uC0C9\uC0C1 \uBCF5\uC6D0" },
+  "sec.coast": { en: "Coastline", ko: "\uD574\uC548\uC120" },
+  "sl.coastWidth": { en: "Width", ko: "\uD3ED" },
+  "lbl.coastColor": { en: "Band color", ko: "\uB760 \uC0C9\uC0C1" },
+  "btn.auto": { en: "Auto", ko: "\uC790\uB3D9" },
+  "sec.effects": { en: "Whole-map effects", ko: "\uC804\uCCB4 \uD6A8\uACFC" },
+  "fx.frame": { en: "Frame", ko: "\uD14C\uB450\uB9AC" },
+  "fx.waves": { en: "Waves", ko: "\uD30C\uB3C4" },
+  "fx.vignette": { en: "Vignette", ko: "\uBE44\uB124\uD2B8" },
+  "sec.texture": { en: "Texture", ko: "\uC9C8\uAC10" },
+  "sl.grain": { en: "Paper grain", ko: "\uC885\uC774 \uACB0" },
+  "sl.relief": { en: "Shading (wash)", ko: "\uBA85\uC554(\uC6CC\uC2DC)" },
+  "sl.mottle": { en: "Paper mottle", ko: "\uC885\uC774 \uC5BC\uB8E9" },
+  "sl.markerScale": { en: "Icon size", ko: "\uC544\uC774\uCF58 \uD06C\uAE30" },
+  "sec.textElements": { en: "Text elements", ko: "\uD14D\uC2A4\uD2B8 \uC694\uC18C" },
+  "orn.title": { en: "Title", ko: "\uC81C\uBAA9" },
+  "orn.label": { en: "Place name", ko: "\uC9C0\uBA85" },
+  "orn.banner": { en: "Ribbon banner", ko: "\uB9AC\uBCF8 \uBB38\uAD6C" },
+  "orn.note": { en: "Note", ko: "\uBA54\uBAA8" },
+  "aria.add": { en: "Add {name}", ko: "{name} \uCD94\uAC00" },
+  "note.textElements": { en: "Double-click to edit text; drag to move, resize with the handle, Delete removes.", ko: "\uB354\uBE14\uD074\uB9AD\uC73C\uB85C \uD14D\uC2A4\uD2B8 \uD3B8\uC9D1, \uB4DC\uB798\uADF8 \uC774\uB3D9\xB7\uD06C\uAE30 \uC870\uC808\xB7Delete \uC0AD\uC81C." },
+  "sec.stickers": { en: "Decorative stickers", ko: "\uAFB8\uBBF8\uAE30 \uC2A4\uD2F0\uCEE4" },
+  "btn.customSticker": { en: "Add my sticker (vault image)\u2026", ko: "\uB0B4 \uC2A4\uD2F0\uCEE4 \uCD94\uAC00 (\uBCFC\uD2B8 \uC774\uBBF8\uC9C0)\u2026" },
+  "note.stickers": {
+    en: "Click to add at the map center \u2014 drag to move, resize, Delete removes. Custom stickers use vault PNGs (transparent background recommended).",
+    ko: "\uD074\uB9AD\uD574 \uC9C0\uB3C4 \uC911\uC559\uC5D0 \uCD94\uAC00 \u2014 \uB4DC\uB798\uADF8 \uC774\uB3D9\xB7\uD06C\uAE30 \uC870\uC808\xB7Delete \uC0AD\uC81C. \uB0B4 \uC2A4\uD2F0\uCEE4\uB294 \uBCFC\uD2B8\uC758 PNG(\uD22C\uBA85 \uBC30\uACBD \uAD8C\uC7A5)\uB97C \uC0AC\uC6A9\uD569\uB2C8\uB2E4."
+  },
+  "sec.styleSec": { en: "Style", ko: "\uC2A4\uD0C0\uC77C" },
+  "lbl.theme": { en: "Theme", ko: "\uD14C\uB9C8" },
+  "style.parchment": { en: "Parchment", ko: "\uC591\uD53C\uC9C0" },
+  "style.color": { en: "Color", ko: "\uCEEC\uB7EC" },
+  "style.ink": { en: "Ink", ko: "\uC789\uD06C" },
+  "chk.contours": { en: "Show contours (2D)", ko: "\uB4F1\uACE0\uC120 \uD45C\uC2DC (2D)" },
+  "chk.coastHatch": { en: "Coastal hatching", ko: "\uD574\uC548 \uD5E4\uCE6D (\uC794\uC120)" },
+  "chk.landHatch": { en: "Land hatching", ko: "\uC721\uC9C0 \uD5E4\uCE6D" },
+  "chk.grid": { en: "Coordinate grid", ko: "\uC88C\uD45C \uACA9\uC790" },
+  "chk.rhumb": { en: "Rhumb lines", ko: "\uD48D\uBC30\uC120 \uD45C\uC2DC" },
+  "chk.fast": { en: "Fast render (lower quality)", ko: "\uBE60\uB978 \uB80C\uB354 (\uD488\uC9C8 \uC800\uD558)" },
+  "sec.background": { en: "Map background", ko: "\uC9C0\uB3C4 \uBC30\uACBD" },
+  "lbl.imagePrefix": { en: "Image: ", ko: "\uC774\uBBF8\uC9C0: " },
+  "btn.toGenerated": { en: "Switch to generated terrain", ko: "\uC0DD\uC131 \uC9C0\uD615\uC73C\uB85C \uC804\uD658" },
+  "btn.loadImage": { en: "Load vault image", ko: "\uBCFC\uD2B8 \uC774\uBBF8\uC9C0 \uBD88\uB7EC\uC624\uAE30" },
+  "note.background": { en: "Load a hand-drawn or external map image and place markers on it.", ko: "\uC190\uADF8\uB9BC\xB7\uC678\uBD80 \uC81C\uC791 \uC9C0\uB3C4\uB97C \uBD88\uB7EC\uC640 \uB9C8\uCEE4\uB97C \uBC30\uCE58\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4." },
+  "sec.export": { en: "Export", ko: "\uB0B4\uBCF4\uB0B4\uAE30" },
+  "btn.exportPng2x": { en: "Export as PNG image (2\xD7)", ko: "PNG \uC774\uBBF8\uC9C0\uB85C \uB0B4\uBCF4\uB0B4\uAE30 (2\xD7)" },
+  "sec.layers": { en: "Placed elements (layers)", ko: "\uBC30\uCE58\uB41C \uC694\uC18C (\uB808\uC774\uC5B4)" },
+  "note.layers": { en: "Top of the list = front of the map. On the canvas: Ctrl+\u2191/\u2193 one step, Ctrl+Shift+\u2191/\u2193 front/back.", ko: "\uBAA9\uB85D \uC704\uCABD = \uC9C0\uB3C4\uC5D0\uC11C \uC55E. \uCE94\uBC84\uC2A4\uC5D0\uC11C Ctrl+\u2191/\u2193(\uD55C \uCE78), Ctrl+Shift+\u2191/\u2193(\uB9E8 \uC55E/\uB4A4)\uB85C\uB3C4 \uC774\uB3D9." },
+  "note.layersEmpty": { en: "Add elements to reorder them here.", ko: "\uC694\uC18C\uB97C \uCD94\uAC00\uD558\uBA74 \uC5EC\uAE30\uC11C \uC21C\uC11C\uB97C \uBC14\uAFC0 \uC218 \uC788\uC2B5\uB2C8\uB2E4." },
+  "sec.markers": { en: "Markers", ko: "\uB9C8\uCEE4" },
+  "note.markersEmpty": { en: "Click the map with the marker tool to add one.", ko: "\uB9C8\uCEE4 \uB3C4\uAD6C\uB85C \uC9C0\uB3C4\uB97C \uD074\uB9AD\uD574 \uCD94\uAC00\uD558\uC138\uC694." },
+  // ── Paint / draw bars ─────────────────────────────────
+  "paint.erase": { en: "Erase", ko: "\uC9C0\uC6B0\uAE30" },
+  "aria.paintErase": { en: "Eraser (E) \u2014 remove painted biome", ko: "\uC9C0\uC6B0\uAC1C (E) \u2014 \uCE60\uD55C \uBC14\uC774\uC634 \uC81C\uAC70" },
+  "lbl.size": { en: "Size", ko: "\uD06C\uAE30" },
+  "lbl.width": { en: "Width", ko: "\uAD75\uAE30" },
+  "lbl.dashed": { en: "Dashed", ko: "\uC810\uC120" },
+  "draw.eraser": { en: "Eraser", ko: "\uC9C0\uC6B0\uAC1C" },
+  "aria.drawErase": { en: "Eraser \u2014 click/drag over drawings to delete", ko: "\uC9C0\uC6B0\uAC1C \u2014 \uADF8\uB9BC \uC704\uB97C \uD074\uB9AD/\uB4DC\uB798\uADF8\uD574 \uC0AD\uC81C" },
+  // ── Context menus ─────────────────────────────────────
+  "menu.openNote": { en: "Open note", ko: "\uB178\uD2B8 \uC5F4\uAE30" },
+  "menu.edit": { en: "Edit", ko: "\uD3B8\uC9D1" },
+  "menu.front": { en: "Bring to front", ko: "\uB9E8 \uC55E\uC73C\uB85C" },
+  "menu.back": { en: "Send to back", ko: "\uB9E8 \uB4A4\uB85C" },
+  "menu.delete": { en: "Delete", ko: "\uC0AD\uC81C" },
+  "menu.editVertices": { en: "Edit vertices", ko: "\uAF2D\uC9D3\uC810 \uD3B8\uC9D1" },
+  "menu.editText": { en: "Edit text", ko: "\uD14D\uC2A4\uD2B8 \uD3B8\uC9D1" },
+  "menu.setName": { en: "Set name (layers)", ko: "\uC774\uB984 \uC9C0\uC815 (\uB808\uC774\uC5B4)" },
+  "menu.forward": { en: "Forward one step (Ctrl+\u2191)", ko: "\uC55E\uC73C\uB85C \uD55C \uCE78 (Ctrl+\u2191)" },
+  "menu.backward": { en: "Back one step (Ctrl+\u2193)", ko: "\uB4A4\uB85C \uD55C \uCE78 (Ctrl+\u2193)" },
+  "menu.front2": { en: "To front (Ctrl+Shift+\u2191)", ko: "\uB9E8 \uC55E\uC73C\uB85C (Ctrl+Shift+\u2191)" },
+  "menu.back2": { en: "To back (Ctrl+Shift+\u2193)", ko: "\uB9E8 \uB4A4\uB85C (Ctrl+Shift+\u2193)" },
+  "aria.rename": { en: "Set name", ko: "\uC774\uB984 \uC9C0\uC815" },
+  "aria.forward": { en: "Forward one step", ko: "\uC55E\uC73C\uB85C \uD55C \uCE78" },
+  "aria.backward": { en: "Back one step", ko: "\uB4A4\uB85C \uD55C \uCE78" },
+  "aria.delete": { en: "Delete", ko: "\uC0AD\uC81C" },
+  // ── Modals ────────────────────────────────────────────
+  "modal.editMarker": { en: "Edit marker", ko: "\uB9C8\uCEE4 \uD3B8\uC9D1" },
+  "modal.newMarker": { en: "New marker", ko: "\uC0C8 \uB9C8\uCEE4" },
+  "modal.name": { en: "Name", ko: "\uC774\uB984" },
+  "modal.icon": { en: "Icon", ko: "\uC544\uC774\uCF58" },
+  "modal.size": { en: "Size", ko: "\uD06C\uAE30" },
+  "modal.linkedNote": { en: "Linked note", ko: "\uC5F0\uACB0\uB41C \uB178\uD2B8" },
+  "modal.none": { en: "None", ko: "\uC5C6\uC74C" },
+  "modal.chooseNote": { en: "Choose note", ko: "\uB178\uD2B8 \uC120\uD0DD" },
+  "modal.unlink": { en: "Unlink", ko: "\uC5F0\uACB0 \uD574\uC81C" },
+  "modal.delete": { en: "Delete", ko: "\uC0AD\uC81C" },
+  "modal.save": { en: "Save", ko: "\uC800\uC7A5" },
+  "modal.editRegion": { en: "Edit region", ko: "\uC9C0\uC5ED \uD3B8\uC9D1" },
+  "modal.newRegion": { en: "New region", ko: "\uC0C8 \uC9C0\uC5ED" },
+  "modal.color": { en: "Color", ko: "\uC0C9\uC0C1" },
+  "modal.searchNote": { en: "Search for a note to link...", ko: "\uC5F0\uACB0\uD560 \uB178\uD2B8\uB97C \uAC80\uC0C9..." },
+  "modal.searchImage": { en: "Search map images... (png/jpg/webp)", ko: "\uC9C0\uB3C4 \uC774\uBBF8\uC9C0\uB97C \uAC80\uC0C9... (png/jpg/webp)" },
+  "heading.editTitle": { en: "Edit title", ko: "\uC81C\uBAA9 \uD3B8\uC9D1" },
+  "heading.editNote": { en: "Edit note (Ctrl+Enter saves)", ko: "\uBA54\uBAA8 \uD3B8\uC9D1 (Ctrl+Enter \uC800\uC7A5)" },
+  "heading.editBanner": { en: "Edit ribbon text", ko: "\uB9AC\uBCF8 \uBB38\uAD6C \uD3B8\uC9D1" },
+  "heading.editText": { en: "Edit text", ko: "\uD14D\uC2A4\uD2B8 \uD3B8\uC9D1" },
+  "heading.setName": { en: "Name this element (for the layer list)", ko: "\uC694\uC18C \uC774\uB984 \uC9C0\uC815 (\uB808\uC774\uC5B4 \uC2DD\uBCC4\uC6A9)" },
+  // ── Placed-element display names ──────────────────────
+  "ornname.compass": { en: "Compass", ko: "\uB098\uCE68\uBC18" },
+  "ornname.ship": { en: "Ship", ko: "\uBC94\uC120" },
+  "ornname.monster": { en: "Sea monster", ko: "\uBC14\uB2E4 \uAD34\uBB3C" },
+  "ornname.title": { en: "Title \xB7 ", ko: "\uC81C\uBAA9 \xB7 " },
+  "ornname.label": { en: "Place \xB7 ", ko: "\uC9C0\uBA85 \xB7 " },
+  "ornname.banner": { en: "Ribbon \xB7 ", ko: "\uB9AC\uBCF8 \xB7 " },
+  "ornname.note": { en: "Note \xB7 ", ko: "\uBA54\uBAA8 \xB7 " },
+  "ornname.customSticker": { en: "My sticker \xB7 ", ko: "\uB0B4 \uC2A4\uD2F0\uCEE4 \xB7 " },
+  "ornname.sticker": { en: "Sticker", ko: "\uC2A4\uD2F0\uCEE4" },
+  // ── Marker icon labels ────────────────────────────────
+  "icon.pin": { en: "Pin", ko: "\uD540" },
+  "icon.castle": { en: "Castle", ko: "\uC131" },
+  "icon.town": { en: "Town", ko: "\uB9C8\uC744" },
+  "icon.anchor": { en: "Harbor", ko: "\uD56D\uAD6C" },
+  "icon.mountain": { en: "Mountain", ko: "\uC0B0" },
+  "icon.tree": { en: "Forest", ko: "\uC232" },
+  "icon.tower": { en: "Tower", ko: "\uD0D1" },
+  "icon.temple": { en: "Temple", ko: "\uC2E0\uC804" },
+  "icon.swords": { en: "Battlefield", ko: "\uC804\uC7A5" },
+  "icon.gem": { en: "Treasure", ko: "\uBCF4\uBB3C" },
+  "icon.tent": { en: "Camp", ko: "\uC57C\uC601\uC9C0" },
+  "icon.star": { en: "Landmark", ko: "\uBA85\uC18C" },
+  "icon.x": { en: "X mark", ko: "X \uD45C\uC2DC" },
+  "icon.skull": { en: "Danger", ko: "\uC704\uD5D8" },
+  "icon.flag": { en: "Flag", ko: "\uAE43\uBC1C" },
+  "icon.chest": { en: "Treasure chest", ko: "\uBCF4\uBB3C\uC0C1\uC790" },
+  "icon.cross": { en: "Sanctuary", ko: "\uC131\uC18C" },
+  // ── Sticker categories & labels ───────────────────────
+  "cat.sky": { en: "Sky", ko: "\uD558\uB298" },
+  "cat.sea": { en: "Sea", ko: "\uBC14\uB2E4" },
+  "cat.land": { en: "Land", ko: "\uB545" },
+  "cat.map": { en: "Map", ko: "\uC9C0\uB3C4" },
+  "sticker.cloud": { en: "Cloud", ko: "\uAD6C\uB984" },
+  "sticker.sun": { en: "Sun", ko: "\uD0DC\uC591" },
+  "sticker.moon": { en: "Crescent moon", ko: "\uCD08\uC2B9\uB2EC" },
+  "sticker.birds": { en: "Flock of birds", ko: "\uC0C8 \uB5BC" },
+  "sticker.whale": { en: "Whale", ko: "\uACE0\uB798" },
+  "sticker.fish": { en: "School of fish", ko: "\uBB3C\uACE0\uAE30 \uB5BC" },
+  "sticker.whirlpool": { en: "Whirlpool", ko: "\uC18C\uC6A9\uB3CC\uC774" },
+  "sticker.waves": { en: "Waves", ko: "\uD30C\uB3C4" },
+  "sticker.dragon": { en: "Dragon", ko: "\uB4DC\uB798\uACE4" },
+  "sticker.tent": { en: "Camp", ko: "\uC57C\uC601\uC9C0" },
+  "sticker.ruins": { en: "Ancient ruins", ko: "\uACE0\uB300 \uC720\uC801" },
+  "sticker.tower": { en: "Tower", ko: "\uD0D1" },
+  "sticker.wind": { en: "Wind", ko: "\uBC14\uB78C" },
+  "sticker.storm": { en: "Storm cloud", ko: "\uD3ED\uD48D \uAD6C\uB984" },
+  "sticker.lighthouse": { en: "Lighthouse", ko: "\uB4F1\uB300" },
+  "sticker.kraken": { en: "Kraken", ko: "\uD06C\uB77C\uCF04" },
+  "sticker.castle": { en: "Castle", ko: "\uC131" },
+  "sticker.bridge": { en: "Bridge", ko: "\uB2E4\uB9AC" },
+  "sticker.windmill": { en: "Windmill", ko: "\uD48D\uCC28" },
+  "sticker.inkblot": { en: "Ink blot", ko: "\uC789\uD06C \uC5BC\uB8E9" },
+  "sticker.scroll": { en: "Scroll", ko: "\uB450\uB8E8\uB9C8\uB9AC" },
+  "sticker.flourish": { en: "Corner flourish", ko: "\uBAA8\uC11C\uB9AC \uC7A5\uC2DD" }
+};
+function t(key) {
+  const m = M[key];
+  if (!m) return key;
+  return m[current] ?? m.en;
+}
+
 // src/main.ts
+var DEFAULT_SETTINGS = {
+  locale: "en"
+  // English by default; the map's own language is always English
+};
 var VellumPlugin = class extends import_obsidian4.Plugin {
+  constructor() {
+    super(...arguments);
+    this.settings = DEFAULT_SETTINGS;
+  }
   async onload() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    setLocale(this.settings.locale);
     this.registerView(VIEW_TYPE_FMAP, (leaf) => new VellumView(leaf));
     this.registerExtensions(["fmap"], VIEW_TYPE_FMAP);
-    this.addRibbonIcon("map", "\uC0C8 \uD310\uD0C0\uC9C0 \uC9C0\uB3C4", () => void this.createNewMap());
+    this.addSettingTab(new VellumSettingTab(this.app, this));
+    this.addRibbonIcon("map", t("cmd.newMapRibbon"), () => void this.createNewMap());
     this.addCommand({
       id: "create-map",
-      name: "\uC0C8 \uD310\uD0C0\uC9C0 \uC9C0\uB3C4 \uB9CC\uB4E4\uAE30",
+      name: t("cmd.newMap"),
       callback: () => void this.createNewMap()
     });
     this.addCommand({
       id: "install-sample",
-      name: "\uC0D8\uD50C\uD329 \uC124\uCE58 (\uC628\uBCF4\uB529)",
+      name: t("cmd.installSample"),
       callback: async () => {
         const file = await installSamplePack(this.app);
         if (file) {
           await this.app.workspace.getLeaf(true).openFile(file);
-          new import_obsidian4.Notice("\uC0D8\uD50C\uD329\uC774 \uC124\uCE58\uB418\uC5C8\uC2B5\uB2C8\uB2E4. '\uC2DC\uC791\uD558\uAE30.md'\uB97C \uD655\uC778\uD558\uC138\uC694!");
+          new import_obsidian4.Notice(t("notice.sampleInstalled"));
         }
       }
     });
     this.addCommand({
       id: "export-png",
-      name: "\uC9C0\uB3C4\uB97C PNG \uC774\uBBF8\uC9C0\uB85C \uB0B4\uBCF4\uB0B4\uAE30",
+      name: t("cmd.exportPng"),
       checkCallback: (checking) => {
         const view = this.app.workspace.getActiveViewOfType(VellumView);
         if (!view) return false;
@@ -6630,7 +6895,7 @@ var VellumPlugin = class extends import_obsidian4.Plugin {
     });
     this.addCommand({
       id: "locate-note-on-map",
-      name: "\uD604\uC7AC \uB178\uD2B8\uB97C \uC9C0\uB3C4\uC5D0\uC11C \uBCF4\uAE30",
+      name: t("cmd.locateNote"),
       checkCallback: (checking) => {
         const active = this.app.workspace.getActiveFile();
         if (!active || active.extension !== "md") return false;
@@ -6642,15 +6907,25 @@ var VellumPlugin = class extends import_obsidian4.Plugin {
   }
   onunload() {
   }
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
+  /** Apply a locale change: persist, switch the string table */
+  async applyLocale(locale) {
+    this.settings.locale = locale;
+    setLocale(locale);
+    await this.saveSettings();
+    new import_obsidian4.Notice(t("notice.restartNeeded") || "Language changed. Please close and reopen map views to apply.");
+  }
   async createNewMap() {
     const parent = this.getActiveFolder();
     const base = parent === "/" || parent === "" ? "" : parent + "/";
-    let path = (0, import_obsidian4.normalizePath)(`${base}\uC0C8 \uC9C0\uB3C4.fmap`);
+    let path = (0, import_obsidian4.normalizePath)(`${base}New Map.fmap`);
     let n = 1;
     while (this.app.vault.getAbstractFileByPath(path)) {
-      path = (0, import_obsidian4.normalizePath)(`${base}\uC0C8 \uC9C0\uB3C4 ${++n}.fmap`);
+      path = (0, import_obsidian4.normalizePath)(`${base}New Map ${++n}.fmap`);
     }
-    const data = defaultMapData(path.replace(/\.fmap$/, "").split("/").pop() ?? "\uC9C0\uB3C4");
+    const data = defaultMapData(path.replace(/\.fmap$/, "").split("/").pop() ?? "Map");
     data.gen = randomizeGenParams(data.gen.seed);
     const file = await this.app.vault.create(path, JSON.stringify(data, null, 2));
     await this.app.workspace.getLeaf(true).openFile(file);
@@ -6694,6 +6969,24 @@ var VellumPlugin = class extends import_obsidian4.Plugin {
       } catch {
       }
     }
-    new import_obsidian4.Notice("\uC774 \uB178\uD2B8\uC640 \uC5F0\uACB0\uB41C \uB9C8\uCEE4\uAC00 \uC788\uB294 \uC9C0\uB3C4\uB97C \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4.");
+    new import_obsidian4.Notice(t("notice.noMarkerMap"));
+  }
+};
+var VellumSettingTab = class extends import_obsidian4.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    new import_obsidian4.Setting(containerEl).setName(t("settings.language")).setDesc(t("settings.languageDesc")).addDropdown((dd) => {
+      Object.keys(LOCALE_LABELS).forEach((code) => dd.addOption(code, LOCALE_LABELS[code]));
+      dd.setValue(this.plugin.settings.locale);
+      dd.onChange(async (v) => {
+        await this.plugin.applyLocale(v);
+        this.display();
+      });
+    });
   }
 };

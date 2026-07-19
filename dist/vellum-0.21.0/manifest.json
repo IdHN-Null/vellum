@@ -3,7 +3,7 @@
   "name": "Vellum",
   "version": "0.21.0",
   "minAppVersion": "1.4.0",
-  "description": "상상을 지도로. 당신만의 판타지 세계를 창조하고 다듬는 지도 생성·편집기.",
+  "description": "Turn your imagination into a map. An Obsidian mapping tool for worldbuilders.",
   "author": "Altair",
   "isDesktopOnly": true
 }
