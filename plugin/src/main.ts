@@ -1,36 +1,51 @@
-import { Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
+import { App, Notice, Plugin, PluginSettingTab, Setting, TFile, TFolder, normalizePath } from "obsidian";
 import { VellumView, VIEW_TYPE_FMAP } from "./view";
 import { defaultMapData, parseMapData, randomizeGenParams } from "./types";
 import { installSamplePack } from "./sample";
+import { LOCALE_LABELS, LocaleId, setLocale, t } from "./i18n";
+
+interface VellumSettings {
+  locale: LocaleId;
+}
+
+const DEFAULT_SETTINGS: VellumSettings = {
+  locale: "en", // English by default; the map's own language is always English
+};
 
 export default class VellumPlugin extends Plugin {
+  settings: VellumSettings = DEFAULT_SETTINGS;
+
   async onload(): Promise<void> {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    setLocale(this.settings.locale);
+
     this.registerView(VIEW_TYPE_FMAP, (leaf) => new VellumView(leaf));
     this.registerExtensions(["fmap"], VIEW_TYPE_FMAP);
+    this.addSettingTab(new VellumSettingTab(this.app, this));
 
-    this.addRibbonIcon("map", "새 판타지 지도", () => void this.createNewMap());
+    this.addRibbonIcon("map", t("cmd.newMapRibbon"), () => void this.createNewMap());
 
     this.addCommand({
       id: "create-map",
-      name: "새 판타지 지도 만들기",
+      name: t("cmd.newMap"),
       callback: () => void this.createNewMap(),
     });
 
     this.addCommand({
       id: "install-sample",
-      name: "샘플팩 설치 (온보딩)",
+      name: t("cmd.installSample"),
       callback: async () => {
         const file = await installSamplePack(this.app);
         if (file) {
           await this.app.workspace.getLeaf(true).openFile(file);
-          new Notice("샘플팩이 설치되었습니다. '시작하기.md'를 확인하세요!");
+          new Notice(t("notice.sampleInstalled"));
         }
       },
     });
 
     this.addCommand({
       id: "export-png",
-      name: "지도를 PNG 이미지로 내보내기",
+      name: t("cmd.exportPng"),
       checkCallback: (checking) => {
         const view = this.app.workspace.getActiveViewOfType(VellumView);
         if (!view) return false;
@@ -42,7 +57,7 @@ export default class VellumPlugin extends Plugin {
 
     this.addCommand({
       id: "locate-note-on-map",
-      name: "현재 노트를 지도에서 보기",
+      name: t("cmd.locateNote"),
       checkCallback: (checking) => {
         const active = this.app.workspace.getActiveFile();
         if (!active || active.extension !== "md") return false;
@@ -57,15 +72,31 @@ export default class VellumPlugin extends Plugin {
     // Obsidian cleans up registered views/extensions automatically.
   }
 
+  async saveSettings(): Promise<void> {
+    await this.saveData(this.settings);
+  }
+
+  /** Apply a locale change: persist, switch the string table, refresh open map views */
+  async applyLocale(locale: LocaleId): Promise<void> {
+    this.settings.locale = locale;
+    setLocale(locale);
+    await this.saveSettings();
+    for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_FMAP)) {
+      const v = leaf.view;
+      if (v instanceof VellumView) await v.refreshUI();
+    }
+  }
+
   private async createNewMap(): Promise<void> {
     const parent = this.getActiveFolder();
     const base = parent === "/" || parent === "" ? "" : parent + "/";
-    let path = normalizePath(`${base}새 지도.fmap`);
+    // Map content is always English — the filename becomes the on-map title
+    let path = normalizePath(`${base}New Map.fmap`);
     let n = 1;
     while (this.app.vault.getAbstractFileByPath(path)) {
-      path = normalizePath(`${base}새 지도 ${++n}.fmap`);
+      path = normalizePath(`${base}New Map ${++n}.fmap`);
     }
-    const data = defaultMapData(path.replace(/\.fmap$/, "").split("/").pop() ?? "지도");
+    const data = defaultMapData(path.replace(/\.fmap$/, "").split("/").pop() ?? "Map");
     // A new map is a fully random world — advanced settings live in the panel (reproducible via seed)
     data.gen = randomizeGenParams(data.gen.seed);
     const file = await this.app.vault.create(path, JSON.stringify(data, null, 2));
@@ -116,6 +147,32 @@ export default class VellumPlugin extends Plugin {
         // Skip corrupted map files
       }
     }
-    new Notice("이 노트와 연결된 마커가 있는 지도를 찾지 못했습니다.");
+    new Notice(t("notice.noMarkerMap"));
+  }
+}
+
+class VellumSettingTab extends PluginSettingTab {
+  private plugin: VellumPlugin;
+
+  constructor(app: App, plugin: VellumPlugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+
+  display(): void {
+    const { containerEl } = this;
+    containerEl.empty();
+
+    new Setting(containerEl)
+      .setName(t("settings.language"))
+      .setDesc(t("settings.languageDesc"))
+      .addDropdown((dd) => {
+        (Object.keys(LOCALE_LABELS) as LocaleId[]).forEach((code) => dd.addOption(code, LOCALE_LABELS[code]));
+        dd.setValue(this.plugin.settings.locale);
+        dd.onChange(async (v) => {
+          await this.plugin.applyLocale(v as LocaleId);
+          this.display(); // re-render this tab in the new language
+        });
+      });
   }
 }

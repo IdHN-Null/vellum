@@ -205,7 +205,7 @@ export function defaultMapData(name: string, seed?: number): MapData {
 
 export function parseMapData(raw: string): MapData {
   const d = JSON.parse(raw) as Partial<MapData>;
-  const base = defaultMapData(d.name ?? "지도");
+  const base = defaultMapData(d.name ?? "Map");
 
   // Migration from v0.2 and earlier: promote fixed decorations (compass, title) to placed elements
   let ornaments: Ornament[];
@@ -218,7 +218,7 @@ export function parseMapData(raw: string): MapData {
       ornaments.push({ id: newId(), type: "compass", x: 0.89, y: 0.14, sizeF: 0.062 });
     }
     if (oldDecor.title !== false) {
-      ornaments.push({ id: newId(), type: "title", x: 0.5, y: 0.075, sizeF: 0.052, text: d.name ?? "지도" });
+      ornaments.push({ id: newId(), type: "title", x: 0.5, y: 0.075, sizeF: 0.052, text: d.name ?? "Map" });
     }
   }
 

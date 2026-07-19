@@ -123,7 +123,7 @@ export function drawOrnaments(
       }
       case "title": {
         const fs = size;
-        const text = orn.text || "제목";
+        const text = orn.text || "Title";
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
         const tw = ctx.measureText(text).width;
         const padX = fs * 1.0, padY = fs * 0.46;
@@ -186,7 +186,7 @@ export function drawOrnaments(
       case "banner": {
         // Ribbon banner: a swallow-tailed ribbon text box that stretches to fit the text
         const fs = size;
-        const text = orn.text || "리본 문구";
+        const text = orn.text || "Banner";
         ctx.save();
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
         const tw = ctx.measureText(text).width;
@@ -242,7 +242,7 @@ export function drawOrnaments(
       case "label": {
         // Place-name label: serif + letter spacing + faint halo (for sea and range names)
         const fs = size;
-        const text = orn.text || "텍스트";
+        const text = orn.text || "Label";
         ctx.save();
         ctx.font = `600 ${fs}px ${FONT_SERIF}`;
         try { (ctx as unknown as { letterSpacing: string }).letterSpacing = `${fs * 0.22}px`; } catch { /* ignore if unsupported */ }
@@ -262,7 +262,7 @@ export function drawOrnaments(
       case "note": {
         // Note card: a slip of paper with a folded corner (handwriting face)
         const fs = size;
-        const lines = (orn.text || "메모").split("\n");
+        const lines = (orn.text || "Note").split("\n");
         ctx.font = `600 ${fs}px ${FONT_HAND}`;
         let maxW = 0;
         for (const ln of lines) maxW = Math.max(maxW, ctx.measureText(ln).width);

@@ -44,16 +44,16 @@ export interface StickerDef {
 }
 
 export const STICKER_CATS: { id: StickerDef["cat"]; label: string }[] = [
-  { id: "sky", label: "하늘" },
-  { id: "sea", label: "바다" },
-  { id: "land", label: "땅" },
-  { id: "map", label: "지도" },
+  { id: "sky", label: "Sky" },
+  { id: "sea", label: "Sea" },
+  { id: "land", label: "Land" },
+  { id: "map", label: "Map" },
 ];
 
 export const STICKERS: StickerDef[] = [
   // ── Sky ──────────────────────────────────────────────
   {
-    id: "cloud", label: "구름", cat: "sky", box: [1.2, 0.72],
+    id: "cloud", label: "Cloud", cat: "sky", box: [1.2, 0.72],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
       // Flat stratus cloud — level base with a billowy top, engraved lines below for a woodcut feel
@@ -81,7 +81,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "sun", label: "태양", cat: "sky", box: [1.05, 1.05],
+    id: "sun", label: "Sun", cat: "sky", box: [1.05, 1.05],
     draw(ctx, cx, cy, r, ink, paper) {
       // Heraldic 'sun in splendour' — restrained rays and a double disc, no face
       const lw = ctx.lineWidth;
@@ -124,7 +124,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "moon", label: "초승달", cat: "sky", box: [0.95, 0.8],
+    id: "moon", label: "Crescent moon", cat: "sky", box: [0.95, 0.8],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
       const p = new Path2D();
@@ -161,7 +161,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "birds", label: "새 떼", cat: "sky", box: [0.95, 0.7],
+    id: "birds", label: "Flock of birds", cat: "sky", box: [0.95, 0.7],
     draw(ctx, cx, cy, r, ink) {
       ctx.strokeStyle = ink(0.75);
       ctx.lineCap = "round";
@@ -181,7 +181,7 @@ export const STICKERS: StickerDef[] = [
 
   // ── Sea ──────────────────────────────────────────────
   {
-    id: "whale", label: "고래", cat: "sea", box: [1.3, 1.0],
+    id: "whale", label: "Whale", cat: "sea", box: [1.3, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
       // Whale — elongated body + angular tail fluke + engraved lines (copperplate natural-history feel)
@@ -245,7 +245,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "fish", label: "물고기 떼", cat: "sea", box: [1.0, 0.8],
+    id: "fish", label: "School of fish", cat: "sea", box: [1.0, 0.8],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
       // Streamlined fish — engraved fins, gills and scale lines (copperplate ichthyology plate)
@@ -288,7 +288,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "whirlpool", label: "소용돌이", cat: "sea", box: [0.95, 0.95],
+    id: "whirlpool", label: "Whirlpool", cat: "sea", box: [0.95, 0.95],
     draw(ctx, cx, cy, r, ink) {
       ctx.strokeStyle = ink(0.7);
       ctx.lineCap = "round";
@@ -312,7 +312,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "waves", label: "파도", cat: "sea", box: [1.05, 0.7],
+    id: "waves", label: "Waves", cat: "sea", box: [1.05, 0.7],
     draw(ctx, cx, cy, r, ink) {
       ctx.strokeStyle = ink(0.6);
       ctx.lineCap = "round";
@@ -331,7 +331,7 @@ export const STICKERS: StickerDef[] = [
 
   // ── Land ─────────────────────────────────────────────
   {
-    id: "dragon", label: "드래곤", cat: "land", box: [1.25, 1.0],
+    id: "dragon", label: "Dragon", cat: "land", box: [1.25, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
       // Flight silhouette — heraldic, with head (left), large bat wing (upper right) and
       // arrowhead tail (right) clearly separated
@@ -371,7 +371,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "tent", label: "야영지", cat: "land", box: [1.0, 1.0],
+    id: "tent", label: "Camp", cat: "land", box: [1.0, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
       // Tent
       const p = new Path2D();
@@ -412,7 +412,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "ruins", label: "고대 유적", cat: "land", box: [1.0, 1.0],
+    id: "ruins", label: "Ancient ruins", cat: "land", box: [1.0, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
@@ -466,7 +466,7 @@ export const STICKERS: StickerDef[] = [
     },
   },
   {
-    id: "tower", label: "탑", cat: "land", box: [0.85, 1.1],
+    id: "tower", label: "Tower", cat: "land", box: [0.85, 1.1],
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
@@ -535,7 +535,7 @@ export const STICKERS: StickerDef[] = [
 // ── Extended set ────────────────────────────────────────
 STICKERS.push(
   {
-    id: "wind", label: "바람", cat: "sky", box: [1.15, 0.8],
+    id: "wind", label: "Wind", cat: "sky", box: [1.15, 0.8],
     draw(ctx, cx, cy, r, ink) {
       // Faceless gust motif — wind streams stretching from a spiral source with curling
       // ends (a restrained weather symbol)
@@ -568,7 +568,7 @@ STICKERS.push(
     },
   },
   {
-    id: "storm", label: "폭풍 구름", cat: "sky", box: [1.0, 1.0],
+    id: "storm", label: "Storm cloud", cat: "sky", box: [1.0, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
       // Cloud
       const p = new Path2D();
@@ -609,7 +609,7 @@ STICKERS.push(
     },
   },
   {
-    id: "lighthouse", label: "등대", cat: "sea", box: [1.05, 1.1],
+    id: "lighthouse", label: "Lighthouse", cat: "sea", box: [1.05, 1.1],
     draw(ctx, cx, cy, r, ink, paper) {
       // Light beams
       ctx.fillStyle = ink(0.18);
@@ -681,7 +681,7 @@ STICKERS.push(
     },
   },
   {
-    id: "kraken", label: "크라켄", cat: "sea", box: [1.1, 0.95],
+    id: "kraken", label: "Kraken", cat: "sea", box: [1.1, 0.95],
     draw(ctx, cx, cy, r, ink, paper) {
       const wl = cy + r * 0.52; // waterline
       ctx.strokeStyle = ink(0.85);
@@ -730,7 +730,7 @@ STICKERS.push(
     },
   },
   {
-    id: "castle", label: "성", cat: "land", box: [1.05, 1.0],
+    id: "castle", label: "Castle", cat: "land", box: [1.05, 1.0],
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
@@ -802,7 +802,7 @@ STICKERS.push(
     },
   },
   {
-    id: "bridge", label: "다리", cat: "land", box: [1.05, 0.7],
+    id: "bridge", label: "Bridge", cat: "land", box: [1.05, 0.7],
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
@@ -844,7 +844,7 @@ STICKERS.push(
     },
   },
   {
-    id: "windmill", label: "풍차", cat: "land", box: [1.0, 1.1],
+    id: "windmill", label: "Windmill", cat: "land", box: [1.0, 1.1],
     draw(ctx, cx, cy, r, ink, paper) {
       ctx.strokeStyle = ink(0.85);
       ctx.fillStyle = paper;
@@ -902,7 +902,7 @@ STICKERS.push(
     },
   },
   {
-    id: "inkblot", label: "잉크 얼룩", cat: "map", box: [1.0, 0.9],
+    id: "inkblot", label: "Ink blot", cat: "map", box: [1.0, 0.9],
     draw(ctx, cx, cy, r, ink) {
       ctx.fillStyle = ink(0.82);
       // Body: not an angular polygon but a smooth organic blob via midpoint interpolation
@@ -948,7 +948,7 @@ STICKERS.push(
     },
   },
   {
-    id: "scroll", label: "두루마리", cat: "map", box: [1.2, 0.65],
+    id: "scroll", label: "Scroll", cat: "map", box: [1.2, 0.65],
     draw(ctx, cx, cy, r, ink, paper) {
       const lw = ctx.lineWidth;
       ctx.strokeStyle = ink(0.85);
@@ -1019,7 +1019,7 @@ STICKERS.push(
     },
   },
   {
-    id: "flourish", label: "모서리 장식", cat: "map", box: [1.1, 1.1],
+    id: "flourish", label: "Corner flourish", cat: "map", box: [1.1, 1.1],
     draw(ctx, cx, cy, r, ink) {
       // For the top-left corner — a double L frame + calligraphic tapered curls
       // (width variation that keeps the pen pressure alive)

@@ -46,7 +46,7 @@ type Ctx = CanvasRenderingContext2D;
 const MAP_W = 768, MAP_H = 432, SCALE = 3;
 const SEED = 151186;
 
-const map = defaultMapData("에스텔라 대륙", SEED);
+const map = defaultMapData("Continent of Estella", SEED);
 map.width = MAP_W;
 map.height = MAP_H;
 map.gen.polarNorth = 0.09;
@@ -91,17 +91,17 @@ const shipP = pick(0.66, 0.86, { water: true });
 const monsterP = pick(0.88, 0.34, { water: true });
 
 const markers = [
-  { x: capital.x, y: capital.y, name: "왕도 에스텔라", icon: "castle", color: "#c0392b" },
-  { x: harbor.x, y: harbor.y, name: "항구 벨마르", icon: "anchor", color: "#2471a3" },
-  { x: gate.x, y: gate.y, name: "북방 관문", icon: "tower", color: "#7a4a1a" },
+  { x: capital.x, y: capital.y, name: "Crown City Estella", icon: "castle", color: "#c0392b" },
+  { x: harbor.x, y: harbor.y, name: "Port Belmar", icon: "anchor", color: "#2471a3" },
+  { x: gate.x, y: gate.y, name: "Northern Gate", icon: "tower", color: "#7a4a1a" },
 ];
 const ornaments: Ornament[] = [
-  { id: "t", type: "title", x: 0.5, y: 0.085, sizeF: 0.062, text: "에스텔라 대륙" },
+  { id: "t", type: "title", x: 0.5, y: 0.085, sizeF: 0.062, text: "Continent of Estella" },
   { id: "c", type: "compass", x: 0.915, y: 0.19, sizeF: 0.072 },
   { id: "s", type: "ship", x: shipP.x, y: shipP.y, sizeF: 0.06 },
   { id: "m", type: "monster", x: monsterP.x, y: monsterP.y, sizeF: 0.058 },
-  { id: "b", type: "banner", x: strait.x, y: strait.y, sizeF: 0.03, text: "잊혀진 해협" },
-  { id: "l", type: "label", x: seaS.x, y: seaS.y, sizeF: 0.04, text: "남 해" },
+  { id: "b", type: "banner", x: strait.x, y: strait.y, sizeF: 0.03, text: "Forgotten Strait" },
+  { id: "l", type: "label", x: seaS.x, y: seaS.y, sizeF: 0.04, text: "South Sea" },
 ];
 
 /** Map compositing (same pipeline as the editor's draw()) — the palette changes per style */
