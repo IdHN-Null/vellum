@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Plugin UI localisation. The interface language is a plugin setting
  * (default: English); strings resolve at call time via t().
  *
@@ -153,7 +153,7 @@ const M: Record<string, Msg> = {
   "chk.landHatch": { en: "Land hatching", ko: "육지 헤칭" },
   "chk.grid": { en: "Coordinate grid", ko: "좌표 격자" },
   "chk.rhumb": { en: "Rhumb lines", ko: "풍배선 표시" },
-  "chk.fast": { en: "⚡ Fast render (lower quality)", ko: "⚡ 빠른 렌더 (품질 저하)" },
+  "chk.fast": { en: " Fast render (lower quality)", ko: " 빠른 렌더 (품질 저하)" },
   "sec.background": { en: "Map background", ko: "지도 배경" },
   "lbl.imagePrefix": { en: "Image: ", ko: "이미지: " },
   "btn.toGenerated": { en: "Switch to generated terrain", ko: "생성 지형으로 전환" },
@@ -307,3 +307,4 @@ export function catLabel(id: string, fallback = ""): string {
   const m = M["cat." + id];
   return m ? (m[current] ?? m.en) : fallback || id;
 }
+
