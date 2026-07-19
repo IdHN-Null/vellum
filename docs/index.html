@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en-US">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vellum — From Imagination to Map</title>
-  <meta name="description" content="A fantasy map generator &amp; editor for Obsidian. Procedural terrain, ink-and-wash antique rendering, note integration." />
-  <meta property="og:title" content="Vellum — From Imagination to Map" />
-  <meta property="og:description" content="A fantasy map generator &amp; editor for Obsidian — shape your own fantasy world." />
+  <title>Vellum — 상상을 지도로</title>
+  <meta name="description" content="당신만의 판타지 세계를 창조하고 다듬는 Obsidian 지도 생성·편집기. 절차적 지형, 잉크&워시 고지도 렌더, 노트 연동." />
+  <meta property="og:title" content="Vellum — 상상을 지도로" />
+  <meta property="og:description" content="당신만의 판타지 세계를 창조하고 다듬는 Obsidian 지도 생성·편집기." />
   <meta property="og:image" content="map/hero.jpg" />
   <meta property="og:type" content="website" />
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
@@ -17,7 +17,7 @@
 
   <div class="progress" id="progress" aria-hidden="true"></div>
 
-  <!-- Nav -->
+  <!-- 내비 -->
   <nav class="nav" id="nav">
     <div class="wrap-wide">
       <a class="brand" href="#top">
@@ -25,53 +25,45 @@
         VELLUM
       </a>
       <div class="nav-links">
-        <a href="#features" data-i18n="nav.features">Features</a>
-        <a href="#stickers" data-i18n="nav.stickers">Stickers</a>
-        <a href="#start" data-i18n="nav.start">Get started</a>
-        <a href="#download" data-i18n="nav.download">Download</a>
-        <a class="nav-cta" href="#download" data-i18n="nav.install">Install</a>
-        <div class="lang-dd" id="langDd">
-          <button class="lang-btn" id="langBtn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="Language">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.7 3.8 9S14.5 18.4 12 21c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z"/></svg>
-            <span id="langCur">English (US)</span>
-            <svg class="lang-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-          <ul class="lang-menu" id="langMenu" role="listbox" aria-label="Language"></ul>
-        </div>
+        <a href="#features">기능</a>
+        <a href="#stickers">스티커</a>
+        <a href="#start">시작하기</a>
+        <a href="#download">다운로드</a>
+        <a class="nav-cta" href="#download">설치하기</a>
       </div>
     </div>
   </nav>
 
-  <!-- Hero -->
+  <!-- 히어로 -->
   <header class="hero" id="top">
     <div class="wrap">
-      <span class="eyebrow reveal" data-i18n="hero.eyebrow">A map studio for Obsidian</span>
-      <h1 class="reveal"><span data-i18n="hero.title">From imagination, to map.</span>
+      <span class="eyebrow reveal">Obsidian 지도 스튜디오</span>
+      <h1 class="reveal">상상을, 지도로.
         <span class="hero-en">A cartographer's studio, inside your vault.</span>
       </h1>
-      <p class="lede reveal" data-i18n="hero.lede">Shape your own fantasy world, paint it in ink and wash, and weave it into your notes.</p>
+      <p class="lede reveal">당신만의 판타지 세계를 빚고, 잉크와 워시로 그려내고, 노트와 하나로 엮습니다.</p>
       <div class="cta-row reveal">
         <a class="btn btn-primary" href="#download">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
-          <span data-i18n="hero.ctaPrimary">Get started free</span>
+          무료로 시작하기
         </a>
-        <a class="btn-text" href="#features" data-i18n="hero.ctaText">Explore features</a>
+        <a class="btn-text" href="#features">기능 둘러보기</a>
       </div>
       <div class="scroll-cue reveal" aria-hidden="true">
-        <span data-i18n="hero.scroll">Scroll</span>
+        <span>스크롤</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
       </div>
     </div>
   </header>
 
-  <!-- Unfurling scroll showcase -->
+  <!-- 두루마리 펼침 쇼케이스 -->
   <section class="unfurl" id="showcase">
     <div class="unfurl-pin">
       <div class="unfurl-stage">
         <div class="roll-group">
           <div class="paper-wrap">
             <div class="paper">
-              <div class="paper-inner"><img src="map/hero.jpg" data-i18n-alt="alt.hero" alt="A fantasy map generated with Vellum — the continent of Estella" width="1600" height="900" /></div>
+              <div class="paper-inner"><img src="map/hero.jpg" alt="Vellum으로 생성한 판타지 지도 — 에스텔라 대륙" width="1600" height="1200" /></div>
             </div>
             <span class="roller left"></span>
             <span class="roller right"></span>
@@ -79,84 +71,81 @@
         </div>
         <div class="paper-cap">
           <span class="eyebrow">The World</span>
-          <h2 data-i18n="showcase.title">Unroll it — a whole world.</h2>
-          <p data-i18n="showcase.p">Erosion and rivers, ranges and coasts awaken as a hand-drawn antique map.</p>
+          <h2>펼치면, 하나의 세계.</h2>
+          <p>침식과 강, 산맥과 해안이 손으로 그린 고지도로 깨어납니다.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Feature 1: procedural terrain -->
+  <!-- 기능 1: 절차적 지형 -->
   <section class="feature-block" id="features">
     <div class="wrap">
-      <div class="fb-figure reveal-clip"><img src="assets/feat-terrain.jpg" data-i18n-alt="alt.terrain" alt="Generated mountain ranges, rivers and contour lines" data-parallax="0.05" loading="lazy" /></div>
+      <div class="fb-figure reveal-clip"><img src="assets/feat-terrain.jpg" alt="생성된 산맥과 강, 등고선" data-parallax="0.05" loading="lazy" /></div>
       <div class="fb-body reveal">
         <span class="eyebrow">Generate</span>
-        <h3 data-i18n-html="feat1.title">One seed,<br>one continent.</h3>
-        <p data-i18n="feat1.p1">Droplet erosion and flow-based hydrology are layered over noise, carving valleys and rivers naturally. Every continent gets a mountain spine, and one roll of the dice reveals an entirely new world.</p>
-        <p data-i18n="feat1.p2">The same seed always brings back the same terrain.</p>
-        <div class="fb-note"><span data-i18n="feat1.n1">Droplet erosion</span><span data-i18n="feat1.n2">Flow hydrology</span><span data-i18n="feat1.n3">Infinitely reproducible</span></div>
+        <h3>시드 하나로,<br>대륙 하나.</h3>
+        <p>노이즈에 물방울 침식과 유량 수문을 더해, 계곡과 강줄기가 자연스럽게 새겨집니다. 대륙마다 산맥 등뼈가 놓이고, 주사위 한 번이면 완전히 새로운 세계가 나타납니다.</p>
+        <p>같은 시드는 언제든 같은 지형으로 돌아옵니다.</p>
+        <div class="fb-note"><span>물방울 침식</span><span>유량 수문</span><span>무한 재현</span></div>
       </div>
     </div>
   </section>
 
-  <!-- Feature 2: ink & wash -->
+  <!-- 기능 2: 잉크 & 워시 -->
   <section class="feature-block flip" id="craft">
     <div class="wrap">
-      <div class="fb-figure reveal-clip"><img src="assets/feat-craft.jpg" data-i18n-alt="alt.craft" alt="Coastline and copperplate hatching detail" data-parallax="0.05" loading="lazy" /></div>
+      <div class="fb-figure reveal-clip"><img src="assets/feat-craft.jpg" alt="해안선과 동판화 헤칭 디테일" data-parallax="0.05" loading="lazy" /></div>
       <div class="fb-body reveal">
         <span class="eyebrow">Render</span>
-        <h3 data-i18n-html="feat2.title">The grain of a<br>hand-drawn map.</h3>
-        <p data-i18n="feat2.p1">Fountain-pen coastlines and contours sit on a watercolor wash, with copperplate hatching engraved layer by layer along the shore. Zoom in — the vector detail never falls apart.</p>
-        <div class="fb-note"><span data-i18n="feat2.n1">Fountain-pen coasts</span><span data-i18n="feat2.n2">Copperplate hatching</span><span data-i18n="feat2.n3">Woodcut mountains</span></div>
+        <h3>손으로 그린<br>고지도의 결.</h3>
+        <p>수채 워시 위에 만년필 해안선과 등고선을 얹고, 해안을 따라 동판화 잔선을 겹겹이 새깁니다. 크게 확대해도 벡터 디테일이 무너지지 않습니다.</p>
+        <div class="fb-note"><span>만년필 해안선</span><span>동판화 헤칭</span><span>판화풍 산맥</span></div>
       </div>
     </div>
   </section>
 
-  <!-- Feature 3: worldbuilding -->
+  <!-- 기능 3: 세계관 연동 -->
   <section class="feature-block" id="world">
     <div class="wrap">
-      <div class="fb-figure reveal-clip"><img src="assets/feat-world.jpg" data-i18n-alt="alt.world" alt="Markers and place-name labels on the map" data-parallax="0.05" loading="lazy" /></div>
+      <div class="fb-figure reveal-clip"><img src="assets/feat-world.jpg" alt="지도 위 마커와 지명 라벨" data-parallax="0.05" loading="lazy" /></div>
       <div class="fb-body reveal">
         <span class="eyebrow">Worldbuild</span>
-        <h3 data-i18n-html="feat3.title">Map and notes,<br>as one.</h3>
-        <p data-i18n="feat3.p1">Drop markers on capitals and ruins, link them to Obsidian notes, and one click opens the lore. You can jump back from a note to its place on the map, too.</p>
-        <p data-i18n="feat3.p2">Regions, ribbon banners, freehand drawings — your worldbuilding lives right on the map.</p>
-        <div class="fb-note"><span data-i18n="feat3.n1">18 marker icons</span><span data-i18n="feat3.n2">Regions &amp; banners</span><span data-i18n="feat3.n3">Two-way note links</span></div>
+        <h3>지도와 노트를,<br>하나로.</h3>
+        <p>수도와 유적에 마커를 찍고 옵시디언 문서를 연결하면, 클릭 한 번으로 설정 노트가 열립니다. 노트에서 지도의 그 장소로 되돌아올 수도 있습니다.</p>
+        <p>지역·리본 문구·자유 그림까지, 세계관을 지도 위에 그대로 담습니다.</p>
+        <div class="fb-note"><span>마커 18종</span><span>지역·리본 문구</span><span>노트 양방향 링크</span></div>
       </div>
     </div>
   </section>
 
-  <!-- Stickers -->
+  <!-- 스티커 -->
   <section class="sticker-band" id="stickers">
     <div class="wrap">
       <div class="lead reveal">
         <span class="eyebrow">Stickers</span>
-        <h2 data-i18n="stickers.title">Twenty-five flourishes for the empty seas.</h2>
-        <p data-i18n="stickers.p">One click places them on the map — ink and paper tones that quietly match your style.</p>
+        <h2>여백을 채우는, 스물다섯 가지 장식.</h2>
+        <p>클릭 한 번으로 지도 위에. 잉크와 종이 톤이 스타일에 맞춰 조용히 어우러집니다.</p>
       </div>
       <div class="sticker-sheet reveal-scale">
-        <img src="assets/stickers.png" data-i18n-alt="alt.stickers" alt="Vellum's built-in stickers — compass, dragon, castle, whale, lighthouse, kraken, sun, windmill, tower, scroll and more" width="900" height="300" loading="lazy" />
+        <img src="assets/stickers.png" alt="Vellum 내장 스티커 — 나침반·용·성·고래·등대·크라켄·태양·풍차·탑·두루마리 등" width="900" height="300" loading="lazy" />
       </div>
       <div class="sticker-cats reveal">
-        <span data-i18n-html="stickers.c1"><b>Sky</b>cloud · sun · wind</span>
-        <span data-i18n-html="stickers.c2"><b>Sea</b>ship · whale · kraken · lighthouse</span>
-        <span data-i18n-html="stickers.c3"><b>Land</b>dragon · castle · ruins · windmill</span>
-        <span data-i18n-html="stickers.c4"><b>Map</b>compass · scroll · +your PNG</span>
+        <span><b>하늘</b>구름·태양·바람</span>
+        <span><b>바다</b>범선·고래·크라켄·등대</span>
+        <span><b>땅</b>드래곤·성·유적·풍차</span>
+        <span><b>지도</b>나침반·두루마리·＋내 PNG</span>
       </div>
     </div>
   </section>
 
-  <!-- Styles -->
+  <!-- 스타일 -->
   <section id="styles">
-    <div class="theme-bg parchment"></div>
-    <div class="theme-bg color"></div>
-    <div class="theme-bg ink"></div>
-    <div class="wrap" style="position:relative; z-index:2;">
+    <div class="wrap">
       <div class="lead reveal">
         <span class="eyebrow">Styles</span>
-        <h2 data-i18n="styles.title">Same world, different brush.</h2>
-        <p data-i18n="styles.p">Three hand-crafted looks, with every biome color yours to change.</p>
+        <h2>같은 세계, 다른 붓.</h2>
+        <p>세 가지 손맛으로, 바이옴 색까지 자유롭게.</p>
       </div>
       <div class="styles-row">
         <div class="style-card reveal">
@@ -166,7 +155,7 @@
             <span class="chip" style="background:#7a5a2a"></span>
           </div>
           <h4>Parchment</h4>
-          <p data-i18n="styles.parchment">Warm parchment and sepia ink. The most classic antique map.</p>
+          <p>따뜻한 양피지에 세피아 잉크. 가장 고전적인 고지도.</p>
         </div>
         <div class="style-card reveal">
           <div class="style-swatch sw-color">
@@ -175,7 +164,7 @@
             <span class="chip" style="background:#c7b46a"></span>
           </div>
           <h4>Color</h4>
-          <p data-i18n="styles.color">Vivid seas and green lands. An illustration-like color tone.</p>
+          <p>선명한 바다와 초록 대지. 삽화 같은 컬러 톤.</p>
         </div>
         <div class="style-card reveal">
           <div class="style-swatch sw-ink">
@@ -184,65 +173,69 @@
             <span class="chip" style="background:#3a352b"></span>
           </div>
           <h4>Ink</h4>
-          <p data-i18n="styles.ink">Monochrome pen work. An engraving in paper and ink alone.</p>
+          <p>흑백 펜화. 종이와 잉크만으로 그린 판화.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Get started (tutorial) -->
+  <!-- 시작하기 (튜토리얼) -->
   <section class="tutorial" id="start">
     <div class="wrap">
       <div class="lead reveal">
         <span class="eyebrow">Start</span>
-        <h2 data-i18n="tut.title">Three steps are all it takes.</h2>
-        <p data-i18n="tut.p">The Vellum flow is simple — generate, refine, connect.</p>
+        <h2>세 걸음이면 충분합니다.</h2>
+        <p>Vellum의 흐름은 단순합니다 — 만들고, 다듬고, 잇는 것.</p>
       </div>
       <div class="tutorial-steps">
         <div class="tut-step reveal">
           <div class="tut-num">1</div>
-          <h4 data-i18n="tut.s1t">Generate</h4>
-          <p data-i18n="tut.s1p">Roll the dice in the Terrain tab until a continent you love appears.</p>
+          <h4>만들기</h4>
+          <p>지형 탭에서 주사위를 굴려, 마음에 드는 대륙이 나올 때까지 생성합니다.</p>
         </div>
         <div class="tut-step reveal">
           <div class="tut-num">2</div>
-          <h4 data-i18n="tut.s2t">Refine</h4>
-          <p data-i18n="tut.s2p">Sculpt the terrain with brushes, then tune style, colors and hatching to taste.</p>
+          <h4>다듬기</h4>
+          <p>브러시로 지형을 손보고, 스타일과 색·헤칭을 취향껏 조절합니다.</p>
         </div>
         <div class="tut-step reveal">
           <div class="tut-num">3</div>
-          <h4 data-i18n="tut.s3t">Connect</h4>
-          <p data-i18n="tut.s3p">Drop markers and link notes, weaving your worldbuilding into a single map.</p>
+          <h4>잇기</h4>
+          <p>마커를 찍고 노트를 연결해, 세계관을 하나의 지도로 엮습니다.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Download -->
+  <!-- 다운로드 -->
   <section class="download" id="download">
     <div class="wrap">
       <div class="lead reveal">
         <span class="eyebrow">Download</span>
-        <h2 data-i18n-html="dl.title">Your first continent, <span class="lite">today.</span></h2>
-        <p data-i18n="dl.p">Obsidian 1.4.0+ · desktop. Runs on pure canvas with no external libraries.</p>
+        <h2>지금, <span class="lite">첫 대륙을.</span></h2>
+        <p>Obsidian 1.4.0 이상 · 데스크톱. 외부 라이브러리 없이 순수 캔버스로 동작합니다.</p>
       </div>
       <div class="reveal" style="text-align:center">
         <a class="dl-btn" href="download/vellum-0.21.0.zip" download>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v13m0 0l-5-5m5 5l5-5M4 21h16"/></svg>
           Vellum v0.21.0 <small>(.zip · ~370KB)</small>
         </a>
-        <div class="dl-meta" data-i18n="dl.meta">MIT License · © 2026 Altair</div>
+        <div class="dl-meta">MIT 라이선스 · © 2026 Altair</div>
       </div>
       <div class="install reveal">
-        <h4 data-i18n="dl.installTitle">Install</h4>
+        <h4>설치</h4>
         <div class="steps">
-          <div class="step"><div class="n"></div><div class="txt" data-i18n-html="dl.step1">Unzip and find <b>main.js · manifest.json · styles.css</b>.</div></div>
-          <div class="step"><div class="n"></div><div class="txt" data-i18n-html="dl.step2">Copy them into your vault's <code>.obsidian/plugins/vellum/</code>. <span style="color:var(--ink-faint)">(On Windows, the bundled <code>install.ps1</code> does it in one go.)</span></div></div>
-          <div class="step"><div class="n"></div><div class="txt" data-i18n-html="dl.step3">Enable <b>Vellum</b> under Settings → <b>Community plugins</b>.</div></div>
-          <div class="step"><div class="n"></div><div class="txt" data-i18n-html="dl.step4">Command palette → <b>샘플팩 설치</b> (install sample pack) gives you an example map to start from.</div></div>
+          <div class="step"><div class="n"></div><div class="txt">압축을 풀고 <b>main.js · manifest.json · styles.css</b>를 확인합니다.</div></div>
+          <div class="step"><div class="n"></div><div class="txt">볼트의 <code>.obsidian/plugins/vellum/</code>에 복사합니다. <span style="color:var(--ink-faint)">(Windows는 동봉된 <code>install.ps1</code>로 한 번에)</span>
+            <div style="font-size: 0.85em; margin-top: 8px; color: var(--ink-soft); background: rgba(0,0,0,0.03); padding: 8px 12px; border-radius: 6px;">
+              💡 <b>스크립트 오류 시:</b> <i>"not digitally signed"</i> 오류로 설치가 안 된다면, 다운로드 파일의 보안 차단 때문입니다. PowerShell에서 <code>Unblock-File -Path .\install.ps1</code>을 입력해 차단을 풀고 다시 시도하세요.
+            </div>
+          </div></div>
+          <div class="step"><div class="n"></div><div class="txt">설정 → <b>커뮤니티 플러그인</b>에서 <b>Vellum</b>을 켭니다.</div></div>
+          <div class="step"><div class="n"></div><div class="txt">명령 팔레트 → <b>샘플팩 설치</b>로 예제 지도를 받아 시작합니다.</div></div>
         </div>
       </div>
-      <p class="migrate reveal" data-i18n-html="dl.migrate"><b>Coming from Fantasy Map Studio?</b> Your map files (<code>.fmap</code>) open as-is. After installing, disable the old plugin — running both may conflict.</p>
+      <p class="migrate reveal"><b>이전에 Fantasy Map Studio를 쓰셨나요?</b> 지도 파일(<code>.fmap</code>)은 그대로 열립니다. 새로 설치한 뒤 기존 플러그인은 비활성화하세요 — 둘 다 켜져 있으면 충돌할 수 있습니다.</p>
     </div>
   </section>
 
@@ -252,18 +245,17 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="9"/><path d="M12 3l1.6 8.4L12 12l-1.6-.6z" fill="currentColor" stroke="none"/></svg>
         VELLUM
       </div>
-      <p data-i18n="footer.tagline">From imagination to map — an Obsidian cartography tool for worldbuilders.</p>
+      <p>상상을 지도로. — 세계관 창작자를 위한 Obsidian 지도 도구.</p>
       <p>Crafted by <a href="#top">Altair</a> · MIT License</p>
     </div>
   </footer>
 
-  <script src="i18n.js"></script>
   <script>
     const nav = document.getElementById("nav");
     const progress = document.getElementById("progress");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // Per-group stagger — sibling elements enter in sequence
+    // 그룹별 스태거 — 형제 요소가 순차적으로 등장
     const stagger = (sel, step) => document.querySelectorAll(sel).forEach((el, i) => {
       el.style.transitionDelay = (i * step) + "ms";
     });
@@ -271,7 +263,7 @@
     stagger(".tutorial-steps > .tut-step", 130);
     stagger(".styles-row > .style-card", 120);
 
-    // Scroll reveal — IO + safety net (content always shows, even in throttled background tabs)
+    // 스크롤 리빌 — IO + 안전망(백그라운드 탭 throttle에도 내용 반드시 표시)
     const revealEls = document.querySelectorAll(".reveal, .reveal-scale, .reveal-clip");
     const showAll = () => revealEls.forEach((el) => el.classList.add("in", "force-show"));
     if ("IntersectionObserver" in window) {
@@ -283,7 +275,7 @@
     } else { showAll(); }
     addEventListener("load", () => setTimeout(showAll, 200));
 
-    // Scroll spy — highlight the nav link for the current section
+    // 스크롤 스파이 — 현재 섹션에 해당하는 내비 링크 활성화
     const navMap = new Map();
     document.querySelectorAll('.nav-links a[href^="#"]:not(.nav-cta)').forEach((a) => navMap.set(a.getAttribute("href").slice(1), a));
     if ("IntersectionObserver" in window) {
@@ -291,7 +283,7 @@
         for (const e of entries) {
           if (!e.isIntersecting) continue;
           const a = navMap.get(e.target.id);
-          if (!a) continue; // sections not in the nav (craft/world etc.) keep the previous active link
+          if (!a) continue; // 내비에 없는 섹션(craft/world 등)은 직전 활성 유지
           navMap.forEach((l) => l.classList.remove("active"));
           a.classList.add("active");
         }
@@ -299,9 +291,9 @@
       document.querySelectorAll("section[id], header[id]").forEach((s) => spy.observe(s));
     }
 
-    // Progress bar (immediate) + feature-image parallax (inertial lerp — butter-smooth)
-    const targets = new Map();          // el → target py
-    const current = new Map();          // el → current py
+    // 진행 바(즉시) + 기능 이미지 패럴랙스(관성 lerp — 버터처럼 부드럽게)
+    const targets = new Map();          // el → 목표 py
+    const current = new Map();          // el → 현재 py
     const parallaxEls = reduce ? [] : [...document.querySelectorAll("[data-parallax]")];
     parallaxEls.forEach((el) => { targets.set(el, 0); current.set(el, 0); });
     const updateProgress = () => {
@@ -327,8 +319,8 @@
       requestAnimationFrame(tick);
     };
 
-    // Scroll unfurl — triggers decisively at set progress points within the pinned range.
-    // Split into two steps so reverse transitions also feel right when scrolling back up.
+    // 두루마리 펼침 — 핀 구간의 특정 진행률에서 확정 트리거.
+    // 올릴 때도 어색하지 않게 역방향 트랜지션을 고려하여 2단계로 쪼갬.
     const unfurl = document.getElementById("showcase");
     const stage = unfurl && unfurl.querySelector(".unfurl-stage");
     const updateUnfurl = () => {
@@ -336,14 +328,14 @@
       if (reduce) { stage.classList.add("play-drop", "play-unfurl"); return; }
       const range = unfurl.offsetHeight - innerHeight;
       const p = range > 0 ? (scrollY - unfurl.offsetTop) / range : (scrollY >= unfurl.offsetTop ? 1 : 0);
+      
+      // Step 1: 두루마리 낙하
+      if (p >= 0.08) stage.classList.add("play-drop");
+      else if (p < 0.02) stage.classList.remove("play-drop");
 
-      // Step 1: the scroll drops in
-      if (p >= 0.15) stage.classList.add("play-drop");
-      else if (p < 0.10) stage.classList.remove("play-drop");
-
-      // Step 2: the scroll unfurls
-      if (p >= 0.35) stage.classList.add("play-unfurl");
-      else if (p < 0.25) stage.classList.remove("play-unfurl");
+      // Step 2: 두루마리 펼침
+      if (p >= 0.20) stage.classList.add("play-unfurl");
+      else if (p < 0.12) stage.classList.remove("play-unfurl");
     };
 
     addEventListener("scroll", () => {
@@ -353,27 +345,6 @@
     addEventListener("resize", () => { updateProgress(); computeTargets(); updateUnfurl(); }, { passive: true });
     updateProgress(); computeTargets(); updateUnfurl();
     if (parallaxEls.length) requestAnimationFrame(tick);
-
-    // Styles hover — the hovered card's actual map style spreads across the background; the card gains focus.
-    // To avoid flicker when moving between cards: "clear previous theme, set current" + reset only on leaving the row.
-    const stylesSec = document.getElementById("styles");
-    const stylesRow = document.querySelector(".styles-row");
-    const styleCards = [...document.querySelectorAll(".styles-row .style-card")];
-    const themes = ["hover-parchment", "hover-color", "hover-ink"];
-    if (stylesSec && stylesRow && styleCards.length === 3) {
-      const clear = () => {
-        stylesSec.classList.remove(...themes);
-        styleCards.forEach((c) => c.classList.remove("is-active"));
-      };
-      styleCards.forEach((card, i) => {
-        card.addEventListener("mouseenter", () => {
-          clear();
-          stylesSec.classList.add(themes[i]);
-          card.classList.add("is-active");
-        });
-      });
-      stylesRow.addEventListener("mouseleave", clear);
-    }
   </script>
 </body>
 </html>

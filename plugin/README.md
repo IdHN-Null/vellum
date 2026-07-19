@@ -51,6 +51,8 @@ cd vellum
 .\install.ps1 "C:\path\to\YourVault"
 ```
 
+> **Troubleshooting**: If you get an error stating the script "is not digitally signed" or cannot be loaded, it is blocked by Windows execution policy. You can unblock the file by running `Unblock-File -Path .\install.ps1` first, or bypass the policy temporarily by running: `powershell -ExecutionPolicy Bypass -File .\install.ps1 "C:\path\to\YourVault"`
+
 ### Option 2 — manual
 1. Create the `.obsidian/plugins/vellum/` folder in your vault.
 2. Copy the three files: `main.js`, `manifest.json`, `styles.css`.

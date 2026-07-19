@@ -51,6 +51,8 @@ cd vellum
 .\install.ps1 "C:\path\to\YourVault"
 ```
 
+> **문제 해결**: "이 시스템에서 스크립트를 실행할 수 없습니다(not digitally signed)" 오류가 발생한다면, 먼저 `Unblock-File -Path .\install.ps1`을 입력하여 차단을 해제한 뒤 다시 시도하거나, `powershell -ExecutionPolicy Bypass -File .\install.ps1 "C:\path\to\YourVault"`로 보안 정책을 우회하여 실행하세요.
+
 ### 방법 2 — 수동
 1. 볼트의 `.obsidian/plugins/vellum/` 폴더를 만든다.
 2. `main.js`, `manifest.json`, `styles.css` 세 파일을 복사한다.
