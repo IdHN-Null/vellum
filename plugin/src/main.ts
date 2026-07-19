@@ -76,15 +76,12 @@ export default class VellumPlugin extends Plugin {
     await this.saveData(this.settings);
   }
 
-  /** Apply a locale change: persist, switch the string table, refresh open map views */
+  /** Apply a locale change: persist, switch the string table */
   async applyLocale(locale: LocaleId): Promise<void> {
     this.settings.locale = locale;
     setLocale(locale);
     await this.saveSettings();
-    for (const leaf of this.app.workspace.getLeavesOfType(VIEW_TYPE_FMAP)) {
-      const v = leaf.view;
-      if (v instanceof VellumView) await v.refreshUI();
-    }
+    new Notice(t("notice.restartNeeded") || "Language changed. Please close and reopen map views to apply.");
   }
 
   private async createNewMap(): Promise<void> {
