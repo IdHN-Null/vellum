@@ -309,11 +309,11 @@
       "ko": "압축을 풀고 <b>main.js · manifest.json · styles.css</b>를 확인합니다.",
     },
     "dl.step2": {
-      "en-US": "Copy them into your vault's <code>.obsidian/plugins/vellum/</code>. <span style=\"color:var(--ink-faint)\">(On Windows, the bundled <code>install.ps1</code> does it in one go.)</span>",
+      "en-US": "Copy them into your vault's <code>.obsidian/plugins/vellum/</code>. <span style=\"color:var(--ink-faint)\">(On Windows, the bundled <code>install.ps1</code> does it in one go.)</span><div style="font-size: 0.85em; margin-top: 8px; color: var(--ink-soft); background: rgba(0,0,0,0.03); padding: 8px 12px; border-radius: 6px;">💡 <b>Script Error?</b> If blocked by execution policy, run <code>Unblock-File -Path .\\install.ps1</code> in PowerShell and try again.</div>",
       "es": "Cópialos en <code>.obsidian/plugins/vellum/</code> de tu bóveda. <span style=\"color:var(--ink-faint)\">(En Windows, el <code>install.ps1</code> incluido lo hace de una vez.)</span>",
       "zh": "复制到库的 <code>.obsidian/plugins/vellum/</code>。<span style=\"color:var(--ink-faint)\">（Windows 可用附带的 <code>install.ps1</code> 一键完成）</span>",
       "ja": "ボールトの <code>.obsidian/plugins/vellum/</code> にコピー。<span style=\"color:var(--ink-faint)\">（Windows は同梱の <code>install.ps1</code> で一発）</span>",
-      "ko": "볼트의 <code>.obsidian/plugins/vellum/</code>에 복사합니다. <span style=\"color:var(--ink-faint)\">(Windows는 동봉된 <code>install.ps1</code>로 한 번에)</span>",
+      "ko": "볼트의 <code>.obsidian/plugins/vellum/</code>에 복사합니다. <span style=\"color:var(--ink-faint)\">(Windows는 동봉된 <code>install.ps1</code>로 한 번에)</span><div style="font-size: 0.85em; margin-top: 8px; color: var(--ink-soft); background: rgba(0,0,0,0.03); padding: 8px 12px; border-radius: 6px;">💡 <b>스크립트 오류 시:</b> <i>"not digitally signed"</i> 오류 발생 시 PowerShell에서 <code>Unblock-File -Path .\\install.ps1</code>을 입력해 차단을 푸세요.</div>",
     },
     "dl.step3": {
       "en-US": "Enable <b>Vellum</b> under Settings → <b>Community plugins</b>.",
