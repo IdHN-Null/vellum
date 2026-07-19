@@ -209,9 +209,12 @@ section { padding: clamp(84px, 13vw, 160px) 0; }
 /* 포커스 연출 — 가리킨 카드는 살짝 떠오르고 스와치가 커진다.
    (카드는 .reveal 요소라 force-show가 transform/opacity/filter를 !important로 잠금 →
     lift는 top으로, 나머지 포커스는 테마 배경 대비[활성=불투명 / 비활성=반투명]가 담당) */
-.style-card.is-active { top: -6px; box-shadow: 0 30px 56px -28px var(--shadow); }
-.style-card.is-active .style-swatch .chip { transform: scale(1.12); }
-#styles.hover-parchment .style-card.is-active { background: #fffdf7; box-shadow: 0 26px 52px -28px var(--shadow); }
+.style-card.is-active { top: -8px; box-shadow: 0 34px 60px -28px var(--shadow); }
+.style-card.is-active .style-swatch .chip { transform: translateY(-4px) scale(1.12); }
+.style-card.is-active .style-swatch .chip:nth-child(1) { transition-delay: 0s; }
+.style-card.is-active .style-swatch .chip:nth-child(2) { transition-delay: 0.05s; }
+.style-card.is-active .style-swatch .chip:nth-child(3) { transition-delay: 0.1s; }
+#styles.hover-parchment .style-card.is-active { background: #fffdf7; box-shadow: 0 30px 58px -28px var(--shadow); }
 #styles.hover-color .style-card.is-active,
 #styles.hover-ink .style-card.is-active {
   background: rgba(255, 255, 255, 0.09); border-color: rgba(255, 255, 255, 0.2);
@@ -220,9 +223,9 @@ section { padding: clamp(84px, 13vw, 160px) 0; }
 
 /* ── 스타일 3종 (차분한 3-up) ─────────────────────────── */
 .styles-row { margin-top: clamp(40px, 6vw, 64px); display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-.style-card { position: relative; top: 0; border-radius: 14px; padding: 34px 30px; border: 1px solid var(--line); background: var(--card); text-align: left; transition: top 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease, background 2s ease, border-color 2s ease; }
-#styles[class*="hover-"] .style-card { transition: top 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease, background 1.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
-.style-card:hover { top: -6px; box-shadow: 0 34px 54px -28px var(--shadow); }
+.style-card { position: relative; top: 0; border-radius: 14px; padding: 34px 30px; border: 1px solid var(--line); background: var(--card); text-align: left; transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease, background 2s ease, border-color 2s ease; }
+#styles[class*="hover-"] .style-card { transition: top 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease, background 1.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.style-card:hover { top: -8px; box-shadow: 0 38px 60px -28px var(--shadow); }
 .style-swatch { 
   display: flex; gap: 12px; align-items: center; 
   height: 84px; margin-bottom: 22px; 
@@ -231,7 +234,7 @@ section { padding: clamp(84px, 13vw, 160px) 0; }
   width: 32px; height: 32px; border-radius: 50%;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.12), 0 4px 12px rgba(58,44,22,0.08);
   border: 1px solid rgba(255,255,255,0.5);
-  transition: transform 0.35s var(--ease);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .style-card h4 { font-family: var(--display); font-weight: 700; font-size: 1.05rem; letter-spacing: 0.05em; margin-bottom: 8px; color: var(--ink); transition: color 2s ease; }
 #styles[class*="hover-"] .style-card h4 { transition: color 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
