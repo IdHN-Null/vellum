@@ -169,9 +169,10 @@ section { padding: clamp(84px, 13vw, 160px) 0; }
 
 /* 각 스타일의 실제 지도를 배경에 은은하게 — 같은 지도, 다른 붓 (스크림으로 채도·명도 낮춤) */
 #styles .theme-bg { 
-  position: absolute; inset: 0; z-index: 0; opacity: 0; pointer-events: none;
-  background-size: cover; background-position: center;
-  transition: clip-path 1s cubic-bezier(0.4, 0, 0.2, 1), opacity 2.5s ease, z-index 0s 2.5s; 
+  position: absolute; inset: 0; background-size: cover; background-position: center; 
+  opacity: 0; z-index: -1; pointer-events: none;
+  /* 마우스가 빠져나갈 때(Hover out): 원축소 애니메이션 없이 투명도만 서서히 사라지고, 사라진 후 clip-path가 초기화되도록 delay 부여 */
+  transition: clip-path 0s 0.7s, opacity 0.7s ease, z-index 0s 0.7s;
 }
 #styles .theme-bg.parchment { 
   background-image: linear-gradient(rgba(244, 236, 218, 0.82), rgba(244, 236, 218, 0.88)), url("assets/style-parchment.jpg");
