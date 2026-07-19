@@ -5854,7 +5854,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
         lb.createSpan({ text: label });
       }
       const secGen = this.panelSection(tTerrain, "\uC0DD\uC131");
-      const randBtn = secGen.createEl("button", { text: "\u{1F3B2} \uC644\uC804 \uB79C\uB364 \uC0DD\uC131", cls: "fms-btn" });
+      const randBtn = secGen.createEl("button", { text: "\uC644\uC804 \uB79C\uB364 \uC0DD\uC131", cls: "fms-btn" });
       const seedRow = secGen.createDiv({ cls: "fms-row" });
       seedRow.createSpan({ cls: "fms-row-label", text: "\uC2DC\uB4DC" });
       const seedInput = seedRow.createEl("input", { cls: "fms-seed-input", type: "number" });
@@ -6169,7 +6169,7 @@ var VellumView = class extends import_obsidian2.TextFileView {
         this.draw();
         if (!this.map.fastRender) this.scheduleDetail();
       };
-      fastLb.createSpan({ text: "\u26A1 \uBE60\uB978 \uB80C\uB354 (\uD488\uC9C8 \uC800\uD558)" });
+      fastLb.createSpan({ text: "\uBE60\uB978 \uB80C\uB354 (\uD488\uC9C8 \uC800\uD558)" });
     }
     const secBg = this.panelSection(tFile, "\uC9C0\uB3C4 \uBC30\uACBD");
     if (this.map.mode === "image") {
@@ -6660,7 +6660,7 @@ var M = {
   "gen.desert": { en: "Desert", ko: "\uC0AC\uB9C9" },
   "gen.forest": { en: "Forest", ko: "\uC232" },
   "sec.generate": { en: "Generate", ko: "\uC0DD\uC131" },
-  "btn.fullRandom": { en: "\u{1F3B2} Fully random", ko: "\u{1F3B2} \uC644\uC804 \uB79C\uB364 \uC0DD\uC131" },
+  "btn.fullRandom": { en: "Fully random", ko: "\uC644\uC804 \uB79C\uB364 \uC0DD\uC131" },
   "lbl.seed": { en: "Seed", ko: "\uC2DC\uB4DC" },
   "aria.seedOnly": { en: "Randomize the seed only (keep settings)", ko: "\uC2DC\uB4DC\uB9CC \uBB34\uC791\uC704 (\uC124\uC815 \uC720\uC9C0)" },
   "note.generate": { en: "Continents, islands and sea level are chosen for you. Fine-tune in the advanced sections.", ko: "\uB300\uB959\xB7\uC12C\xB7\uD574\uC218\uBA74 \uB4F1\uC744 \uC54C\uC544\uC11C \uC815\uD569\uB2C8\uB2E4. \uC138\uBD80 \uC870\uC815\uC740 \uACE0\uAE09 \uC124\uC815\uC5D0\uC11C." },
@@ -6727,7 +6727,7 @@ var M = {
   "chk.landHatch": { en: "Land hatching", ko: "\uC721\uC9C0 \uD5E4\uCE6D" },
   "chk.grid": { en: "Coordinate grid", ko: "\uC88C\uD45C \uACA9\uC790" },
   "chk.rhumb": { en: "Rhumb lines", ko: "\uD48D\uBC30\uC120 \uD45C\uC2DC" },
-  "chk.fast": { en: "\u26A1 Fast render (lower quality)", ko: "\u26A1 \uBE60\uB978 \uB80C\uB354 (\uD488\uC9C8 \uC800\uD558)" },
+  "chk.fast": { en: "Fast render (lower quality)", ko: "\uBE60\uB978 \uB80C\uB354 (\uD488\uC9C8 \uC800\uD558)" },
   "sec.background": { en: "Map background", ko: "\uC9C0\uB3C4 \uBC30\uACBD" },
   "lbl.imagePrefix": { en: "Image: ", ko: "\uC774\uBBF8\uC9C0: " },
   "btn.toGenerated": { en: "Switch to generated terrain", ko: "\uC0DD\uC131 \uC9C0\uD615\uC73C\uB85C \uC804\uD658" },

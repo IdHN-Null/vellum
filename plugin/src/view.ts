@@ -2394,7 +2394,7 @@ export class VellumView extends TextFileView {
 
       // Generation: the default is one-shot "fully random" — fine-tuning lives in the advanced settings below
       const secGen = this.panelSection(tTerrain, "생성");
-      const randBtn = secGen.createEl("button", { text: "🎲 완전 랜덤 생성", cls: "fms-btn" });
+      const randBtn = secGen.createEl("button", { text: "완전 랜덤 생성", cls: "fms-btn" });
       const seedRow = secGen.createDiv({ cls: "fms-row" });
       seedRow.createSpan({ cls: "fms-row-label", text: "시드" });
       const seedInput = seedRow.createEl("input", { cls: "fms-seed-input", type: "number" });
@@ -2731,7 +2731,7 @@ export class VellumView extends TextFileView {
         this.draw();
         if (!this.map.fastRender) this.scheduleDetail();
       };
-      fastLb.createSpan({ text: "⚡ 빠른 렌더 (품질 저하)" });
+      fastLb.createSpan({ text: "빠른 렌더 (품질 저하)" });
     }
 
     // Background (image mode)
